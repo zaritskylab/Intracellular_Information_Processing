@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from typing import Tuple, List, Sequence, Iterable, Dict, Set
-from utils import *
-from global_parameters import *
+from Miscellaneous.utils import *
+from Miscellaneous.global_parameters import *
 
 
 class BaselineCell2CellInfluenceAnalyzer:
