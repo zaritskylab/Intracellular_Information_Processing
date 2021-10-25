@@ -2,7 +2,6 @@ import os
 
 # todo: add explanation to all global parameters
 
-
 SHOWFIG = True
 SAVEFIG = not SHOWFIG
 

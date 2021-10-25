@@ -1,13 +1,14 @@
 import json
+import os
 from typing import *
 import numpy as np
 import pandas as pd
+from numpy import median
 from scipy.spatial import Voronoi
 from scipy.stats import linregress, zscore
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error as mse
 from sklearn.metrics.pairwise import euclidean_distances as euc_dis
-from global_parameters import *
 from matplotlib.lines import Line2D
 import random
 
@@ -357,3 +358,38 @@ def get_dead_cells_mask_in_window(window_start_time_min: int,
         return (cells_times_of_death >= window_start_time_min) * (cells_times_of_death < window_end_time_min)
     else:
         return cells_times_of_death < window_end_time_min
+
+
+def create_trainable_dataset(file_path: str):
+    df = pd.read_csv(file_path)
+    dataset = pd.DataFrame()
+    dataset['cell_idx'] = df['Unnamed: 0']
+    dataset['cell_x'] = df['cell_x']
+    dataset['cell_y'] = df['cell_y']
+
+    cell_xy = dataset.loc[:, ['cell_x', 'cell_y']].values
+    cells_neighbors_level_1 = get_cells_neighbors(cell_xy)[0]
+
+    dataset['median'] = pd.Series()
+    for idx, cell_neighbors in enumerate(cells_neighbors_level_1):
+        dead_neighbors = []
+        curr_cell_death_time = df['death_time'][idx]
+        for neighbor in cell_neighbors:
+            if curr_cell_death_time > df['death_time'][neighbor]:
+                dead_neighbors.append(df['death_time'][neighbor])
+        # TODO: infinity?
+        if len(dead_neighbors) == 0:
+            dataset['median'][idx] = None
+        else:
+            dataset['median'][idx] = median(dead_neighbors)
+
+    dataset['label'] = df['death_time']
+
+ALL_EXPERIMENTS_FILES_MAIN_DIR = os.sep.join(os.getcwd().split(os.sep)[:-1] + ['Data', 'Experiments_XYT_CSV'])
+
+NON_COMPRESSED_FILE_MAIN_DIR = os.sep.join([ALL_EXPERIMENTS_FILES_MAIN_DIR, 'OriginalTimeMinutesData'])
+
+create_trainable_dataset(NON_COMPRESSED_FILE_MAIN_DIR + '/20160820_10A_FB_xy11.csv')
+
+
+
