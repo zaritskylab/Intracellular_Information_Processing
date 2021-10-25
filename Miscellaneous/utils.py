@@ -156,7 +156,7 @@ def get_linear_regression_line_between_two_signals(x: np.array, y: np.array) -> 
     return x_new, y_new
 
 
-def get_cells_neighbors(XY, threshold_dist: Union[int, float] = None) ->Tuple[List[int], List[int], List[int]]:
+def get_cells_neighbors(XY, threshold_dist: Union[int, float] = None) -> Tuple[List[int], List[int], List[int]]:
     """
     returns 3 levels of topological neighbors for each cell.
     if threshold_dist is not None, a distance constraint is employed on the neighbors to prevent neighbors that are
@@ -334,7 +334,7 @@ def clean_string_from_bad_chars(treatment_name: str, replacement='_') -> str:
     return treatment_name.replace('\\', replacement).replace('/', replacement)
 
 
-def normalize(values: np.array, normalization_method:str = 'z_score', axis: int = 0):
+def normalize(values: np.array, normalization_method: str = 'z_score', axis: int = 0):
     if normalization_method == 'z_score':
         return zscore(values, axis=axis)
     Warning('the normalization method is unknown!')
@@ -370,26 +370,38 @@ def create_trainable_dataset(file_path: str):
     cell_xy = dataset.loc[:, ['cell_x', 'cell_y']].values
     cells_neighbors_level_1 = get_cells_neighbors(cell_xy)[0]
 
-    dataset['median'] = pd.Series()
+    dataset['median_time_of_death'] = pd.Series()
+    dataset['weighted_avg_time_of_death'] = pd.Series()
     for idx, cell_neighbors in enumerate(cells_neighbors_level_1):
-        dead_neighbors = []
         curr_cell_death_time = df['death_time'][idx]
-        for neighbor in cell_neighbors:
-            if curr_cell_death_time > df['death_time'][neighbor]:
-                dead_neighbors.append(df['death_time'][neighbor])
+
+        dead_neighbors = [(n, df['death_time'][n]) for n in cell_neighbors if
+                          curr_cell_death_time > df['death_time'][n]]
+
         # TODO: infinity?
         if len(dead_neighbors) == 0:
-            dataset['median'][idx] = None
+            dataset['median_time_of_death'][idx] = None
+            dataset['weighted_avg_time_of_death'][idx] = None
         else:
-            dataset['median'][idx] = median(dead_neighbors)
+            dataset['median_time_of_death'][idx] = median([n[1] for n in dead_neighbors])
+
+            dist_from_each_dead_cell = [get_euclidean_distance_between_cells_in_pixels(cell_xy[idx], cell_xy[n[0]])
+                                        for n in dead_neighbors]
+            sum_of_dist = sum(dist_from_each_dead_cell)
+
+            relative = [sum_of_dist / d for d in dist_from_each_dead_cell]
+            sum_relative = sum(relative)
+
+            weighted_sum = 0
+            for i in range(len(relative)):
+                weighted_sum += float(dead_neighbors[i][1]) * (relative[i] / sum_relative)
+            dataset['weighted_avg_time_of_death'][idx] = weighted_sum
 
     dataset['label'] = df['death_time']
+
 
 ALL_EXPERIMENTS_FILES_MAIN_DIR = os.sep.join(os.getcwd().split(os.sep)[:-1] + ['Data', 'Experiments_XYT_CSV'])
 
 NON_COMPRESSED_FILE_MAIN_DIR = os.sep.join([ALL_EXPERIMENTS_FILES_MAIN_DIR, 'OriginalTimeMinutesData'])
 
 create_trainable_dataset(NON_COMPRESSED_FILE_MAIN_DIR + '/20160820_10A_FB_xy11.csv')
-
-
-
