@@ -9,6 +9,7 @@ from scipy.stats import linregress, zscore
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error as mse
 from sklearn.metrics.pairwise import euclidean_distances as euc_dis
+from Miscellaneous.global_parameters import *
 from matplotlib.lines import Line2D
 import random
 
@@ -361,6 +362,12 @@ def get_dead_cells_mask_in_window(window_start_time_min: int,
 
 
 def create_trainable_dataset(file_path: str):
+    """
+    transform a csv into multiple lines of raw training data
+    :param file_path:
+    :param cells_neighbors_distance_threshold:
+    :return:
+    """
     df = pd.read_csv(file_path)
     dataset = pd.DataFrame()
     dataset['cell_idx'] = df['Unnamed: 0']
@@ -368,7 +375,7 @@ def create_trainable_dataset(file_path: str):
     dataset['cell_y'] = df['cell_y']
 
     cell_xy = dataset.loc[:, ['cell_x', 'cell_y']].values
-    cells_neighbors_level_1 = get_cells_neighbors(cell_xy)[0]
+    cells_neighbors_level_1 = get_cells_neighbors(XY=cell_xy, threshold_dist=DIST_THRESHOLD_IN_PIXELS)[0]
 
     dataset['median_time_of_death'] = pd.Series()
     dataset['weighted_avg_time_of_death'] = pd.Series()
@@ -380,10 +387,10 @@ def create_trainable_dataset(file_path: str):
 
         # TODO: infinity?
         if len(dead_neighbors) == 0:
-            dataset['median_time_of_death'][idx] = None
-            dataset['weighted_avg_time_of_death'][idx] = None
+            dataset['median_time_of_death'][idx] = -1
+            dataset['weighted_avg_time_of_death'][idx] = -1
         else:
-            dataset['median_time_of_death'][idx] = median([n[1] for n in dead_neighbors])
+            dataset['median_time_of_death'][idx] = np.median([n[1] for n in dead_neighbors])
 
             dist_from_each_dead_cell = [get_euclidean_distance_between_cells_in_pixels(cell_xy[idx], cell_xy[n[0]])
                                         for n in dead_neighbors]
@@ -398,10 +405,3 @@ def create_trainable_dataset(file_path: str):
             dataset['weighted_avg_time_of_death'][idx] = weighted_sum
 
     dataset['label'] = df['death_time']
-
-
-ALL_EXPERIMENTS_FILES_MAIN_DIR = os.sep.join(os.getcwd().split(os.sep)[:-1] + ['Data', 'Experiments_XYT_CSV'])
-
-NON_COMPRESSED_FILE_MAIN_DIR = os.sep.join([ALL_EXPERIMENTS_FILES_MAIN_DIR, 'OriginalTimeMinutesData'])
-
-create_trainable_dataset(NON_COMPRESSED_FILE_MAIN_DIR + '/20160820_10A_FB_xy11.csv')
