@@ -10,6 +10,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error as mse
 from sklearn.metrics.pairwise import euclidean_distances as euc_dis
 from Miscellaneous.global_parameters import *
+from Miscellaneous.consts import *
 from matplotlib.lines import Line2D
 import random
 
@@ -363,61 +364,60 @@ def get_dead_cells_mask_in_window(window_start_time_min: int,
 
 def create_trainable_dataset(file_path: str):
     """
-    transform a csv into multiple lines of raw training data
-    :param file_path:
-    :param cells_neighbors_distance_threshold:
+    transform a csv into multiple lines of raw training data.
+    for each alive cell in every frame, add new record for the cell with his new state
+    :param file_path: the path where the csv data file is saved
     :return:
     """
     df = pd.read_csv(file_path)
     dataset = pd.DataFrame()
-    df['cell_idx'] = df['Unnamed: 0']
-    dataset['cell_idx'] = df['Unnamed: 0']
-    dataset['cell_x'] = df['cell_x']
-    dataset['cell_y'] = df['cell_y']
+    df[CELL_IDX] = df[UNNAMED_COLUMN]
+    dataset[CELL_IDX] = df[UNNAMED_COLUMN]
+    dataset[CELL_X] = df[CELL_X]
+    dataset[CELL_Y] = df[CELL_Y]
 
-    cell_xy = dataset.loc[:, ['cell_x', 'cell_y']].values
+    cell_xy = dataset.loc[:, [CELL_X, CELL_Y]].values
     cells_neighbors_level_1 = get_cells_neighbors(XY=cell_xy, threshold_dist=DIST_THRESHOLD_IN_PIXELS)[0]
 
-    # TODO: move to consts
-    dataset['frame'] = pd.Series(dtype=float)
-    dataset['frame'] = -1
-    dataset['avg_neighbors_time_of_death'] = pd.Series(dtype=float)
-    dataset['normalized_dist_to_cell_dead_neighbors'] = pd.Series(dtype=float)
-    dataset['normalized_dist_to_cell_alive_neighbors'] = pd.Series(dtype=float)
-    dataset['normalized_num_dead_neighbors_by_all_neighbors'] = pd.Series(dtype=float)
-    dataset['normalized_num_alive_neighbors_by_all_alive_cell_in_time'] = pd.Series(dtype=float)
+    dataset[FRAME_IN_MINUTES] = pd.Series(dtype=float)
+    dataset[FRAME_IN_MINUTES] = -1
+    dataset[AVG_NEIGHBORS_TIME_OF_DEATH] = pd.Series(dtype=float)
+    dataset[NORMALIZED_DIST_TO_CELL_DEAD_NEIGHBORS] = pd.Series(dtype=float)
+    dataset[NORMALIZED_DIST_TO_CELL_ALIVE_NEIGHBORS] = pd.Series(dtype=float)
+    dataset[NUM_DEAD_NEIGHBORS_BY_ALL_NEIGHBORS] = pd.Series(dtype=float)
+    dataset[NUM_ALIVE_NEIGHBORS_BY_ALL_ALIVE_CELLS_IN_TIME_POINT] = pd.Series(dtype=float)
 
     dead_cells_by_minute = df.copy()
-    dead_cells_by_minute = dead_cells_by_minute.groupby('death_time', sort=True)['death_time']
+    dead_cells_by_minute = dead_cells_by_minute.groupby(DEATH_TIME, sort=True)[DEATH_TIME]
 
     for frame, deads in dead_cells_by_minute:
-        all_alive_cells_at_this_point = len(df[df['death_time'] > frame])
+        all_alive_cells_at_this_point = len(df[df[DEATH_TIME] > frame])
         # for each alive cell
-        for idx, cell in df[df['death_time'] > frame].iterrows():
+        for idx, cell in df[df[DEATH_TIME] > frame].iterrows():
             my_neighbors = df.iloc[cells_neighbors_level_1[idx]]
-            dead_neighbors = my_neighbors[my_neighbors['death_time'] <= frame]
-            alive_neighbors = my_neighbors[my_neighbors['death_time'] > frame]
+            dead_neighbors = my_neighbors[my_neighbors[DEATH_TIME] <= frame]
+            alive_neighbors = my_neighbors[my_neighbors[DEATH_TIME] > frame]
 
             new_row = dataset.iloc[idx].copy()
-            new_row['frame'] = frame
+            new_row[FRAME_IN_MINUTES] = frame
 
             # TODO: infinity?
             if len(dead_neighbors) == 0:
-                new_row['avg_neighbors_time_of_death'] = -1
-                new_row['normalized_dist_to_cell_dead_neighbors'] = -1
+                new_row[AVG_NEIGHBORS_TIME_OF_DEATH] = -1
+                new_row[NORMALIZED_DIST_TO_CELL_DEAD_NEIGHBORS] = -1
             else:
                 # the average time of death of the cell's dead neighbors
-                new_row['avg_neighbors_time_of_death'] = np.average(dead_neighbors['death_time'])
+                new_row[AVG_NEIGHBORS_TIME_OF_DEATH] = np.average(dead_neighbors[DEATH_TIME])
 
                 # distance of the cell from each dead neighbor cell
                 dist_from_each_dead_cell = [get_euclidean_distance_between_cells_in_pixels(cell_xy[idx], cell_xy[cell_idx])
                                             for cell_idx in dead_neighbors.index.values.tolist()]
                 # normalize the distance
                 sum_normalized_dist = sum(1/pow(dist, 2) for dist in dist_from_each_dead_cell)
-                new_row['normalized_dist_to_cell_dead_neighbors'] = sum_normalized_dist
+                new_row[NORMALIZED_DIST_TO_CELL_DEAD_NEIGHBORS] = sum_normalized_dist
 
             if len(alive_neighbors) == 0:
-                new_row['normalized_dist_to_cell_alive_neighbors'] = -1
+                new_row[NORMALIZED_DIST_TO_CELL_ALIVE_NEIGHBORS] = -1
 
             else:
                 # distance of the cell from each alive neighbor cell
@@ -426,18 +426,18 @@ def create_trainable_dataset(file_path: str):
                     for cell_idx in alive_neighbors.index.values.tolist()]
                 # normalize the distance
                 sum_normalized_dist = sum(1 / pow(dist, 2) for dist in dist_from_each_alive_cell)
-                new_row['normalized_dist_to_cell_alive_neighbors'] = sum_normalized_dist
+                new_row[NORMALIZED_DIST_TO_CELL_ALIVE_NEIGHBORS] = sum_normalized_dist
 
             if len(my_neighbors) == 0:
-                new_row['normalized_num_dead_neighbors_by_all_neighbors'] = 0
+                new_row[NUM_DEAD_NEIGHBORS_BY_ALL_NEIGHBORS] = 0
             else:
-                new_row['normalized_num_dead_neighbors_by_all_neighbors'] = len(dead_neighbors)/len(my_neighbors)
+                new_row[NUM_DEAD_NEIGHBORS_BY_ALL_NEIGHBORS] = len(dead_neighbors)/len(my_neighbors)
 
-            new_row['normalized_num_alive_neighbors_by_all_alive_cell_in_time'] = len(alive_neighbors)/all_alive_cells_at_this_point
+            new_row[NUM_ALIVE_NEIGHBORS_BY_ALL_ALIVE_CELLS_IN_TIME_POINT] = len(alive_neighbors)/all_alive_cells_at_this_point
 
             dataset = dataset.append(new_row)
 
-    dataset['label'] = zscore(df['death_time'])
+    dataset[LABEL] = zscore(df[DEATH_TIME])
 
 
 create_trainable_dataset(NON_COMPRESSED_FILE_MAIN_DIR + '/20160820_10A_FB_xy11.csv')
