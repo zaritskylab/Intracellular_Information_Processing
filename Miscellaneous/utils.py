@@ -438,6 +438,8 @@ def create_trainable_dataset(file_path: str):
             dataset = dataset.append(new_row)
 
     dataset[LABEL] = zscore(df[DEATH_TIME])
+    dataset = dataset.iloc[len(df):]
+    dataset.reset_index(inplace=True)
 
 
 create_trainable_dataset(NON_COMPRESSED_FILE_MAIN_DIR + '/20160820_10A_FB_xy11.csv')
