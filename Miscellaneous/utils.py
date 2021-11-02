@@ -362,7 +362,8 @@ def get_dead_cells_mask_in_window(window_start_time_min: int,
         return cells_times_of_death < window_end_time_min
 
 
-def create_trainable_dataset(file_path: str):
+def create_trainable_dataset(file_path: str,
+                             config: dict):
     """
     transform a csv into multiple lines of raw training data.
     for each alive cell in every frame, add new record for the cell with his new state
@@ -444,7 +445,7 @@ def create_trainable_dataset(file_path: str):
 
             dataset = dataset.append(new_row)
 
-    # TODO: cut from the dataframe frame zero
+    # TODO: cut frame zero
     # dataset = dataset.iloc[len(df) + len(dataset[dataset[FRAME_IN_MINUTES] == 0]):]
     dataset = dataset.iloc[len(df):]
 
@@ -453,8 +454,10 @@ def create_trainable_dataset(file_path: str):
 
     dataset.reset_index(inplace=True)
 
-    #TODO:
-    # num_of_cells_with_zero_death_neighbors = len(dataset[dataset[AVG_NEIGHBORS_TIME_OF_DEATH] == -1])
+    if config['filter_cells_without_dead_neighbors']:
+        dataset = dataset[dataset[AVG_NEIGHBORS_TIME_OF_DEATH] != -1]
 
 
-create_trainable_dataset(NON_COMPRESSED_FILE_MAIN_DIR + '/20160820_10A_FB_xy11.csv')
+with open('config.json') as json_file:
+    config = json.load(json_file)
+    create_trainable_dataset(NON_COMPRESSED_FILE_MAIN_DIR + '/20160820_10A_FB_xy11.csv', config)
