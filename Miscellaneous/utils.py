@@ -9,6 +9,8 @@ from scipy.stats import linregress, zscore
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error as mse
 from sklearn.metrics.pairwise import euclidean_distances as euc_dis
+from sklearn.model_selection import train_test_split
+
 from Miscellaneous.global_parameters import *
 from Miscellaneous.consts import *
 from matplotlib.lines import Line2D
@@ -452,11 +454,20 @@ def create_trainable_dataset(file_path: str,
     dataset[LABEL] = zscore(df[DEATH_TIME])
     dataset[FRAME_IN_MINUTES] = zscore(dataset[FRAME_IN_MINUTES])
 
-    dataset.reset_index(inplace=True)
-
     if config['filter_cells_without_dead_neighbors']:
         dataset = dataset[dataset[AVG_NEIGHBORS_TIME_OF_DEATH] != -1]
 
+    dataset.reset_index(inplace=True)
+
+    # randomize rows order
+    dataset = dataset.sample(frac=1).reset_index(drop=True)
+
+    to_X = dataset.drop(['index', CELL_IDX, CELL_X, CELL_Y, 'frame', LABEL], axis=1)
+    X = pd.DataFrame(to_X, columns=to_X.columns)
+    y = pd.Series(dataset[LABEL])
+
+    # split the data to train and test
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
 with open('config.json') as json_file:
     config = json.load(json_file)
