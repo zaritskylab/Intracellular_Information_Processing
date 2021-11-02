@@ -370,8 +370,13 @@ def create_trainable_dataset(file_path: str):
     :return:
     """
     df = pd.read_csv(file_path)
+    original_df = df.copy()
+
+    df[CELL_X] = zscore(df[CELL_X])
+    df[CELL_Y] = zscore(df[CELL_Y])
+    df[DEATH_TIME] = zscore(df[DEATH_TIME])
+
     dataset = pd.DataFrame()
-    df[CELL_IDX] = df[UNNAMED_COLUMN]
     dataset[CELL_IDX] = df[UNNAMED_COLUMN]
     dataset[CELL_X] = df[CELL_X]
     dataset[CELL_Y] = df[CELL_Y]
@@ -379,6 +384,7 @@ def create_trainable_dataset(file_path: str):
     cell_xy = dataset.loc[:, [CELL_X, CELL_Y]].values
     cells_neighbors_level_1 = get_cells_neighbors(XY=cell_xy, threshold_dist=DIST_THRESHOLD_IN_PIXELS)[0]
 
+    # adding features to the dataframe
     dataset[FRAME_IN_MINUTES] = pd.Series(dtype=float)
     dataset[FRAME_IN_MINUTES] = -1
     dataset[AVG_NEIGHBORS_TIME_OF_DEATH] = pd.Series(dtype=float)
@@ -387,16 +393,17 @@ def create_trainable_dataset(file_path: str):
     dataset[NUM_DEAD_NEIGHBORS_BY_ALL_NEIGHBORS] = pd.Series(dtype=float)
     dataset[NUM_ALIVE_NEIGHBORS_BY_ALL_ALIVE_CELLS_IN_TIME_POINT] = pd.Series(dtype=float)
 
-    dead_cells_by_minute = df.copy()
-    dead_cells_by_minute = dead_cells_by_minute.groupby(DEATH_TIME, sort=True)[DEATH_TIME]
+    dead_cells_by_minute = original_df.groupby(DEATH_TIME, sort=True)[DEATH_TIME]
+
 
     for frame, deads in dead_cells_by_minute:
-        all_alive_cells_at_this_point = len(df[df[DEATH_TIME] > frame])
+        all_alive_cells_at_this_point = len(original_df[original_df[DEATH_TIME] > frame])
         # for each alive cell
-        for idx, cell in df[df[DEATH_TIME] > frame].iterrows():
+        for idx, cell in original_df[original_df[DEATH_TIME] > frame].iterrows():
+            my_neighbors_original_tod = original_df.iloc[cells_neighbors_level_1[idx]]
             my_neighbors = df.iloc[cells_neighbors_level_1[idx]]
-            dead_neighbors = my_neighbors[my_neighbors[DEATH_TIME] <= frame]
-            alive_neighbors = my_neighbors[my_neighbors[DEATH_TIME] > frame]
+            dead_neighbors = my_neighbors[my_neighbors_original_tod[DEATH_TIME] <= frame]
+            alive_neighbors = my_neighbors[my_neighbors_original_tod[DEATH_TIME] > frame]
 
             new_row = dataset.iloc[idx].copy()
             new_row[FRAME_IN_MINUTES] = frame
@@ -413,8 +420,8 @@ def create_trainable_dataset(file_path: str):
                 dist_from_each_dead_cell = [get_euclidean_distance_between_cells_in_pixels(cell_xy[idx], cell_xy[cell_idx])
                                             for cell_idx in dead_neighbors.index.values.tolist()]
                 # normalize the distance
-                sum_normalized_dist = sum(1/pow(dist, 2) for dist in dist_from_each_dead_cell)
-                new_row[NORMALIZED_DIST_TO_CELL_DEAD_NEIGHBORS] = sum_normalized_dist
+                normalized_dist = [pow(dist, 2) for dist in dist_from_each_dead_cell]
+                new_row[NORMALIZED_DIST_TO_CELL_DEAD_NEIGHBORS] = np.mean(normalized_dist)
 
             if len(alive_neighbors) == 0:
                 new_row[NORMALIZED_DIST_TO_CELL_ALIVE_NEIGHBORS] = -1
@@ -425,8 +432,8 @@ def create_trainable_dataset(file_path: str):
                     get_euclidean_distance_between_cells_in_pixels(cell_xy[idx], cell_xy[cell_idx])
                     for cell_idx in alive_neighbors.index.values.tolist()]
                 # normalize the distance
-                sum_normalized_dist = sum(1 / pow(dist, 2) for dist in dist_from_each_alive_cell)
-                new_row[NORMALIZED_DIST_TO_CELL_ALIVE_NEIGHBORS] = sum_normalized_dist
+                normalized_dist = [pow(dist, 2) for dist in dist_from_each_alive_cell]
+                new_row[NORMALIZED_DIST_TO_CELL_ALIVE_NEIGHBORS] = np.mean(normalized_dist)
 
             if len(my_neighbors) == 0:
                 new_row[NUM_DEAD_NEIGHBORS_BY_ALL_NEIGHBORS] = 0
@@ -437,9 +444,17 @@ def create_trainable_dataset(file_path: str):
 
             dataset = dataset.append(new_row)
 
-    dataset[LABEL] = zscore(df[DEATH_TIME])
+    # TODO: cut from the dataframe frame zero
+    # dataset = dataset.iloc[len(df) + len(dataset[dataset[FRAME_IN_MINUTES] == 0]):]
     dataset = dataset.iloc[len(df):]
+
+    dataset[LABEL] = zscore(df[DEATH_TIME])
+    dataset[FRAME_IN_MINUTES] = zscore(dataset[FRAME_IN_MINUTES])
+
     dataset.reset_index(inplace=True)
+
+    #TODO:
+    # num_of_cells_with_zero_death_neighbors = len(dataset[dataset[AVG_NEIGHBORS_TIME_OF_DEATH] == -1])
 
 
 create_trainable_dataset(NON_COMPRESSED_FILE_MAIN_DIR + '/20160820_10A_FB_xy11.csv')
