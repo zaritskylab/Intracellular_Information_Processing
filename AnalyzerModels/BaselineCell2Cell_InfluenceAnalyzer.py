@@ -159,14 +159,14 @@ class BaselineCell2CellInfluenceAnalyzer:
 
 if __name__ == '__main__':
     #### single experiment test ####
-    # single_file_path = 'C:\\Users\\User\\PycharmProjects\\CellDeathQuantification\\Data\\Experiments_XYT_CSV\\OriginalTimeMinutesData\\20160820_10A_FB_xy14.csv'
-    # baseline_influence_analyzer = BaselineCell2CellInfluenceAnalyzer(file_full_path=single_file_path)
-    # print(baseline_influence_analyzer.calc_prediction_error())
+    single_file_path = NON_COMPRESSED_FILE_MAIN_DIR + '\\20160820_10A_FB_xy11.csv'
+    baseline_influence_analyzer = BaselineCell2CellInfluenceAnalyzer(file_full_path=single_file_path)
+    print(baseline_influence_analyzer.calc_prediction_error())
     #### all experiments in treatment test ####
-    full_treatment_type = 'DMEM/F12-AA+400uM FAC&BSO'
-    all_experiments_dir_full_path = 'C:\\Users\\User\\PycharmProjects\\CellDeathQuantification\\Data\\Experiments_XYT_CSV\\OriginalTimeMinutesData'
-    meta_data_full_file_path = 'C:\\Users\\User\\PycharmProjects\\CellDeathQuantification\\Data\\Experiments_XYT_CSV\\ExperimentsMetaData.csv'
-    treatment_results = BaselineCell2CellInfluenceAnalyzer.multiple_experiments_of_treatment_error(full_treatment_type=full_treatment_type,
-                                                                                                   meta_data_full_file_path=meta_data_full_file_path,
-                                                                                                   all_experiments_dir_full_path=all_experiments_dir_full_path)
-    print(treatment_results)
+    # full_treatment_type = 'DMEM/F12-AA+400uM FAC&BSO'
+    # all_experiments_dir_full_path = NON_COMPRESSED_FILE_MAIN_DIR
+    # meta_data_full_file_path = 'Cell2CellComunicationAnalyzer\\Data\\Experiments_XYT_CSV\\ExperimentsMetaData.csv'
+    # treatment_results = BaselineCell2CellInfluenceAnalyzer.multiple_experiments_of_treatment_error(full_treatment_type=full_treatment_type,
+    #                                                                                                meta_data_full_file_path=meta_data_full_file_path,
+    #                                                                                                all_experiments_dir_full_path=all_experiments_dir_full_path)
+    # print(treatment_results)

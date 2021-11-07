@@ -364,14 +364,17 @@ def get_dead_cells_mask_in_window(window_start_time_min: int,
         return cells_times_of_death < window_end_time_min
 
 
-def create_trainable_dataset(file_path: str,
-                             config: dict):
+def create_trainable_dataset(file_path: str):
     """
     transform a csv into multiple lines of raw training data.
     for each alive cell in every frame, add new record for the cell with his new state
     :param file_path: the path where the csv data file is saved
     :return:
     """
+
+    with open('config.json') as json_file:
+        config = json.load(json_file)
+
     df = pd.read_csv(file_path)
     original_df = df.copy()
 
@@ -447,7 +450,7 @@ def create_trainable_dataset(file_path: str,
 
             dataset = dataset.append(new_row)
 
-    # TODO: cut frame zero
+    # TODO: cut frame zero?
     # dataset = dataset.iloc[len(df) + len(dataset[dataset[FRAME_IN_MINUTES] == 0]):]
     dataset = dataset.iloc[len(df):]
 
@@ -462,13 +465,10 @@ def create_trainable_dataset(file_path: str,
     # randomize rows order
     dataset = dataset.sample(frac=1).reset_index(drop=True)
 
-    to_X = dataset.drop(['index', CELL_IDX, CELL_X, CELL_Y, 'frame', LABEL], axis=1)
-    X = pd.DataFrame(to_X, columns=to_X.columns)
-    y = pd.Series(dataset[LABEL])
+    # drop unnecessary columns
+    prepared_dataset = dataset.drop(['index', CELL_IDX, CELL_X, CELL_Y, 'frame'], axis=1)
 
-    # split the data to train and test
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    prepared_dataset.to_pickle('dataset.pkl')
 
-with open('config.json') as json_file:
-    config = json.load(json_file)
-    create_trainable_dataset(NON_COMPRESSED_FILE_MAIN_DIR + '/20160820_10A_FB_xy11.csv', config)
+
+# create_trainable_dataset(NON_COMPRESSED_FILE_MAIN_DIR + '/20160820_10A_FB_xy11.csv')
