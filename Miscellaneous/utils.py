@@ -10,9 +10,9 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error as mse
 from sklearn.metrics.pairwise import euclidean_distances as euc_dis
 from sklearn.model_selection import train_test_split
-
 from Miscellaneous.global_parameters import *
 from Miscellaneous.consts import *
+from Miscellaneous.global_parameters import *
 from matplotlib.lines import Line2D
 import random
 
