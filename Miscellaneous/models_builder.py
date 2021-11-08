@@ -1,4 +1,5 @@
 from matplotlib import pyplot
+from sklearn.model_selection import GridSearchCV
 from sklearn.neural_network import MLPRegressor
 import shap
 import tensorflow
@@ -54,13 +55,34 @@ def mlp():
     # split the data to train and test
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-    regr = MLPRegressor(random_state=0)
+
+    # regr = MLPRegressor(random_state=0)
+    #
+    # parameter_space = {
+    #     'hidden_layer_sizes': [(50, 50, 50), (50, 100, 50), (100,)],
+    #     'activation': ['tanh', 'relu'],
+    #     'solver': ['sgd', 'adam'],
+    #     'alpha': [0.0001, 0.05],
+    #     'learning_rate': ['constant', 'adaptive'],
+    # }
+    #
+    # cv_model = GridSearchCV(regr, parameter_space, cv=3)
+    # cv_model.fit(X_train, y_train)
+    # print('Best parameters found:\n', cv_model.best_params_)
+
+    regr = MLPRegressor(random_state=0, hidden_layer_sizes=(50, 100, 50,))
+
 
     regr.fit(X_train, y_train)
 
     y_pred = regr.predict(X_test)
 
     score = calc_distance_metric_between_signals(y_test, y_pred, 'rmse')
+
+    # e = shap.DeepExplainer(regr, X_train)
+    # shap_values = e.shap_values(X_test)
+    # shap.force_plot(e.expected_value, shap_values)
+    # shap.summary_plot(shap_values, X_train, plot_type="bar")
 
     print(score)
 
@@ -75,5 +97,5 @@ def feature_importance(importance):
 
 
 if __name__ == '__main__':
-    elastic_net()
+    # elastic_net()
     mlp()
