@@ -30,6 +30,7 @@ class BaselineCell2CellInfluenceAnalyzer:
         self._cell_number = len(self.exp_df)
         self._cells_xy = self.exp_df.loc[:, ['cell_x', 'cell_y']].values
         self._cells_death_times = self.exp_df.loc[:, ['death_time']].values.flatten()
+        self._normalized_cell_death_times = normalize(self._cells_death_times, normalization_method='z_score')
 
         self.frames_number = len(self._cells_death_times)
 
@@ -48,7 +49,7 @@ class BaselineCell2CellInfluenceAnalyzer:
 
         self._base_line_calculated = False
 
-    def calc_prediction_error(self) -> Tuple[float, float]:
+    def calc_prediction_error(self, **kwargs) -> Tuple[float, float]:
         """
         Calculates the baseline prediction for cell death.
         calculates for each cell death, the median and mean times of death of all neighbor cells.
@@ -68,9 +69,11 @@ class BaselineCell2CellInfluenceAnalyzer:
         mean_by_cell = list()
         cells_with_no_neighbors_indices = list()
 
-        for curr_cell_idx, curr_cell_time_of_death in enumerate(self._cells_death_times):
+        cell_death_times = self._normalized_cell_death_times if kwargs.get('use_normalized_TOD', True) else self._cells_death_times
+
+        for curr_cell_idx, curr_cell_time_of_death in enumerate(cell_death_times):
             curr_cell_neighbors_indices = self._cells_neighbors_list1[curr_cell_idx]
-            curr_cell_neighbors_times_of_death = self._cells_death_times[curr_cell_neighbors_indices].flatten()
+            curr_cell_neighbors_times_of_death = cell_death_times[curr_cell_neighbors_indices].flatten()
             # verify that curr cell has neighbors ("lone cell"), if it does not, ignore that cell as we can not perform prediction based on zero data
             # to ignore that cell in future calculations, we remove it from the cell death list entirely by keeping a list of cells' indices which had no neighbors
             if len(curr_cell_neighbors_times_of_death) == 0:
@@ -83,9 +86,9 @@ class BaselineCell2CellInfluenceAnalyzer:
         median_by_cell = np.array(median_by_cell)
         mean_by_cell = np.array(mean_by_cell)
 
-        loner_cells_mask = np.ones(len(self._cells_death_times), dtype=bool)
+        loner_cells_mask = np.ones(len(cell_death_times), dtype=bool)
         loner_cells_mask[cells_with_no_neighbors_indices] = False
-        cells_times_of_death_with_no_loner_cells = self._cells_death_times[loner_cells_mask, ...]
+        cells_times_of_death_with_no_loner_cells = cell_death_times[loner_cells_mask, ...]
 
         # function from utils script
         self.median_error_by_cell_dist = calc_distance_metric_between_signals(y_true=cells_times_of_death_with_no_loner_cells,
@@ -159,14 +162,14 @@ class BaselineCell2CellInfluenceAnalyzer:
 
 if __name__ == '__main__':
     #### single experiment test ####
-    # single_file_path = 'C:\\Users\\User\\PycharmProjects\\CellDeathQuantification\\Data\\Experiments_XYT_CSV\\OriginalTimeMinutesData\\20160820_10A_FB_xy14.csv'
-    # baseline_influence_analyzer = BaselineCell2CellInfluenceAnalyzer(file_full_path=single_file_path)
-    # print(baseline_influence_analyzer.calc_prediction_error())
+    single_file_path = 'C:\\Users\\User\\PycharmProjects\\CellDeathQuantification\\Data\\Experiments_XYT_CSV\\OriginalTimeMinutesData\\20160820_10A_FB_xy11.csv'
+    baseline_influence_analyzer = BaselineCell2CellInfluenceAnalyzer(file_full_path=single_file_path)
+    print(baseline_influence_analyzer.calc_prediction_error())
     #### all experiments in treatment test ####
-    full_treatment_type = 'DMEM/F12-AA+400uM FAC&BSO'
-    all_experiments_dir_full_path = 'C:\\Users\\User\\PycharmProjects\\CellDeathQuantification\\Data\\Experiments_XYT_CSV\\OriginalTimeMinutesData'
-    meta_data_full_file_path = 'C:\\Users\\User\\PycharmProjects\\CellDeathQuantification\\Data\\Experiments_XYT_CSV\\ExperimentsMetaData.csv'
-    treatment_results = BaselineCell2CellInfluenceAnalyzer.multiple_experiments_of_treatment_error(full_treatment_type=full_treatment_type,
-                                                                                                   meta_data_full_file_path=meta_data_full_file_path,
-                                                                                                   all_experiments_dir_full_path=all_experiments_dir_full_path)
-    print(treatment_results)
+    # full_treatment_type = 'DMEM/F12-AA+400uM FAC&BSO'
+    # all_experiments_dir_full_path = 'C:\\Users\\User\\PycharmProjects\\CellDeathQuantification\\Data\\Experiments_XYT_CSV\\OriginalTimeMinutesData'
+    # meta_data_full_file_path = 'C:\\Users\\User\\PycharmProjects\\CellDeathQuantification\\Data\\Experiments_XYT_CSV\\ExperimentsMetaData.csv'
+    # treatment_results = BaselineCell2CellInfluenceAnalyzer.multiple_experiments_of_treatment_error(full_treatment_type=full_treatment_type,
+    #                                                                                                meta_data_full_file_path=meta_data_full_file_path,
+    #                                                                                                all_experiments_dir_full_path=all_experiments_dir_full_path)
+    # print(treatment_results)

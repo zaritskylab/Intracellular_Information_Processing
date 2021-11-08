@@ -7,7 +7,7 @@ from scipy.stats import linregress, zscore
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error as mse
 from sklearn.metrics.pairwise import euclidean_distances as euc_dis
-from global_parameters import *
+from Miscellaneous.global_parameters import *
 from matplotlib.lines import Line2D
 import random
 
