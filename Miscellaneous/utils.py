@@ -470,5 +470,6 @@ def create_trainable_dataset(file_path: str):
 
     prepared_dataset.to_pickle('dataset.pkl')
 
-
 # create_trainable_dataset(NON_COMPRESSED_FILE_MAIN_DIR + '/20160820_10A_FB_xy11.csv')
+
+

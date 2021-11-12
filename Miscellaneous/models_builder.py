@@ -1,11 +1,12 @@
 from matplotlib import pyplot
+from sklearn.metrics import make_scorer
 from sklearn.model_selection import GridSearchCV
 from sklearn.neural_network import MLPRegressor
 import shap
 import tensorflow
-
 from Miscellaneous.utils import *
 from sklearn.linear_model import ElasticNet, ElasticNetCV
+from Miscellaneous.consts import *
 
 
 def elastic_net():
@@ -24,23 +25,29 @@ def elastic_net():
     # split the data to train and test
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-    cv_model = ElasticNetCV(cv=10, random_state=0)
-    cv_model.fit(X_train, y_train)
+    regr = ElasticNet(random_state=0)
 
-    # print('Optimal alpha: %.8f' % cv_model.alpha_)
-    # print('Optimal l1_ratio: %.3f' % cv_model.l1_ratio_)
-    # print('Number of iterations %d' % cv_model.n_iter_)
+    parameters = {
+        'alpha': [0, 0.01, 0.05, 0.1, 0.3, 0.5, 0.8, 1.0],
+        'l1_ratio': [0, 0.01, 0.05, 0.1, 0.3, 0.5, 0.8, 1.0],
+        'fit_intercept': [True, False],
+        'normalize': [True, False],
+        'max_iter': [200, 500, 1000, 2000],
+        'positive': [True, False],
+        'selection': ['cyclic', 'random']
+    }
 
-    regr = ElasticNet(alpha=cv_model.alpha_, l1_ratio=cv_model.l1_ratio_, max_iter=cv_model.n_iter_)
-    regr.fit(X_train, y_train)
-
-    y_pred = regr.predict(X_test)
-
-    feature_importance(regr.coef_)
+    best_model = grid_search(regr, parameters, cv=10)
+    best_model.fit(X_train, y_train)
+    y_pred = best_model.best_estimator_.predict(X_test)
+    print(best_model.best_params_)
 
     score = calc_distance_metric_between_signals(y_test, y_pred, 'rmse')
 
     print(score)
+
+# {'alpha': 0, 'fit_intercept': True, 'l1_ratio': 0, 'max_iter': 200, 'normalize': True, 'positive': False, 'selection': 'cyclic'}
+# 0.6893279814580038
 
 
 def mlp():
@@ -55,36 +62,60 @@ def mlp():
     # split the data to train and test
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
+    regr = MLPRegressor(random_state=0, max_iter=1000)
 
-    # regr = MLPRegressor(random_state=0)
-    #
-    # parameter_space = {
-    #     'hidden_layer_sizes': [(50, 50, 50), (50, 100, 50), (100,)],
-    #     'activation': ['tanh', 'relu'],
+    # parameters = {
+    #     'hidden_layer_sizes': [(20, 40, 20, )],
+    #     'activation': ['relu', 'tanh', 'logistic'],
     #     'solver': ['sgd', 'adam'],
-    #     'alpha': [0.0001, 0.05],
+    #     'alpha': [0.0001],
+    #     'batch_size': [10],
     #     'learning_rate': ['constant', 'adaptive'],
+    #     'learning_rate_init': [0.001, 0.05]
     # }
+    parameters = {
+        'hidden_layer_sizes': [(20, 40, 20,), (5, 3,), (5, 3, 1,), (5,), (5, 10, 2,)],
+        'activation': ['relu', 'tanh', 'logistic'],
+        'solver': ['sgd', 'adam'],
+        'alpha': [0.0001, 0.01, 0.1, 0.5, 0.8],
+        'batch_size': [10, 20, 30, 40, 50],
+        'learning_rate': ['constant', 'adaptive'],
+        'learning_rate_init': [0.001, 0.05]
+    }
+
+
+
     #
+
     # cv_model = GridSearchCV(regr, parameter_space, cv=3)
     # cv_model.fit(X_train, y_train)
     # print('Best parameters found:\n', cv_model.best_params_)
+    # regr = MLPRegressor(random_state=0, hidden_layer_sizes=(50, 100, 50,))
 
-    regr = MLPRegressor(random_state=0, hidden_layer_sizes=(50, 100, 50,))
-
-
-    regr.fit(X_train, y_train)
-
-    y_pred = regr.predict(X_test)
+    best_model = grid_search(regr, parameters, cv=3)
+    best_model.fit(X_train, y_train)
+    y_pred = best_model.best_estimator_.predict(X_test)
+    print(best_model.best_params_)
 
     score = calc_distance_metric_between_signals(y_test, y_pred, 'rmse')
+
+    print(score)
 
     # e = shap.DeepExplainer(regr, X_train)
     # shap_values = e.shap_values(X_test)
     # shap.force_plot(e.expected_value, shap_values)
     # shap.summary_plot(shap_values, X_train, plot_type="bar")
 
-    print(score)
+
+def grid_search(model, parameters: dict, cv: int = None):
+    scoring = make_scorer(my_custom_loss_func, greater_is_better=False)
+    best_model = GridSearchCV(estimator=model, param_grid=parameters, scoring=scoring, cv=cv, n_jobs=-1)
+    return best_model
+
+
+def my_custom_loss_func(y_true: np.array, y_pred: np.array, metric: str = 'rmse'):
+    score = calc_distance_metric_between_signals(y_true, y_pred, metric)
+    return score
 
 
 def feature_importance(importance):
