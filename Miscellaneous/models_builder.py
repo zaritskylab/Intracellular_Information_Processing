@@ -42,12 +42,11 @@ def elastic_net():
     y_pred = best_model.best_estimator_.predict(X_test)
     print(best_model.best_params_)
 
-    score = calc_distance_metric_between_signals(y_test, y_pred, 'rmse')
+    error = calc_distance_metric_between_signals(y_test, y_pred, 'rmse')
 
-    print(score)
+    print("elasticNet rmse: " + str(error))
 
-# {'alpha': 0, 'fit_intercept': True, 'l1_ratio': 0, 'max_iter': 200, 'normalize': True, 'positive': False, 'selection': 'cyclic'}
-# 0.6893279814580038
+
 
 
 def mlp():
@@ -62,44 +61,35 @@ def mlp():
     # split the data to train and test
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-    regr = MLPRegressor(random_state=0, max_iter=1000)
+    # regr = MLPRegressor(random_state=0)
 
     # parameters = {
     #     'hidden_layer_sizes': [(20, 40, 20, )],
-    #     'activation': ['relu', 'tanh', 'logistic'],
-    #     'solver': ['sgd', 'adam'],
+    # 'activation': ['relu', 'tanh', 'logistic', 'identity'],
+    # 'solver': ['sgd', 'adam', 'lbfgs'],
     #     'alpha': [0.0001],
     #     'batch_size': [10],
-    #     'learning_rate': ['constant', 'adaptive'],
-    #     'learning_rate_init': [0.001, 0.05]
+    # 'learning_rate': ['constant', 'adaptive', 'invscaling'],
+    # 'learning_rate_init': [0.001, 0.01, 0.005, 0.008, 0.05]
     # }
-    parameters = {
-        'hidden_layer_sizes': [(20, 40, 20,), (5, 3,), (5, 3, 1,), (5,), (5, 10, 2,)],
-        'activation': ['relu', 'tanh', 'logistic'],
-        'solver': ['sgd', 'adam'],
-        'alpha': [0.0001, 0.01, 0.1, 0.5, 0.8],
-        'batch_size': [10, 20, 30, 40, 50],
-        'learning_rate': ['constant', 'adaptive'],
-        'learning_rate_init': [0.001, 0.05]
-    }
-
-
-
-    #
 
     # cv_model = GridSearchCV(regr, parameter_space, cv=3)
     # cv_model.fit(X_train, y_train)
     # print('Best parameters found:\n', cv_model.best_params_)
     # regr = MLPRegressor(random_state=0, hidden_layer_sizes=(50, 100, 50,))
 
-    best_model = grid_search(regr, parameters, cv=3)
-    best_model.fit(X_train, y_train)
-    y_pred = best_model.best_estimator_.predict(X_test)
-    print(best_model.best_params_)
+    # best_model = grid_search(regr, parameters, cv=3)
+    # best_model.fit(X_train, y_train)
+    # y_pred = best_model.best_estimator_.predict(X_test)
+    # print(best_model.best_params_)
 
-    score = calc_distance_metric_between_signals(y_test, y_pred, 'rmse')
+    regr = MLPRegressor(random_state=0, max_iter=1000, batch_size=10, hidden_layer_sizes=(20, 40, 20,))
 
-    print(score)
+    regr.fit(X_train, y_train)
+    y_pred = regr.predict(X_test)
+    error = calc_distance_metric_between_signals(y_test, y_pred, 'rmse')
+
+    print("mlp rmse: " + str(error))
 
     # e = shap.DeepExplainer(regr, X_train)
     # shap_values = e.shap_values(X_test)
@@ -109,7 +99,7 @@ def mlp():
 
 def grid_search(model, parameters: dict, cv: int = None):
     scoring = make_scorer(my_custom_loss_func, greater_is_better=False)
-    best_model = GridSearchCV(estimator=model, param_grid=parameters, scoring=scoring, cv=cv, n_jobs=-1)
+    best_model = GridSearchCV(estimator=model, param_grid=parameters, scoring=scoring, cv=cv)
     return best_model
 
 
