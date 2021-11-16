@@ -16,7 +16,7 @@ def elastic_net():
     """
 
     # read the dataset
-    df = pd.read_pickle('dataset.pkl')
+    df = pd.read_pickle('../PreparedDatasets/dataset_20160820_10A_FB_xy13.pkl')
 
     to_X = df.drop([LABEL], axis=1)
     X = pd.DataFrame(to_X, columns=to_X.columns)
@@ -47,12 +47,18 @@ def elastic_net():
     print("elasticNet rmse: " + str(error))
 
 
+def mlp(file_path: str):
 
+    filename, file_extension = os.path.splitext(file_path)
 
-def mlp():
+    if file_extension == '.pkl':
+        # read the dataset
+        df = pd.read_pickle(file_path)
 
-    # read the dataset
-    df = pd.read_pickle('dataset.pkl')
+    if file_extension == '.csv':
+        # read the dataset
+        df = pd.read_csv(file_path)
+
 
     to_X = df.drop([LABEL], axis=1)
     X = pd.DataFrame(to_X, columns=to_X.columns)
@@ -61,30 +67,25 @@ def mlp():
     # split the data to train and test
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-    # regr = MLPRegressor(random_state=0)
+    regr = MLPRegressor(random_state=0, max_iter=1000, hidden_layer_sizes=(20, 40, 20,), alpha=0.0001, batch_size=10)
 
     # parameters = {
-    #     'hidden_layer_sizes': [(20, 40, 20, )],
-    # 'activation': ['relu', 'tanh', 'logistic', 'identity'],
-    # 'solver': ['sgd', 'adam', 'lbfgs'],
-    #     'alpha': [0.0001],
-    #     'batch_size': [10],
-    # 'learning_rate': ['constant', 'adaptive', 'invscaling'],
-    # 'learning_rate_init': [0.001, 0.01, 0.005, 0.008, 0.05]
+    #     # 'hidden_layer_sizes': [(20, 40, 20, ), (5, 10, 5), (5, 3,)],
+    #     # 'activation': ['relu', 'tanh', 'logistic', 'identity'],
+    #     # 'solver': ['sgd', 'adam', 'lbfgs'],
+    #     # 'alpha': [0.0001, 0.001, 0.005, 0.05, 0.1],
+    #     # 'batch_size': [10, 20, 30],
+    #     # 'learning_rate': ['constant', 'adaptive', 'invscaling'],
+    #     # 'learning_rate_init': [0.001, 0.01, 0.005, 0.008, 0.05]
     # }
-
-    # cv_model = GridSearchCV(regr, parameter_space, cv=3)
-    # cv_model.fit(X_train, y_train)
-    # print('Best parameters found:\n', cv_model.best_params_)
-    # regr = MLPRegressor(random_state=0, hidden_layer_sizes=(50, 100, 50,))
-
+    #
     # best_model = grid_search(regr, parameters, cv=3)
     # best_model.fit(X_train, y_train)
     # y_pred = best_model.best_estimator_.predict(X_test)
     # print(best_model.best_params_)
 
-    regr = MLPRegressor(random_state=0, max_iter=1000, batch_size=10, hidden_layer_sizes=(20, 40, 20,))
-
+    # regr = MLPRegressor(random_state=0, max_iter=1000, batch_size=10, hidden_layer_sizes=(20, 40, 20,))
+    #
     regr.fit(X_train, y_train)
     y_pred = regr.predict(X_test)
     error = calc_distance_metric_between_signals(y_test, y_pred, 'rmse')
@@ -119,4 +120,4 @@ def feature_importance(importance):
 
 if __name__ == '__main__':
     # elastic_net()
-    mlp()
+    mlp('../PreparedDatasets/dataset_DMEM+7.5uM_erastin.csv')

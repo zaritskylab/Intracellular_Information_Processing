@@ -163,7 +163,7 @@ class BaselineCell2CellInfluenceAnalyzer:
 
 if __name__ == '__main__':
     #### single experiment test ####
-    single_file_path = NON_COMPRESSED_FILE_MAIN_DIR + '\\20160820_10A_FB_xy11.csv'
+    single_file_path = NON_COMPRESSED_FILE_MAIN_DIR + '\\20160820_10A_FB_xy13.csv'
     baseline_influence_analyzer = BaselineCell2CellInfluenceAnalyzer(file_full_path=single_file_path)
     print(baseline_influence_analyzer.calc_prediction_error())
     #### all experiments in treatment test ####
