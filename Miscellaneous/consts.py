@@ -8,6 +8,8 @@ NUM_DEAD_NEIGHBORS_BY_ALL_NEIGHBORS = 'num_dead_neighbors_by_all_neighbors'
 
 NUM_ALIVE_NEIGHBORS_BY_ALL_ALIVE_CELLS_IN_TIME_POINT = 'alive_neighbors_by_all_alive_cells_in_time_point'
 
+NUM_ALIVE_CELLS_BY_ALL_CELLS = 'num_of_alive_cells_by_all_cells'
+
 DEATH_TIME = 'death_time'
 
 CELL_IDX = 'cell_idx'
@@ -21,3 +23,7 @@ FRAME_IN_MINUTES = 'frame'
 LABEL = 'label'
 
 UNNAMED_COLUMN = 'Unnamed: 0'
+
+RMSE = 'rmse'
+
+KL_DIVERGENCE = 'kl_divergence'
