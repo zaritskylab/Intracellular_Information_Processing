@@ -1,5 +1,7 @@
 import json
+import math
 import os
+import pickle
 from typing import *
 import numpy as np
 import pandas as pd
@@ -364,7 +366,7 @@ def get_dead_cells_mask_in_window(window_start_time_min: int,
         return cells_times_of_death < window_end_time_min
 
 
-def create_trainable_dataset(file_path: str):
+def create_trainable_dataset(file_path: str, file_path_2: str = None):
     """
     transform a csv into multiple lines of raw training data.
     for each alive cell in every frame, add new record for the cell with his new state
@@ -376,6 +378,12 @@ def create_trainable_dataset(file_path: str):
         config = json.load(json_file)
 
     df = pd.read_csv(file_path)
+
+    if file_path_2:
+        df2 = pd.read_csv(file_path_2)
+        df = df.append(df2, ignore_index=True)
+
+    df = df.reset_index()
     original_df = df.copy()
 
     df[CELL_X] = zscore(df[CELL_X])
@@ -383,7 +391,7 @@ def create_trainable_dataset(file_path: str):
     df[DEATH_TIME] = zscore(df[DEATH_TIME])
 
     dataset = pd.DataFrame()
-    dataset[CELL_IDX] = df[UNNAMED_COLUMN]
+    dataset[CELL_IDX] = df['index']
     dataset[CELL_X] = df[CELL_X]
     dataset[CELL_Y] = df[CELL_Y]
 
@@ -398,9 +406,9 @@ def create_trainable_dataset(file_path: str):
     dataset[NORMALIZED_DIST_TO_CELL_ALIVE_NEIGHBORS] = pd.Series(dtype=float)
     dataset[NUM_DEAD_NEIGHBORS_BY_ALL_NEIGHBORS] = pd.Series(dtype=float)
     dataset[NUM_ALIVE_NEIGHBORS_BY_ALL_ALIVE_CELLS_IN_TIME_POINT] = pd.Series(dtype=float)
+    dataset[NUM_ALIVE_CELLS_BY_ALL_CELLS] = pd.Series(dtype=float)
 
     dead_cells_by_minute = original_df.groupby(DEATH_TIME, sort=True)[DEATH_TIME]
-
 
     for frame, deads in dead_cells_by_minute:
         all_alive_cells_at_this_point = len(original_df[original_df[DEATH_TIME] > frame])
@@ -423,8 +431,9 @@ def create_trainable_dataset(file_path: str):
                 new_row[AVG_NEIGHBORS_TIME_OF_DEATH] = np.average(dead_neighbors[DEATH_TIME])
 
                 # distance of the cell from each dead neighbor cell
-                dist_from_each_dead_cell = [get_euclidean_distance_between_cells_in_pixels(cell_xy[idx], cell_xy[cell_idx])
-                                            for cell_idx in dead_neighbors.index.values.tolist()]
+                dist_from_each_dead_cell = [
+                    get_euclidean_distance_between_cells_in_pixels(cell_xy[idx], cell_xy[cell_idx])
+                    for cell_idx in dead_neighbors.index.values.tolist()]
                 # normalize the distance
                 normalized_dist = [pow(dist, 2) for dist in dist_from_each_dead_cell]
                 new_row[NORMALIZED_DIST_TO_CELL_DEAD_NEIGHBORS] = np.mean(normalized_dist)
@@ -444,9 +453,12 @@ def create_trainable_dataset(file_path: str):
             if len(my_neighbors) == 0:
                 new_row[NUM_DEAD_NEIGHBORS_BY_ALL_NEIGHBORS] = 0
             else:
-                new_row[NUM_DEAD_NEIGHBORS_BY_ALL_NEIGHBORS] = len(dead_neighbors)/len(my_neighbors)
+                new_row[NUM_DEAD_NEIGHBORS_BY_ALL_NEIGHBORS] = len(dead_neighbors) / len(my_neighbors)
 
-            new_row[NUM_ALIVE_NEIGHBORS_BY_ALL_ALIVE_CELLS_IN_TIME_POINT] = len(alive_neighbors)/all_alive_cells_at_this_point
+            new_row[NUM_ALIVE_NEIGHBORS_BY_ALL_ALIVE_CELLS_IN_TIME_POINT] = len(
+                alive_neighbors) / all_alive_cells_at_this_point
+
+            new_row[NUM_ALIVE_CELLS_BY_ALL_CELLS] = all_alive_cells_at_this_point / len(original_df)
 
             dataset = dataset.append(new_row)
 
@@ -466,9 +478,89 @@ def create_trainable_dataset(file_path: str):
     dataset = dataset.sample(frac=1).reset_index(drop=True)
 
     # drop unnecessary columns
-    prepared_dataset = dataset.drop(['index', CELL_IDX, CELL_X, CELL_Y, 'frame'], axis=1)
+    prepared_dataset = dataset.drop(['index', CELL_X, CELL_Y, 'frame'], axis=1)
 
-    prepared_dataset.to_pickle('dataset.pkl')
+    # save the dataset to a file
+    file = file_path.split('\\')[-1]
+    file = 'dataset_with_%_alive_cells_param_' + str(file)
+    save_csv_path = os.sep.join(
+        os.getcwd().split(os.sep)[:-1] + ['PreparedDatasets', file])
+
+    prepared_dataset.to_csv(save_csv_path)
 
 
-# create_trainable_dataset(NON_COMPRESSED_FILE_MAIN_DIR + '/20160820_10A_FB_xy11.csv')
+def get_all_treatment_experiments(treatment: str, meta_data_file_full_path: str = None, compressed_flag: bool = False):
+    if meta_data_file_full_path is None:
+        if compressed_flag:
+            meta_data_file_full_path = os.sep.join(os.getcwd().split(os.sep)[:-1] + ['Data',
+                                                                                     'Experiments_XYT_CSV',
+                                                                                     'Compressed_ExperimentsMetaData.csv'])
+        else:
+            meta_data_file_full_path = os.sep.join(os.getcwd().split(os.sep)[:-1] + ['Data',
+                                                                                     'Experiments_XYT_CSV',
+                                                                                     'ExperimentsMetaData.csv'])
+
+    meta_data_file = pd.read_csv(meta_data_file_full_path)
+    treatment_files = meta_data_file[meta_data_file['Treatment'] == treatment]
+    all_treatment_exp = pd.DataFrame()
+    for file in treatment_files['File Name']:
+        file_data_path = os.sep.join(
+            os.getcwd().split(os.sep)[:-1] + ['Data', 'Experiments_XYT_CSV', 'OriginalTimeMinutesData', file])
+        df_file_data = pd.read_csv(file_data_path)
+        all_treatment_exp = all_treatment_exp.append(df_file_data)
+
+    treatment_name = treatment.replace(' ', '_')
+    treatment_name = treatment_name.replace('/', '_')
+    save_csv_path = os.sep.join(
+        os.getcwd().split(os.sep)[:-1] + ['Data', 'Experiments_XYT_CSV', 'AllTreatmentExperiments', treatment_name])
+
+    all_treatment_exp.to_csv(save_csv_path + '.csv')
+
+
+def adjust_data_to_kl_divergence(dataset: pd.DataFrame = None, epsilon: int = 0.001):
+
+    if AVG_NEIGHBORS_TIME_OF_DEATH in dataset.columns:
+        min_value_avg_neighb_tod = min(dataset[AVG_NEIGHBORS_TIME_OF_DEATH])
+        dataset[AVG_NEIGHBORS_TIME_OF_DEATH] = dataset[AVG_NEIGHBORS_TIME_OF_DEATH] + abs(min_value_avg_neighb_tod) + epsilon
+
+    min_value_label = min(dataset[LABEL])
+    dataset[LABEL] = dataset[LABEL] + abs(min_value_label) + epsilon
+
+    return dataset
+
+
+def test_model_on_treatment(model_path: str, treatment_dataset_path: str, metric: str = RMSE):
+    model = pickle.load(open(model_path, 'rb'))
+
+    df = pd.read_csv(treatment_dataset_path)
+
+    if len(df[UNNAMED_COLUMN]) > 0:
+        df = df.drop([UNNAMED_COLUMN], axis=1)
+
+    if len(df[CELL_IDX]) > 0:
+        df = df.drop([CELL_IDX], axis=1)
+
+    if metric == KL_DIVERGENCE:
+        df = adjust_data_to_kl_divergence(df)
+
+    to_X = df.drop([LABEL], axis=1)
+    X = pd.DataFrame(to_X, columns=to_X.columns)
+    y = pd.Series(df[LABEL])
+
+    y_pred = model.predict(X)
+
+    error = calc_distance_metric_between_signals(y, y_pred, metric)
+
+    print(error)
+
+    return error
+
+
+# test_model_on_treatment('../TrainedModels/fitted_mlp_model_erastin_test_one_cell_kl_divergence.sav',
+#                         '../PreparedDatasets/dataset_with_%_alive_cells_param_DMEM_F12+50ng_mL_superkiller_TRAIL.csv', 'kl_divergence')
+# adjust_data_to_kl_divergence()
+# get_all_treatment_experiments('DMEM/F12+50ng/mL superkiller TRAIL')
+# create_trainable_dataset(ALL_TREATMENT_EXPERIMENTS_DIR + '\\DMEM_F12+50ng_mL_superkiller_TRAIL.csv')
+# create_trainable_dataset(NON_COMPRESSED_FILE_MAIN_DIR + '\\20160820_10A_FB_xy13.csv')
+# create_trainable_dataset(NON_COMPRESSED_FILE_MAIN_DIR + '\\20160909_b16f10_aMSH_xy36.csv', NON_COMPRESSED_FILE_MAIN_DIR + '\\20160909_b16f10_aMSH_xy37.csv')
+# print(get_all_unique_treatments())

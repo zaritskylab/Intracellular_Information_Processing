@@ -23,9 +23,9 @@ class BaselineCell2CellInfluenceAnalyzer:
         self.file_full_path = file_full_path
         self.exp_name = self.file_full_path.split(os.sep)[-1]
         self.exp_df = pd.read_csv(self.file_full_path)
-        self.full_path_to_experiments_metadata_file = kwargs.get('metadata_file_full_path', METADATA_FILE_FULL_PATH)
-        self.exp_treatment_name, self.exp_temporal_resolution = get_exp_treatment_type_and_temporal_resolution(
-            exp_file_name=self.exp_name, meta_data_file_full_path=self.full_path_to_experiments_metadata_file)
+        # self.full_path_to_experiments_metadata_file = kwargs.get('metadata_file_full_path', METADATA_FILE_FULL_PATH)
+        # self.exp_treatment_name, self.exp_temporal_resolution = get_exp_treatment_type_and_temporal_resolution(
+        #     exp_file_name=self.exp_name, meta_data_file_full_path=self.full_path_to_experiments_metadata_file)
 
         self._cell_number = len(self.exp_df)
         self._cells_xy = self.exp_df.loc[:, ['cell_x', 'cell_y']].values
@@ -35,14 +35,14 @@ class BaselineCell2CellInfluenceAnalyzer:
         self.frames_number = len(self._cells_death_times)
 
         self.all_frames_idx = np.arange(0, self.frames_number, 1)
-        self.all_frames_by_minutes = np.arange(self._cells_death_times.min(), self._cells_death_times.max(),
-                                               self.exp_temporal_resolution)
+        # self.all_frames_by_minutes = np.arange(self._cells_death_times.min(), self._cells_death_times.max(),
+        #                                        self.exp_temporal_resolution)
 
         self.cells_neighbors_distance_threshold = kwargs.get('threshold_dist', DIST_THRESHOLD_IN_PIXELS)
         self._cells_neighbors_list1, self._cells_neighbors_list2, self._cells_neighbors_list3 = \
             get_cells_neighbors(XY=self._cells_xy, threshold_dist=self.cells_neighbors_distance_threshold)
 
-        self._distance_metric = kwargs.get('distance_metric_from_true_times_of_death', 'rmse')
+        self._distance_metric = kwargs.get('distance_metric_from_true_times_of_death', 'kl_divergence')
 
         self.median_error_by_cell_dist = 0
         self.mean_error_by_cell_dist = 0
@@ -89,6 +89,16 @@ class BaselineCell2CellInfluenceAnalyzer:
         loner_cells_mask = np.ones(len(cell_death_times), dtype=bool)
         loner_cells_mask[cells_with_no_neighbors_indices] = False
         cells_times_of_death_with_no_loner_cells = cell_death_times[loner_cells_mask, ...]
+
+        # for kl_divergence metric, in order to remove negative values (as a result of z-score normalization)
+        # we add the minimum value in the array and add 0.1 to make sure there won't be zero values
+        # for the kl_divergence calculation
+        if self._distance_metric == 'kl_divergence':
+            cells_times_of_death_with_no_loner_cells = cells_times_of_death_with_no_loner_cells +\
+                                                       abs(min(cells_times_of_death_with_no_loner_cells)) + 0.1
+
+            median_by_cell = median_by_cell + abs(min(median_by_cell)) + 0.1
+            mean_by_cell = mean_by_cell + abs(min(mean_by_cell)) + 0.1
 
         # function from utils script
         self.median_error_by_cell_dist = calc_distance_metric_between_signals(y_true=cells_times_of_death_with_no_loner_cells,
@@ -160,15 +170,17 @@ class BaselineCell2CellInfluenceAnalyzer:
     #     axis[0]
 
 
+
 if __name__ == '__main__':
     #### single experiment test ####
-    single_file_path = NON_COMPRESSED_FILE_MAIN_DIR + '\\20160820_10A_FB_xy11.csv'
-    baseline_influence_analyzer = BaselineCell2CellInfluenceAnalyzer(file_full_path=single_file_path)
+    single_file_path = ALL_TREATMENT_EXPERIMENTS_DIR + '\\DMEM+7.5uM_erastin.csv'
+    baseline_influence_analyzer = BaselineCell2CellInfluenceAnalyzer(file_full_path=single_file_path,
+                                                                     kwargs={'distance_metric_from_true_times_of_death':'kl_divergence'})
     print(baseline_influence_analyzer.calc_prediction_error())
     #### all experiments in treatment test ####
-    # full_treatment_type = 'DMEM/F12-AA+400uM FAC&BSO'
+    # full_treatment_type = 'DMEM+7.5uM erastin'
     # all_experiments_dir_full_path = NON_COMPRESSED_FILE_MAIN_DIR
-    # meta_data_full_file_path = 'Cell2CellComunicationAnalyzer\\Data\\Experiments_XYT_CSV\\ExperimentsMetaData.csv'
+    # meta_data_full_file_path = '../Data/Experiments_XYT_CSV/ExperimentsMetaData.csv'
     # treatment_results = BaselineCell2CellInfluenceAnalyzer.multiple_experiments_of_treatment_error(full_treatment_type=full_treatment_type,
     #                                                                                                meta_data_full_file_path=meta_data_full_file_path,
     #                                                                                                all_experiments_dir_full_path=all_experiments_dir_full_path)
