@@ -27,3 +27,5 @@ UNNAMED_COLUMN = 'Unnamed: 0'
 RMSE = 'rmse'
 
 KL_DIVERGENCE = 'kl_divergence'
+
+FILE_NAME = 'File Name'

@@ -1,3 +1,4 @@
+import glob
 import json
 import math
 import os
@@ -12,6 +13,8 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error as mse
 from sklearn.metrics.pairwise import euclidean_distances as euc_dis
 from sklearn.model_selection import train_test_split
+from typing import List
+
 from Miscellaneous.global_parameters import *
 from Miscellaneous.consts import *
 from Miscellaneous.global_parameters import *
@@ -370,6 +373,7 @@ def create_trainable_dataset(file_path: str, file_path_2: str = None):
     """
     transform a csv into multiple lines of raw training data.
     for each alive cell in every frame, add new record for the cell with his new state
+    :param file_path_2:
     :param file_path: the path where the csv data file is saved
     :return:
     """
@@ -377,7 +381,19 @@ def create_trainable_dataset(file_path: str, file_path_2: str = None):
     with open('config.json') as json_file:
         config = json.load(json_file)
 
-    df = pd.read_csv(file_path)
+    if os.path.isdir(file_path):
+        path = file_path
+        all_files = glob.glob(path + "/*.csv")
+        li = []
+        for file in all_files:
+            df_file = pd.read_csv(file, index_col=None, header=0)
+            li.append(df_file)
+        df = pd.concat(li, axis=0, ignore_index=True)
+        cols = [c for c in df.columns if c.lower()[:df.columns.size] != 'unnamed']
+        df = df[cols]
+
+    else:
+        df = pd.read_csv(file_path)
 
     if file_path_2:
         df2 = pd.read_csv(file_path_2)
@@ -394,6 +410,7 @@ def create_trainable_dataset(file_path: str, file_path_2: str = None):
     dataset[CELL_IDX] = df['index']
     dataset[CELL_X] = df[CELL_X]
     dataset[CELL_Y] = df[CELL_Y]
+    dataset['File Name'] = df['File Name']
 
     cell_xy = dataset.loc[:, [CELL_X, CELL_Y]].values
     cells_neighbors_level_1 = get_cells_neighbors(XY=cell_xy, threshold_dist=DIST_THRESHOLD_IN_PIXELS)[0]
@@ -489,7 +506,8 @@ def create_trainable_dataset(file_path: str, file_path_2: str = None):
     prepared_dataset.to_csv(save_csv_path)
 
 
-def get_all_treatment_experiments(treatment: str, meta_data_file_full_path: str = None, compressed_flag: bool = False):
+def save_all_treatment_experiments(treatment: str, meta_data_file_full_path: str = None, compressed_flag: bool = False,
+                                   add_filename: bool = False):
     if meta_data_file_full_path is None:
         if compressed_flag:
             meta_data_file_full_path = os.sep.join(os.getcwd().split(os.sep)[:-1] + ['Data',
@@ -507,17 +525,19 @@ def get_all_treatment_experiments(treatment: str, meta_data_file_full_path: str 
         file_data_path = os.sep.join(
             os.getcwd().split(os.sep)[:-1] + ['Data', 'Experiments_XYT_CSV', 'OriginalTimeMinutesData', file])
         df_file_data = pd.read_csv(file_data_path)
+        if add_filename:
+            df_file_data['File Name'] = file
         all_treatment_exp = all_treatment_exp.append(df_file_data)
 
     treatment_name = treatment.replace(' ', '_')
     treatment_name = treatment_name.replace('/', '_')
     save_csv_path = os.sep.join(
-        os.getcwd().split(os.sep)[:-1] + ['Data', 'Experiments_XYT_CSV', 'AllTreatmentExperiments', treatment_name])
+        os.getcwd().split(os.sep)[:-1] + ['Data', 'Experiments_XYT_CSV', 'AllTreatmentExperiments', 'FAC&BSO', treatment_name])
 
     all_treatment_exp.to_csv(save_csv_path + '.csv')
 
 
-def adjust_data_to_kl_divergence(dataset: pd.DataFrame = None, epsilon: int = 0.001):
+def adjust_data_to_positive_values(dataset: pd.DataFrame = None, epsilon: int = 0.001):
 
     if AVG_NEIGHBORS_TIME_OF_DEATH in dataset.columns:
         min_value_avg_neighb_tod = min(dataset[AVG_NEIGHBORS_TIME_OF_DEATH])
@@ -541,7 +561,7 @@ def test_model_on_treatment(model_path: str, treatment_dataset_path: str, metric
         df = df.drop([CELL_IDX], axis=1)
 
     if metric == KL_DIVERGENCE:
-        df = adjust_data_to_kl_divergence(df)
+        df = adjust_data_to_positive_values(df)
 
     to_X = df.drop([LABEL], axis=1)
     X = pd.DataFrame(to_X, columns=to_X.columns)
@@ -556,11 +576,21 @@ def test_model_on_treatment(model_path: str, treatment_dataset_path: str, metric
     return error
 
 
-# test_model_on_treatment('../TrainedModels/fitted_mlp_model_erastin_test_one_cell_kl_divergence.sav',
-#                         '../PreparedDatasets/dataset_with_%_alive_cells_param_DMEM_F12+50ng_mL_superkiller_TRAIL.csv', 'kl_divergence')
+# test_model_on_treatment('../TrainedModels/fitted_svr_model_superkiller_80_20_rmse.sav',
+#                         '../PreparedDatasets/dataset_with_%_alive_cells_param_DMEM_F12+50ng_mL_superkiller_TRAIL.csv', RMSE)
 # adjust_data_to_kl_divergence()
 # get_all_treatment_experiments('DMEM/F12+50ng/mL superkiller TRAIL')
-# create_trainable_dataset(ALL_TREATMENT_EXPERIMENTS_DIR + '\\DMEM_F12+50ng_mL_superkiller_TRAIL.csv')
+# create_trainable_dataset(ALL_TREATMENT_EXPERIMENTS_DIR + '\\FAC&BSO')
 # create_trainable_dataset(NON_COMPRESSED_FILE_MAIN_DIR + '\\20160820_10A_FB_xy13.csv')
 # create_trainable_dataset(NON_COMPRESSED_FILE_MAIN_DIR + '\\20160909_b16f10_aMSH_xy36.csv', NON_COMPRESSED_FILE_MAIN_DIR + '\\20160909_b16f10_aMSH_xy37.csv')
 # print(get_all_unique_treatments())
+# print(get_all_unique_treatments())
+# save_all_treatment_experiments('DMEM + 400uM FAC&BSO')
+
+# treatments = ['DMEM + 400uM FAC&BSO', 'DMEM + 400uM FAC&BSO + 20mM PEG1450', 'DMEM + 400uM FAC&BSO + 20mM PEG3350',
+#                           'DMEM-AA+400uM FAC&BSO', 'DMEM/F12-AA+400uM FAC&BSO', 'RPMI+400uM FAC&BSO']
+# meta_data_file = pd.read_csv('C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Cell2CellComunicationAnalyzer\\Data\\Experiments_XYT_CSV\\ExperimentsMetaData.csv')
+# treatments_experiments = pd.DataFrame()
+# for treatment in treatments:
+#     # treatments_experiments = treatments_experiments.append(meta_data_file[meta_data_file['Treatment'] == treatment])
+#     save_all_treatment_experiments(treatment, add_filename=True)
