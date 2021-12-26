@@ -532,7 +532,7 @@ def save_all_treatment_experiments(treatment: str, meta_data_file_full_path: str
     treatment_name = treatment.replace(' ', '_')
     treatment_name = treatment_name.replace('/', '_')
     save_csv_path = os.sep.join(
-        os.getcwd().split(os.sep)[:-1] + ['Data', 'Experiments_XYT_CSV', 'AllTreatmentExperiments', 'FAC&BSO', treatment_name])
+        os.getcwd().split(os.sep)[:-1] + ['Data', 'Experiments_XYT_CSV', 'AllTreatmentExperiments', treatment_name])
 
     all_treatment_exp.to_csv(save_csv_path + '.csv')
 
@@ -580,17 +580,35 @@ def test_model_on_treatment(model_path: str, treatment_dataset_path: str, metric
 #                         '../PreparedDatasets/dataset_with_%_alive_cells_param_DMEM_F12+50ng_mL_superkiller_TRAIL.csv', RMSE)
 # adjust_data_to_kl_divergence()
 # get_all_treatment_experiments('DMEM/F12+50ng/mL superkiller TRAIL')
-# create_trainable_dataset(ALL_TREATMENT_EXPERIMENTS_DIR + '\\FAC&BSO')
+# create_trainable_dataset(ALL_TREATMENT_EXPERIMENTS_DIR + '\\FAC&BSO_PEG')
 # create_trainable_dataset(NON_COMPRESSED_FILE_MAIN_DIR + '\\20160820_10A_FB_xy13.csv')
 # create_trainable_dataset(NON_COMPRESSED_FILE_MAIN_DIR + '\\20160909_b16f10_aMSH_xy36.csv', NON_COMPRESSED_FILE_MAIN_DIR + '\\20160909_b16f10_aMSH_xy37.csv')
 # print(get_all_unique_treatments())
 # print(get_all_unique_treatments())
-# save_all_treatment_experiments('DMEM + 400uM FAC&BSO')
+# save_all_treatment_experiments('DMEM/F12-AA+400uM FAC&BSO', add_filename=True)
+# create_trainable_dataset(NON_COMPRESSED_FILE_MAIN_DIR + '\\20160820_10A_FB_xy13.csv')
+# create_trainable_dataset(ALL_TREATMENT_EXPERIMENTS_DIR + '\\DMEM_F12-AA+400uM_FAC&BSO.csv')
+
 
 # treatments = ['DMEM + 400uM FAC&BSO', 'DMEM + 400uM FAC&BSO + 20mM PEG1450', 'DMEM + 400uM FAC&BSO + 20mM PEG3350',
 #                           'DMEM-AA+400uM FAC&BSO', 'DMEM/F12-AA+400uM FAC&BSO', 'RPMI+400uM FAC&BSO']
+
+# treatments = ['DMEM + 400uM FAC&BSO + 20mM PEG1450', 'DMEM + 400uM FAC&BSO + 20mM PEG3350']
+#
 # meta_data_file = pd.read_csv('C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Cell2CellComunicationAnalyzer\\Data\\Experiments_XYT_CSV\\ExperimentsMetaData.csv')
 # treatments_experiments = pd.DataFrame()
+
+# #### Check number of experiments for each treatment
+# meta_data_file_full_path = os.sep.join(os.getcwd().split(os.sep)[:-1] + ['Data',
+#                                                                          'Experiments_XYT_CSV',
+#                                                                      'ExperimentsMetaData.csv'])
+# meta_data_file = pd.read_csv(meta_data_file_full_path)
+# treatments = get_all_unique_treatments()
+# treatments_to_num_of_exp = {}
 # for treatment in treatments:
-#     # treatments_experiments = treatments_experiments.append(meta_data_file[meta_data_file['Treatment'] == treatment])
+#     treatment_files = meta_data_file[meta_data_file['Treatment'] == treatment]
+#     treatments_to_num_of_exp[treatment] = len(treatment_files)
+# ####
+
+# for treatment in treatments:
 #     save_all_treatment_experiments(treatment, add_filename=True)

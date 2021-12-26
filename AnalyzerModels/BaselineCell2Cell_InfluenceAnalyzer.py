@@ -1,3 +1,4 @@
+import csv
 import os
 
 import matplotlib.pyplot as plt
@@ -42,7 +43,7 @@ class BaselineCell2CellInfluenceAnalyzer:
         self._cells_neighbors_list1, self._cells_neighbors_list2, self._cells_neighbors_list3 = \
             get_cells_neighbors(XY=self._cells_xy, threshold_dist=self.cells_neighbors_distance_threshold)
 
-        self._distance_metric = kwargs.get('distance_metric_from_true_times_of_death', 'kl_divergence')
+        self._distance_metric = kwargs.get('distance_metric_from_true_times_of_death', 'rmse')
 
         self.median_error_by_cell_dist = 0
         self.mean_error_by_cell_dist = 0
@@ -173,10 +174,10 @@ class BaselineCell2CellInfluenceAnalyzer:
 
 if __name__ == '__main__':
     #### single experiment test ####
-    single_file_path = ALL_TREATMENT_EXPERIMENTS_DIR + '\\DMEM+7.5uM_erastin.csv'
-    baseline_influence_analyzer = BaselineCell2CellInfluenceAnalyzer(file_full_path=single_file_path,
-                                                                     kwargs={'distance_metric_from_true_times_of_death':'kl_divergence'})
-    print(baseline_influence_analyzer.calc_prediction_error())
+    single_file_path = ALL_TREATMENT_EXPERIMENTS_DIR + '\\20161129_MCF7_FB_xy11.csv'
+    # baseline_influence_analyzer = BaselineCell2CellInfluenceAnalyzer(file_full_path=single_file_path,
+    #                                                                  kwargs={'distance_metric_from_true_times_of_death':'kl_divergence'})
+    # print(baseline_influence_analyzer.calc_prediction_error())
     #### all experiments in treatment test ####
     # full_treatment_type = 'DMEM+7.5uM erastin'
     # all_experiments_dir_full_path = NON_COMPRESSED_FILE_MAIN_DIR
@@ -185,3 +186,20 @@ if __name__ == '__main__':
     #                                                                                                meta_data_full_file_path=meta_data_full_file_path,
     #                                                                                                all_experiments_dir_full_path=all_experiments_dir_full_path)
     # print(treatment_results)
+
+
+
+    # df_results = pd.DataFrame(columns=['Baseline Error', 'B', 'C'])
+    #
+    # for i in range(1,5):
+    #     single_file_path = NON_COMPRESSED_FILE_MAIN_DIR + '\\20161129_MCF7_FB_xy11.csv'
+    #     baseline_influence_analyzer = BaselineCell2CellInfluenceAnalyzer(file_full_path=single_file_path,
+    #                                                                      kwargs={'distance_metric_from_true_times_of_death':'rmse'})
+    #     error = baseline_influence_analyzer.calc_prediction_error()
+    #     df_results = df_results.append(pd.DataFrame({'Baseline Error': error[0], 'B': i, 'C': i+1}, index=[0]), ignore_index=True)
+    #
+    #
+    # df_results.to_csv('results.csv')
+
+
+

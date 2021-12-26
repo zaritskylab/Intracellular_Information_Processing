@@ -1,4 +1,9 @@
 venv
 .idea/
 PreparedDatasets
+TrainedModels
+data.csv
+DMEM_F12-AA+400uM_FAC&BSO_rmse_results.csv
+FAC&BSO_PEG_rmse_results.csv
+FAC&BSO_rmse_results.csv
 
