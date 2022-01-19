@@ -1,0 +1,19 @@
+venv
+.idea/
+PreparedDatasets
+TrainedModels
+SavedData
+Pillars
+Data
+Miscellaneous/data.csv
+Miscellaneous/DMEM_F12-AA+400uM_FAC&BSO_rmse_results.csv
+Miscellaneous/FAC&BSO_PEG_rmse_results.csv
+Miscellaneous/FAC&BSO_rmse_results.csv
+SavedData/cropped images.npy
+SavedData/not_cropped_images.npy
+not_cropped_images.npy
+Data/Pillars/New-06-Airyscan Processing-04-actin_drift_corrected_13.2.tif
+*.npy
+*.pyc
+
+
