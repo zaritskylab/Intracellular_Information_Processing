@@ -27,5 +27,7 @@ NON_COMPRESSED_FILE_MAIN_DIR = os.sep.join([ALL_EXPERIMENTS_FILES_MAIN_DIR, 'Ori
 
 ALL_TREATMENT_EXPERIMENTS_DIR = os.sep.join([ALL_EXPERIMENTS_FILES_MAIN_DIR, 'AllTreatmentExperiments'])
 
+PILLARS = os.sep.join(os.getcwd().split(os.sep)[:-1] + ['Data', 'Pillars'])
+
 LOWER_DEATH_PERCENTILE_BOUNDARY = 0.1
 UPPER_DEATH_PERCENTILE_BOUNDARY = 0.9
