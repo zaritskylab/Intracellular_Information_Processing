@@ -17,6 +17,8 @@ from Miscellaneous.consts import *
 from Miscellaneous.pillars_graph import *
 import networkx as nx
 import seaborn as sns
+from statsmodels.tsa.stattools import adfuller, grangercausalitytests
+from statsmodels.tsa.api import VAR
 
 
 # masks = []
@@ -392,12 +394,12 @@ def show_last_image_masked():
     # plt.imshow(last_img, cmap=plt.cm.gray)
     # plt.show()
 
-    with open('../SavedPillarsData/sub_mask.npy', 'rb') as f:
+    with open('../SavedPillarsData/pillars_mask_15_35.npy', 'rb') as f:
         pillars_mask = np.load(f)
         pillars_mask = 255 - pillars_mask
         mx = ma.masked_array(last_img, pillars_mask)
         plt.imshow(mx, cmap=plt.cm.gray)
-        # add the centers on the image
+        # add the centers location on the image
         centers = find_centers()
         # for center in centers:
         #     s = '(' + str(center[0]) + ',' + str(center[1]) + ')'
@@ -408,15 +410,15 @@ def show_last_image_masked():
 
 def build_pillars_mask():
     centers = find_centers()
-    small_mask = create_mask(10, centers)
-    large_mask = create_mask(40, centers)
+    small_mask = create_mask(SMALL_MASK_RADIUS, centers)
+    large_mask = create_mask(LARGE_MASK_RADIUS, centers)
     pillars_mask = large_mask - small_mask
     pillars_mask *= 255
 
-    # cv2.imshow('sub mask', sub_mask)
-    # with open('../SavedPillarsData/sub_mask.npy', 'wb') as f:
-    #     np.save(f, pillars_mask)
-    # cv2.waitKey(0)
+    cv2.imshow('pillars_mask', pillars_mask)
+    with open('../SavedPillarsData/pillars_mask_15_35.npy', 'wb') as f:
+        np.save(f, pillars_mask)
+    cv2.waitKey(0)
     return pillars_mask
 
 
@@ -426,12 +428,13 @@ def get_mask_for_each_pillar():
     pillar_to_mask_dict = {}
     for center in centers:
         small_mask_template = np.zeros((1000, 1000), np.uint8)
-        cv2.circle(small_mask_template, (center[1], center[0]), 10, 255, thickness)
+        cv2.circle(small_mask_template, (center[1], center[0]), SMALL_MASK_RADIUS, 255, thickness)
 
         large_mask_template = np.zeros((1000, 1000), np.uint8)
-        cv2.circle(large_mask_template, (center[1], center[0]), 50, 255, thickness)
+        cv2.circle(large_mask_template, (center[1], center[0]), LARGE_MASK_RADIUS, 255, thickness)
 
         mask = large_mask_template - small_mask_template
+
         pillar_to_mask_dict[center] = mask
 
     return pillar_to_mask_dict
@@ -604,6 +607,7 @@ def get_frame_to_alive_pillars():
             frame_to_alive_pillars = pickle.load(handle)
             return frame_to_alive_pillars
     frame_to_alive_pillars = {}
+    # frame_to_background_pillars = {}
     images = get_images(get_images_path())
     pillar2mask = get_mask_for_each_pillar()
     frame_num = 1
@@ -615,39 +619,59 @@ def get_frame_to_alive_pillars():
         blur[blur < ret] = 0
 
         relevant_pillars_in_frame = []
+        # background_pillars = []
         for pillar_item in pillar2mask.items():
             curr_pillar = blur * pillar_item[1]
             is_pillar_alive = np.sum(curr_pillar)
             if is_pillar_alive > 0:
                 relevant_pillars_in_frame.append(pillar_item[0])
+            # else:
+            #     background_pillars.append(pillar_item[0])
         frame_to_alive_pillars[frame_num] = relevant_pillars_in_frame
+        # frame_to_background_pillars[frame_num] = background_pillars
         frame_num += 1
+    # with open('../SavedPillarsData/background_gray_scale_pillars.pickle', 'wb') as handle:
+    #     pickle.dump(frame_to_background_pillars, handle, protocol=pickle.HIGHEST_PROTOCOL)
     with open('../SavedPillarsData/frames2pillars.pickle', 'wb') as handle:
         pickle.dump(frame_to_alive_pillars, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     return frame_to_alive_pillars
 
 
-def get_alive_pillars_correlation():
-    if os.path.isfile('../SavedPillarsData/alive_pillar_correlation.pickle'):
-        with open('../SavedPillarsData/alive_pillar_correlation.pickle', 'rb') as handle:
+def get_alive_pillars_correlation(normalized=False):
+    path = get_alive_pillars_corr_path(normalized)
+
+    if os.path.isfile(path):
+        with open(path, 'rb') as handle:
             correlation = pickle.load(handle)
             return correlation
 
-    relevant_pillars_dict = get_alive_pillars_to_intensities()
+    relevant_pillars_dict = get_alive_pillars_to_intensities(normalized)
 
     pillar_intensity_df = pd.DataFrame({str(k): v for k, v in relevant_pillars_dict.items()})
     alive_pillars_corr = pillar_intensity_df.corr()
 
-    with open('../SavedPillarsData/alive_pillar_correlation.pickle', 'wb') as handle:
+    with open(path, 'wb') as handle:
         pickle.dump(alive_pillars_corr, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     return alive_pillars_corr
 
 
-def get_alive_pillars_to_intensities():
+def get_alive_pillars_corr_path(normalized):
+    if normalized:
+        path = '../SavedPillarsData/alive_pillar_correlation_normalized.pickle'
+    else:
+        path = '../SavedPillarsData/alive_pillar_correlation.pickle'
+
+    return path
+
+
+def get_alive_pillars_to_intensities(normalized_intensities=False):
     frame_to_pillars = get_frame_to_alive_pillars()
-    pillar_intensity_dict = get_pillar_to_intensities(get_images_path())
+    if not normalized_intensities:
+        pillar_intensity_dict = get_pillar_to_intensities(get_images_path())
+    else:
+        pillar_intensity_dict = normalized_intensities_by_mean_background_intensity()
 
     any_time_live_pillars = set()
     for pillars in frame_to_pillars.values():
@@ -658,23 +682,38 @@ def get_alive_pillars_to_intensities():
     return relevant_pillars_dict
 
 
-def get_all_pillars_correlation():
-    if os.path.isfile('../SavedPillarsData/all_pillar_correlation.pickle'):
-        with open('../SavedPillarsData/all_pillar_correlation.pickle', 'rb') as handle:
+def get_all_pillars_correlation(normalized=False):
+    path = get_all_pillars_corr_path(normalized)
+
+    if os.path.isfile(path):
+        with open(path, 'rb') as handle:
             correlation = pickle.load(handle)
             return correlation
 
-    pillar_intensity_dict = get_pillar_to_intensities(get_images_path())
+    if normalized:
+        pillar_intensity_dict = normalized_intensities_by_mean_background_intensity()
+    else:
+        pillar_intensity_dict = get_pillar_to_intensities(get_images_path())
+
     all_pillar_intensity_df = pd.DataFrame({str(k): v for k, v in pillar_intensity_dict.items()})
     all_pillars_corr = all_pillar_intensity_df.corr()
 
-    with open('../SavedPillarsData/all_pillar_correlation.pickle', 'wb') as handle:
+    with open(path, 'wb') as handle:
         pickle.dump(all_pillars_corr, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     return all_pillars_corr
 
 
-def correlation_graph(only_alive=True):
+def get_all_pillars_corr_path(normalized):
+    if normalized:
+        path = '../SavedPillarsData/all_pillar_correlation_normalized.pickle'
+    else:
+        path = '../SavedPillarsData/alive_pillar_correlation.pickle'
+
+    return path
+
+
+def correlation_plot(only_alive=True):
     my_G = nx.Graph()
     nodes_loc = find_centers()
     neighbors1, neighbors2 = get_pillar_to_neighbors()
@@ -682,32 +721,82 @@ def correlation_graph(only_alive=True):
     for i in range(len(nodes_loc)):
         node_loc2index[nodes_loc[i]] = i
         my_G.add_node(i)
-    alive_pillars_correlation = get_alive_pillars_correlation()
-    all_pillars_corr = get_all_pillars_correlation()
+    alive_pillars_correlation = get_alive_pillars_correlation(normalized=True)
+    all_pillars_corr = get_all_pillars_correlation(normalized=True)
+
+    if only_alive:
+        correlation = alive_pillars_correlation
+    else:
+        correlation = all_pillars_corr
+
     for n1 in neighbors1.keys():
         for n2 in neighbors1[n1]:
             my_G.add_edge(node_loc2index[n1], node_loc2index[n2])
             try:
-                if only_alive:
-                    my_G[node_loc2index[n1]][node_loc2index[n2]]['weight'] = alive_pillars_correlation[str(n1)][str(n2)]
-                else:
-                    my_G[node_loc2index[n1]][node_loc2index[n2]]['weight'] = all_pillars_corr[str(n1)][str(n2)]
-
+                my_G[node_loc2index[n1]][node_loc2index[n2]]['weight'] = correlation[str(n1)][str(n2)]
             except:
                 x = 1
     for n1 in neighbors2.keys():
         for n2 in neighbors2[n1]:
             my_G.add_edge(node_loc2index[n1], node_loc2index[n2])
             try:
-                if only_alive:
-                    my_G[node_loc2index[n1]][node_loc2index[n2]]['weight'] = alive_pillars_correlation[str(n1)][str(n2)]
-                else:
-                    my_G[node_loc2index[n1]][node_loc2index[n2]]['weight'] = all_pillars_corr[str(n1)][str(n2)]
+                my_G[node_loc2index[n1]][node_loc2index[n2]]['weight'] = correlation[str(n1)][str(n2)]
 
             except:
                 x = 1
 
     edges, weights = zip(*nx.get_edge_attributes(my_G, 'weight').items())
+    cmap = plt.cm.seismic
+    sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=-1, vmax=1))
+    frame2pillars = get_frame_to_alive_pillars()
+    nodes_index2size = [10] * len(nodes_loc)
+    for node in nodes_loc:
+        for i in range(len(frame2pillars)):
+            if node in frame2pillars[i + 1]:
+                nodes_index2size[node_loc2index[node]] = len(frame2pillars) - ((i // 13) * 13)
+                break
+    nodes_loc_y_inverse = [(loc[0], 1000 - loc[1]) for loc in nodes_loc]
+
+    nx.draw(my_G, nodes_loc_y_inverse, with_labels=True, node_color='gray', edgelist=edges, edge_color=weights,
+            width=3.0,
+            edge_cmap=cmap,
+            node_size=nodes_index2size)
+    plt.colorbar(sm)
+    plt.show()
+    x = 1
+
+
+def indirect_alive_neighbors_correlation_plot(pillar_location, only_alive=True):
+    my_G = nx.Graph()
+    nodes_loc = find_centers()
+    node_loc2index = {}
+    for i in range(len(nodes_loc)):
+        node_loc2index[nodes_loc[i]] = i
+        my_G.add_node(i)
+
+    if only_alive:
+        pillars = get_alive_pillars_to_intensities()
+    else:
+        # pillars = get_pillar_to_intensities(get_images_path())
+        pillars = normalized_intensities_by_mean_background_intensity()
+
+    pillar_loc = pillar_location
+    indirect_neighbors_dict = get_pillar_indirect_neighbors_dict(pillar_location)
+    # alive_pillars = get_alive_pillars_to_intensities()
+    directed_neighbors = get_pillar_directed_neighbors(pillar_loc)
+    indirect_alive_neighbors = {pillar: indirect_neighbors_dict[pillar] for pillar in pillars.keys() if
+                                pillar not in directed_neighbors}
+    pillars_corr = get_indirect_neighbors_correlation(pillar_loc, only_alive)
+    for no_n1 in indirect_alive_neighbors.keys():
+        my_G.add_edge(node_loc2index[pillar_loc], node_loc2index[no_n1])
+        try:
+            my_G[node_loc2index[pillar_loc]][node_loc2index[no_n1]]['weight'] = pillars_corr[str(pillar_loc)][
+                str(no_n1)]
+        except:
+            x = -1
+
+    edges, weights = zip(*nx.get_edge_attributes(my_G, 'weight').items())
+
     cmap = plt.cm.seismic
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=-1, vmax=1))
     frame2pillars = get_frame_to_alive_pillars()
@@ -727,29 +816,30 @@ def correlation_graph(only_alive=True):
     x = 1
 
 
-def indirect_alive_neighbors_correlation_graph(pillar_location):
-    my_G = nx.Graph()
+def gc_plot(gc_df, only_alive=True):
+    my_G = nx.Graph().to_directed()
     nodes_loc = find_centers()
+    # neighbors1, neighbors2 = get_pillar_to_neighbors()
     node_loc2index = {}
     for i in range(len(nodes_loc)):
-        node_loc2index[nodes_loc[i]] = i
+        node_loc2index[str(nodes_loc[i])] = i
         my_G.add_node(i)
+    alive_pillars_correlation = get_alive_pillars_correlation(normalized=True)
+    all_pillars_corr = get_all_pillars_correlation(normalized=True)
 
-    pillar_loc = pillar_location
-    indirect_neighbors_dict = get_pillar_indirect_neighbors_dict(pillar_location)
-    alive_pillars = get_alive_pillars_to_intensities()
-    directed_neighbors = get_pillar_directed_neighbors(pillar_loc)
-    # alive_pillars_minus_neighbors = {pillar: indirect_neighbors_dict[pillar] for pillar in alive_pillars.keys()}
-    indirect_alive_neighbors = {pillar: indirect_neighbors_dict[pillar] for pillar in alive_pillars.keys() if pillar not in directed_neighbors}
-    pillars_corr = get_indirect_neighbors_correlation(pillar_loc)
-    for no_n1 in indirect_alive_neighbors.keys():
-        my_G.add_edge(node_loc2index[pillar_loc], node_loc2index[no_n1])
-        try:
-            my_G[node_loc2index[pillar_loc]][node_loc2index[no_n1]]['weight'] = pillars_corr[str(pillar_loc)][str(no_n1)]
-        except:
-            x = -1
+    if only_alive:
+        correlation = alive_pillars_correlation
+    else:
+        correlation = all_pillars_corr
 
-    edges, weights = zip(*nx.get_edge_attributes(my_G, 'weight').items())
+    for col in gc_df.keys():
+        for row, _ in gc_df.iterrows():
+            if gc_df[col][row] < 0.05:
+                my_G.add_edge(node_loc2index[col], node_loc2index[row])
+                try:
+                    my_G[node_loc2index[col]][node_loc2index[row]]['weight'] = correlation[col][row]
+                except:
+                    x = 1
 
     cmap = plt.cm.seismic
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=-1, vmax=1))
@@ -758,10 +848,14 @@ def indirect_alive_neighbors_correlation_graph(pillar_location):
     for node in nodes_loc:
         for i in range(len(frame2pillars)):
             if node in frame2pillars[i + 1]:
-                nodes_index2size[node_loc2index[node]] = len(frame2pillars) - ((i // 13) * 13)
+                nodes_index2size[node_loc2index[str(node)]] = len(frame2pillars) - ((i // 13) * 13)
                 break
     nodes_loc_y_inverse = [(loc[0], 1000 - loc[1]) for loc in nodes_loc]
-    nx.draw(my_G, nodes_loc_y_inverse, with_labels=True, node_color='gray', edgelist=edges, edge_color=weights, width=3.0,
+
+    edges, weights = zip(*nx.get_edge_attributes(my_G, 'weight').items())
+    # edges = list(filter(lambda x: x[0] == 52, edges))
+    nx.draw(my_G, nodes_loc_y_inverse, with_labels=True, node_color='gray', edgelist=edges, edge_color=weights,
+            width=3.0,
             edge_cmap=cmap,
             node_size=nodes_index2size)
     plt.colorbar(sm)
@@ -773,7 +867,7 @@ def get_indirect_neighbors_correlation(pillar_location, only_alive=True):
     if only_alive:
         pillars_corr = get_alive_pillars_correlation()
     else:
-        pillars_corr = get_all_pillars_correlation()
+        pillars_corr = get_all_pillars_correlation(normalized=True)
 
     pillar_directed_neighbors = get_pillar_directed_neighbors(pillar_location)
 
@@ -824,19 +918,220 @@ def correlation_histogram(correlations_df):
     plt.show()
 
 
-# correlation_graph(False)
-# indirect_alive_neighbors_correlation_graph((511, 539))
-# correlation_histogram(get_alive_pillars_correlation())
-# correlation_histogram(get_all_pillars_correlation())
-# correlation_histogram(get_indirect_neighbors_correlation((511, 539), False))
+def plot_pillar_time_series(pillar_location, normalized=False):
+    if normalized:
+        pillar2intens = normalized_intensities_by_mean_background_intensity()
+    else:
+        pillar2intens = get_pillar_to_intensities(get_images_path())
+    pillar_loc = pillar_location
+    intensities = pillar2intens[pillar_loc]
+    x = [i * 19.87 for i in range(len(intensities))]
+    intensities = [i * 0.0519938 for i in intensities]
+    plt.plot(x, intensities)
+    plt.xlabel('Time (sec)')
+    plt.ylabel('Intensity (micron)')
+    plt.title('Pillar ' + str(pillar_loc))
+    plt.show()
 
-pillar2intens = get_pillar_to_intensities(get_images_path())
-pillar_loc = (163, 338)
-intensities = pillar2intens[pillar_loc]
-x = [i * 19.87 for i in range(len(intensities))]
-intensities = [i * 0.0519938 for i in intensities]
-plt.plot(x, intensities)
-plt.xlabel('Time (sec)')
-plt.ylabel('Intensity (micron)')
-plt.title('Pillar ' + str(pillar_loc))
-plt.show()
+
+def normalized_intensities_by_max_background_intensity():
+    alive_pillars = get_alive_pillars_to_intensities()
+    all_pillars = get_pillar_to_intensities(get_images_path())
+    background_pillars_intensities = {pillar: all_pillars[pillar] for pillar in all_pillars.keys() if
+                                      pillar not in alive_pillars}
+    intensity_values_lst = list(background_pillars_intensities.values())
+    max_int = max(max(intensity_values_lst, key=max))
+    for pillar_item in all_pillars.items():
+        for i, intensity in enumerate(pillar_item[1]):
+            sub_int = int(intensity) - int(max_int)
+            if sub_int > 0:
+                all_pillars[pillar_item[0]][i] = sub_int
+            else:
+                all_pillars[pillar_item[0]][i] = 0
+
+    return all_pillars
+
+
+def normalized_intensities_by_mean_background_intensity():
+    alive_pillars = get_alive_pillars_to_intensities()
+    all_pillars = get_pillar_to_intensities(get_images_path())
+    background_pillars_intensities = {pillar: all_pillars[pillar] for pillar in all_pillars.keys() if
+                                      pillar not in alive_pillars}
+
+    background_intensity_values_lst = list(background_pillars_intensities.values())
+    avg_intensity_in_frame = np.mean(background_intensity_values_lst, axis=0)
+    for pillar_item in all_pillars.items():
+        for i, intensity in enumerate(pillar_item[1]):
+            sub_int = int(intensity) - avg_intensity_in_frame[i]
+            all_pillars[pillar_item[0]][i] = sub_int
+
+    return all_pillars
+
+
+# correlation_plot(only_alive=False)
+# indirect_alive_neighbors_correlation_plot((896, 807), False)
+# correlation_histogram(get_alive_pillars_correlation(normalized=True))
+# correlation_histogram(get_all_pillars_correlation(normalized=True))
+# correlation_histogram(get_indirect_neighbors_correlation((511, 539)))
+# plot_pillar_time_series((856, 740), normalized=True)
+# build_pillars_mask()
+# show_last_image_masked()
+# normalized_intensities_by_max_background_intensity()
+# normalized_intensities_by_mean_background_intensity()
+
+# alive_pillars = get_alive_pillars_to_intensities()
+# all_pillars = get_pillar_to_intensities(get_images_path())
+# background_pillars_intensities = {pillar: all_pillars[pillar] for pillar in all_pillars.keys() if
+#                                   pillar not in alive_pillars}
+#
+# background_intensity_values_lst = list(background_pillars_intensities.values())
+# avg_intensity_in_frame = np.mean(background_intensity_values_lst, axis=0)
+# plt.plot(avg_intensity_in_frame)
+# plt.show()
+
+def adf_test(df):
+    result = adfuller(df.values)
+    print('ADF Statistics: %f' % result[0])
+    print('p-value: %f' % result[1])
+    print('Critical values:')
+    for key, value in result[4].items():
+        print('\t%s: %.3f' % (key, value))
+
+
+def grangers_causation_matrix(data, variables, test='ssr_chi2test'):
+    """Check Granger Causality of all possible combinations of the Time series.
+    The rows are the response variable, columns are predictors. The values in the table
+    are the P-Values. P-Values lesser than the significance level (0.05), implies
+    the Null Hypothesis that the coefficients of the corresponding past values is
+    zero, that is, the X does not cause Y can be rejected.
+
+    data      : pandas dataframe containing the time series variables
+    variables : list containing names of the time series variables.
+    """
+    df = pd.DataFrame(np.zeros((len(variables), len(variables))), columns=variables, index=variables)
+    for c in df.columns:
+        for r in df.index:
+            test_result = grangercausalitytests(data[[r, c]], maxlag=4, verbose=False)
+            p_values = [round(test_result[i + 1][0][test][1], 4) for i in range(4)]
+            min_p_value = np.min(p_values)
+            df.loc[r, c] = min_p_value
+    df.columns = [var + '_x' for var in variables]
+    df.index = [var + '_y' for var in variables]
+    return df
+
+
+# p2i = get_pillar_to_intensities(get_images_path())
+# p2i = normalized_intensities_by_max_background_intensity()
+p2i = get_alive_pillars_to_intensities(normalized_intensities=True)
+p2i_df = pd.DataFrame({str(k): v for k, v in p2i.items()})
+# adf_test(p2i_df['(625, 740)'])
+
+# data stationary
+# p_vals = []
+# for i in range(5):
+#     for col in p2i_df:
+#         res = adfuller(p2i_df[col])
+#         p_vals.append(res[1])
+#     p_vals = np.array(p_vals)
+#     if p_vals.any() > 0.05:
+#         p2i_df = p2i_df.diff().dropna()
+#         p_vals = list(p_vals)
+#     else:
+#         break
+
+# Find the lag for gc test. according to the lag where min of aic
+# var_model = VAR(p2i_df)
+# for i in [1,2,3,4,5,6,7,8,9,10,11,12]:
+#     result = var_model.fit(i)
+#     try:
+#         print('Lag Order =', i)
+#         print('AIC : ', result.aic)
+#         print('BIC : ', result.bic)
+#         print('FPE : ', result.fpe)
+#         print('HQIC: ', result.hqic, '\n')
+#     except:
+#         continue
+
+# correlation_plot()
+gc_df = grangers_causation_matrix(p2i_df, p2i_df.columns)
+gc_plot(gc_df)
+# _, pillar_adf_p_value, _, _, _, _ = adfuller(p2i_df['(625, 740)'])
+# p2i_df_transformed = p2i_df.diff().dropna()
+# adf_test(p2i_df_transformed['(625, 740)'])
+# _, pillar_adf_p_value_transformed, _, _, _, _ = adfuller(p2i_df_transformed['(625, 740)'])
+# results = model.fit(maxlags=3)
+
+# gc_df = grangers_causation_matrix(p2i_df_transformed, p2i_df_transformed.columns)
+
+# def granger_cause_plot(granger_cause_df, only_alive=True):
+#     my_G = nx.Graph()
+#     nodes_loc = find_centers()
+#     node_loc2index = {}
+#     for i in range(len(nodes_loc)):
+#         node_loc2index[nodes_loc[i]] = i
+#         my_G.add_node(i)
+#     alive_pillars_correlation = granger_cause_df
+#     # all_pillars_corr = get_all_pillars_correlation(normalized=True)
+#             my_G.add_edge(node_loc2index[n1], node_loc2index[n2])
+#             try:
+#                 if only_alive and alive_pillars_correlation[str(n1) + '_x'][str(n2) + '_y'] < 0.05:
+#                     my_G[node_loc2index[n1]][node_loc2index[n2]]['weight'] = alive_pillars_correlation[str(n1) + '_x'][str(n2) + '_y']
+#                 # else:
+#                 #     my_G[node_loc2index[n1]][node_loc2index[n2]]['weight'] = all_pillars_corr[str(n1)][str(n2)]
+#
+#             except:
+#                 x = 1
+#     for n1 in neighbors2.keys():
+#         for n2 in neighbors2[n1]:
+#             my_G.add_edge(node_loc2index[n1], node_loc2index[n2])
+#             try:
+#                 if only_alive and alive_pillars_correlation[str(n1) + '_x'][str(n2) + '_y'] < 0.05:
+#                     my_G[node_loc2index[n1]][node_loc2index[n2]]['weight'] = alive_pillars_correlation[str(n1) + '_x'][str(n2) + '_y']
+#                 # else:
+#                 #     my_G[node_loc2index[n1]][node_loc2index[n2]]['weight'] = all_pillars_corr[str(n1)][str(n2)]
+#
+#             except:
+#                 x = 1
+#
+#     edges, weights = zip(*nx.get_edge_attributes(my_G, 'weight').items())
+#     cmap = plt.cm.seismic
+#     sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=-1, vmax=1))
+#     frame2pillars = get_frame_to_alive_pillars()
+#     nodes_index2size = [10] * len(nodes_loc)
+#     for node in nodes_loc:
+#         for i in range(len(frame2pillars)):
+#             if node in frame2pillars[i + 1]:
+#                 nodes_index2size[node_loc2index[node]] = len(frame2pillars) - ((i // 13) * 13)
+#                 break
+#     nodes_loc_y_inverse = [(loc[0], 1000 - loc[1]) for loc in nodes_loc]
+#     nx.draw(my_G, nodes_loc_y_inverse, with_labels=True, node_color='gray', edgelist=edges, edge_color=weights,
+#             width=3.0,
+#             edge_cmap=cmap,
+#             node_size=nodes_index2size)
+#     plt.colorbar(sm)
+#     plt.show()
+#     x = 1
+
+
+# for pillar in p2i:
+#     # find derivative for stationary
+#     for derivative in range(10):
+#         alive_pillars_intensities_derivative = list(np.diff(p2i[pillar], n=derivative))
+#         _, pillar_adf_p_value, _, _, _, _ = adfuller(alive_pillars_intensities_derivative)
+#         if pillar_adf_p_value > 0.05:
+#             continue
+#         p2i[pillar] = alive_pillars_intensities_derivative
+#         break
+# p2i_df = pd.DataFrame({str(k): v for k, v in p2i.items()})
+# var model to retrieve lag
+# var_model = VAR(p2i_df_transformed)
+# lag_order_results = var_model.select_order()
+# estimators_lags = [
+#     lag_order_results.aic,
+#     lag_order_results.bic,
+#     lag_order_results.fpe,
+#     lag_order_results.hqic
+# ]
+# min_estimator_lag = min(estimators_lags)
+
+# x=1
