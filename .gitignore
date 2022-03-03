@@ -17,5 +17,4 @@ Data/Pillars/New-06-Airyscan Processing-04-actin_drift_corrected_13.2.tif
 *.npy
 *.pyc
 SavedCellDeathData_06
-
-
+/SavedPillarsData_06/

@@ -403,8 +403,8 @@ def show_last_image_masked(video_path = VIDEO_06,
 
 def build_pillars_mask(masks_path = PATH_MASKS_VIDEO_06_15_35):
     centers = find_centers()
-    small_mask = create_mask(SMALL_MASK_RADIUS, centers)
-    large_mask = create_mask(LARGE_MASK_RADIUS, centers)
+    small_mask = create_mask(SMALL_MASK_RADIUS_06, centers)
+    large_mask = create_mask(LARGE_MASK_RADIUS_06, centers)
     pillars_mask = large_mask - small_mask
     pillars_mask *= 255
 
@@ -421,10 +421,10 @@ def get_mask_for_each_pillar():
     pillar_to_mask_dict = {}
     for center in centers:
         small_mask_template = np.zeros((1000, 1000), np.uint8)
-        cv2.circle(small_mask_template, (center[1], center[0]), SMALL_MASK_RADIUS, 255, thickness)
+        cv2.circle(small_mask_template, (center[1], center[0]), SMALL_MASK_RADIUS_06, 255, thickness)
 
         large_mask_template = np.zeros((1000, 1000), np.uint8)
-        cv2.circle(large_mask_template, (center[1], center[0]), LARGE_MASK_RADIUS, 255, thickness)
+        cv2.circle(large_mask_template, (center[1], center[0]), LARGE_MASK_RADIUS_06, 255, thickness)
 
         mask = large_mask_template - small_mask_template
 
@@ -488,30 +488,30 @@ def get_pillar_to_neighbors():
     for pillar in all_pillars:
         pillar_to_cross_neighbors[pillar] = []
 
-        if (pillar[0] + JUMP_ROW_CROSS_1, pillar[1] + JUMP_COL_CROSS_06_VIDEO) in all_pillars:
-            pillar_to_cross_neighbors[pillar].append((pillar[0] + JUMP_ROW_CROSS_1, pillar[1] + JUMP_COL_CROSS_06_VIDEO))
+        if (pillar[0] + JUMP_ROW_CROSS_1_06, pillar[1] + JUMP_COL_CROSS_06_VIDEO) in all_pillars:
+            pillar_to_cross_neighbors[pillar].append((pillar[0] + JUMP_ROW_CROSS_1_06, pillar[1] + JUMP_COL_CROSS_06_VIDEO))
 
-        if (pillar[0] - JUMP_ROW_CROSS_1, pillar[1] + JUMP_COL_CROSS_06_VIDEO) in all_pillars:
-            pillar_to_cross_neighbors[pillar].append((pillar[0] - JUMP_ROW_CROSS_1, pillar[1] + JUMP_COL_CROSS_06_VIDEO))
+        if (pillar[0] - JUMP_ROW_CROSS_1_06, pillar[1] + JUMP_COL_CROSS_06_VIDEO) in all_pillars:
+            pillar_to_cross_neighbors[pillar].append((pillar[0] - JUMP_ROW_CROSS_1_06, pillar[1] + JUMP_COL_CROSS_06_VIDEO))
 
-        if (pillar[0] - JUMP_ROW_CROSS_1, pillar[1] - JUMP_COL_CROSS_06_VIDEO) in all_pillars:
-            pillar_to_cross_neighbors[pillar].append((pillar[0] - JUMP_ROW_CROSS_1, pillar[1] - JUMP_COL_CROSS_06_VIDEO))
+        if (pillar[0] - JUMP_ROW_CROSS_1_06, pillar[1] - JUMP_COL_CROSS_06_VIDEO) in all_pillars:
+            pillar_to_cross_neighbors[pillar].append((pillar[0] - JUMP_ROW_CROSS_1_06, pillar[1] - JUMP_COL_CROSS_06_VIDEO))
 
-        if (pillar[0] + JUMP_ROW_CROSS_1, pillar[1] - JUMP_COL_CROSS_06_VIDEO) in all_pillars:
-            pillar_to_cross_neighbors[pillar].append((pillar[0] + JUMP_ROW_CROSS_1, pillar[1] - JUMP_COL_CROSS_06_VIDEO))
+        if (pillar[0] + JUMP_ROW_CROSS_1_06, pillar[1] - JUMP_COL_CROSS_06_VIDEO) in all_pillars:
+            pillar_to_cross_neighbors[pillar].append((pillar[0] + JUMP_ROW_CROSS_1_06, pillar[1] - JUMP_COL_CROSS_06_VIDEO))
 
         # different number of row jump
-        if (pillar[0] + JUMP_ROW_CROSS_2, pillar[1] + JUMP_COL_CROSS_06_VIDEO) in all_pillars:
-            pillar_to_cross_neighbors[pillar].append((pillar[0] + JUMP_ROW_CROSS_2, pillar[1] + JUMP_COL_CROSS_06_VIDEO))
+        if (pillar[0] + JUMP_ROW_CROSS_2_06, pillar[1] + JUMP_COL_CROSS_06_VIDEO) in all_pillars:
+            pillar_to_cross_neighbors[pillar].append((pillar[0] + JUMP_ROW_CROSS_2_06, pillar[1] + JUMP_COL_CROSS_06_VIDEO))
 
-        if (pillar[0] - JUMP_ROW_CROSS_2, pillar[1] + JUMP_COL_CROSS_06_VIDEO) in all_pillars:
-            pillar_to_cross_neighbors[pillar].append((pillar[0] - JUMP_ROW_CROSS_2, pillar[1] + JUMP_COL_CROSS_06_VIDEO))
+        if (pillar[0] - JUMP_ROW_CROSS_2_06, pillar[1] + JUMP_COL_CROSS_06_VIDEO) in all_pillars:
+            pillar_to_cross_neighbors[pillar].append((pillar[0] - JUMP_ROW_CROSS_2_06, pillar[1] + JUMP_COL_CROSS_06_VIDEO))
 
-        if (pillar[0] - JUMP_ROW_CROSS_2, pillar[1] - JUMP_COL_CROSS_06_VIDEO) in all_pillars:
-            pillar_to_cross_neighbors[pillar].append((pillar[0] - JUMP_ROW_CROSS_2, pillar[1] - JUMP_COL_CROSS_06_VIDEO))
+        if (pillar[0] - JUMP_ROW_CROSS_2_06, pillar[1] - JUMP_COL_CROSS_06_VIDEO) in all_pillars:
+            pillar_to_cross_neighbors[pillar].append((pillar[0] - JUMP_ROW_CROSS_2_06, pillar[1] - JUMP_COL_CROSS_06_VIDEO))
 
-        if (pillar[0] + JUMP_ROW_CROSS_2, pillar[1] - JUMP_COL_CROSS_06_VIDEO) in all_pillars:
-            pillar_to_cross_neighbors[pillar].append((pillar[0] + JUMP_ROW_CROSS_2, pillar[1] - JUMP_COL_CROSS_06_VIDEO))
+        if (pillar[0] + JUMP_ROW_CROSS_2_06, pillar[1] - JUMP_COL_CROSS_06_VIDEO) in all_pillars:
+            pillar_to_cross_neighbors[pillar].append((pillar[0] + JUMP_ROW_CROSS_2_06, pillar[1] - JUMP_COL_CROSS_06_VIDEO))
 
     return pillar_to_neighbors, pillar_to_cross_neighbors
 
