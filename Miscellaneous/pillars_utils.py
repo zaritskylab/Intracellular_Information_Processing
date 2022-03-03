@@ -755,7 +755,7 @@ def correlation_plot(only_alive=True):
             if node in frame2pillars[i + 1]:
                 nodes_index2size[node_loc2index[node]] = len(frame2pillars) - ((i // 13) * 13)
                 break
-    nodes_loc_y_inverse = [(loc[0], 1000 - loc[1]) for loc in nodes_loc]
+    nodes_loc_y_inverse = [(loc[1], 1000 - loc[0]) for loc in nodes_loc]
 
     nx.draw(my_G, nodes_loc_y_inverse, with_labels=True, node_color='gray', edgelist=edges, edge_color=weights,
             width=3.0,
@@ -806,7 +806,7 @@ def indirect_alive_neighbors_correlation_plot(pillar_location, only_alive=True):
             if node in frame2pillars[i + 1]:
                 nodes_index2size[node_loc2index[node]] = len(frame2pillars) - ((i // 13) * 13)
                 break
-    nodes_loc_y_inverse = [(loc[0], 1000 - loc[1]) for loc in nodes_loc]
+    nodes_loc_y_inverse = [(loc[1], 1000 - loc[0]) for loc in nodes_loc]
     nx.draw(my_G, nodes_loc_y_inverse, with_labels=True, node_color='gray', edgelist=edges, edge_color=weights,
             width=3.0,
             edge_cmap=cmap,
@@ -850,7 +850,7 @@ def gc_plot(gc_df, only_alive=True):
             if node in frame2pillars[i + 1]:
                 nodes_index2size[node_loc2index[str(node)]] = len(frame2pillars) - ((i // 13) * 13)
                 break
-    nodes_loc_y_inverse = [(loc[0], 1000 - loc[1]) for loc in nodes_loc]
+    nodes_loc_y_inverse = [(loc[1], 1000 - loc[0]) for loc in nodes_loc]
 
     edges, weights = zip(*nx.get_edge_attributes(my_G, 'weight').items())
     # edges = list(filter(lambda x: x[0] == 52, edges))
