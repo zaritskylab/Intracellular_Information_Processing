@@ -11,10 +11,11 @@ SavedCellDeathData/DMEM_F12-AA+400uM_FAC&BSO_rmse_results.csv
 SavedCellDeathData/FAC&BSO_PEG_rmse_results.csv
 SavedCellDeathData/FAC&BSO_rmse_results.csv
 SavedPillarsData/cropped images.npy
-SavedPillarsData/not_cropped_images.npy
+SavedPillarsData/not_cropped_images_06.npy
 not_cropped_images.npy
 Data/Pillars/New-06-Airyscan Processing-04-actin_drift_corrected_13.2.tif
 *.npy
 *.pyc
+SavedCellDeathData_06
 
 

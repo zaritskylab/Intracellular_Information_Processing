@@ -59,12 +59,10 @@ def find_edges(path: str):
 
     return top_row, bottom_row, left_col, right_col
 
-
 def crop_image(path, top_row, bottom_row, left_col, right_col):
     images = io.imread(path)
     cropped_images = images[0:len(images), top_row:bottom_row + 1, left_col:right_col + 1]
     np.save('cropped images', cropped_images)
-
 
 def set_background_color(img, from_color, to_color):
     # Direction vectors
@@ -100,7 +98,6 @@ def set_background_color(img, from_color, to_color):
                 q.append((adjx, adjy))
                 visited[adjx][adjy] = True
 
-
 def isValid(visited, row, col, img, from_color):
     # If cell lies out of bounds
     if (row < 0 or col < 0 or row >= len(img) or col >= len(img[0])):
@@ -113,7 +110,6 @@ def isValid(visited, row, col, img, from_color):
     # Otherwise
     return img[row][col] == from_color
 
-
 def filter_image(path_to_image):
     print("start: ", datetime.now().time())
     with open(path_to_image, 'rb') as f:
@@ -125,7 +121,7 @@ def filter_image(path_to_image):
     # plt.show()
 
     for i in range(len(images)):
-        normal_result = rank.mean(images[180], footprint=kernel)
+        normal_result = rank.mean(images[VIDEO_06_LENGTH], footprint=kernel)
         plt.imshow(normal_result, cmap=plt.cm.gray)
         plt.show()
 
@@ -204,7 +200,6 @@ def filter_image(path_to_image):
 
     print("end: ", datetime.now().time())
 
-
 def create_mask(radius: int, centers: list):
     mask = np.zeros((1000, 1000), np.uint8)
     mask += 255
@@ -214,17 +209,16 @@ def create_mask(radius: int, centers: list):
     for center in centers:
         cv2.circle(mask, (center[1], center[0]), radius, color, thickness)
 
-    # cv2.imshow("mask", mask)
-    # cv2.waitKey(0)
+    cv2.imshow("mask", mask)
+    cv2.waitKey(0)
     return mask
 
-
 def find_centers():
-    start_row_1 = START_ROW_1
-    start_col_1 = START_COL_1
+    start_row_1 = START_ROW_1_06_VIDEO
+    start_col_1 = START_COL_1_06_VIDEO
 
-    row_jump = ROW_JUMP
-    col_jump = COL_JUMP
+    row_jump = ROW_JUMP_06_VIDEO
+    col_jump = COL_JUMP_06_VIDEO
 
     centers = []
 
@@ -232,15 +226,14 @@ def find_centers():
         for j in range(start_col_1, 1000, col_jump):
             centers.append((i, j))
 
-    start_row_2 = START_ROW_2
-    start_col_2 = START_COL_2
+    start_row_2 = START_ROW_2_06_VIDEO
+    start_col_2 = START_COL_2_06_VIDEO
 
     for i in range(start_row_2, 1000, row_jump):
         for j in range(start_col_2, 1000, col_jump):
             centers.append((i, j))
 
     return centers
-
 
 # def create_pillar_mask(img, center, radius):
 #     mask = np.zeros((1000, 1000), np.uint8)
@@ -377,7 +370,6 @@ def get_images(path):
     images = io.imread(path)
     return images
 
-
 def get_last_image(path_to_image):
     with open(path_to_image, 'rb') as f:
         images = np.load(f)
@@ -386,15 +378,16 @@ def get_last_image(path_to_image):
 
     # fig, ax = try_all_threshold(box_blur, figsize=(10, 8), verbose=False)
     # plt.show()
-    return rank.mean(images[1], footprint=kernel)
+    # TODO: VIDEO_06_LENGTH instead of -1 if error
+    return rank.mean(images[-1], footprint=kernel)
 
-
-def show_last_image_masked():
-    last_img = get_last_image('../SavedPillarsData/not_cropped_images.npy')
+def show_last_image_masked(video_path = VIDEO_06,
+                           mask_path = PATH_MASKS_VIDEO_06_15_35):
+    last_img = get_last_image(video_path)
     # plt.imshow(last_img, cmap=plt.cm.gray)
     # plt.show()
 
-    with open('../SavedPillarsData/pillars_mask_15_35.npy', 'rb') as f:
+    with open(mask_path, 'rb') as f:
         pillars_mask = np.load(f)
         pillars_mask = 255 - pillars_mask
         mx = ma.masked_array(last_img, pillars_mask)
@@ -403,12 +396,12 @@ def show_last_image_masked():
         centers = find_centers()
         # for center in centers:
         #     s = '(' + str(center[0]) + ',' + str(center[1]) + ')'
-        #     plt.text(center[180], center[0], s=s, fontsize=7, color='red')
+        #     plt.text(center[VIDEO_06_LENGTH], center[0], s=s, fontsize=7, color='red')
 
         plt.show()
 
 
-def build_pillars_mask():
+def build_pillars_mask(masks_path = PATH_MASKS_VIDEO_06_15_35):
     centers = find_centers()
     small_mask = create_mask(SMALL_MASK_RADIUS, centers)
     large_mask = create_mask(LARGE_MASK_RADIUS, centers)
@@ -416,7 +409,7 @@ def build_pillars_mask():
     pillars_mask *= 255
 
     cv2.imshow('pillars_mask', pillars_mask)
-    with open('../SavedPillarsData/pillars_mask_15_35.npy', 'wb') as f:
+    with open(masks_path, 'wb') as f:
         np.save(f, pillars_mask)
     cv2.waitKey(0)
     return pillars_mask
@@ -478,47 +471,47 @@ def get_pillar_to_neighbors():
     for pillar in all_pillars:
         pillar_to_neighbors[pillar] = []
 
-        if (pillar[0] + ROW_JUMP, pillar[1]) in all_pillars:
-            pillar_to_neighbors[pillar].append((pillar[0] + ROW_JUMP, pillar[1]))
+        if (pillar[0] + ROW_JUMP_06_VIDEO, pillar[1]) in all_pillars:
+            pillar_to_neighbors[pillar].append((pillar[0] + ROW_JUMP_06_VIDEO, pillar[1]))
 
-        if (pillar[0] - ROW_JUMP, pillar[1]) in all_pillars:
-            pillar_to_neighbors[pillar].append((pillar[0] - ROW_JUMP, pillar[1]))
+        if (pillar[0] - ROW_JUMP_06_VIDEO, pillar[1]) in all_pillars:
+            pillar_to_neighbors[pillar].append((pillar[0] - ROW_JUMP_06_VIDEO, pillar[1]))
 
-        if (pillar[0], pillar[1] + COL_JUMP) in all_pillars:
-            pillar_to_neighbors[pillar].append((pillar[0], pillar[1] + COL_JUMP))
+        if (pillar[0], pillar[1] + COL_JUMP_06_VIDEO) in all_pillars:
+            pillar_to_neighbors[pillar].append((pillar[0], pillar[1] + COL_JUMP_06_VIDEO))
 
-        if (pillar[0], pillar[1] - COL_JUMP) in all_pillars:
-            pillar_to_neighbors[pillar].append((pillar[0], pillar[1] - COL_JUMP))
+        if (pillar[0], pillar[1] - COL_JUMP_06_VIDEO) in all_pillars:
+            pillar_to_neighbors[pillar].append((pillar[0], pillar[1] - COL_JUMP_06_VIDEO))
 
     pillar_to_cross_neighbors = {}
     # cross neighbors
     for pillar in all_pillars:
         pillar_to_cross_neighbors[pillar] = []
 
-        if (pillar[0] + JUMP_ROW_CROSS_1, pillar[1] + JUMP_COL_CROSS) in all_pillars:
-            pillar_to_cross_neighbors[pillar].append((pillar[0] + JUMP_ROW_CROSS_1, pillar[1] + JUMP_COL_CROSS))
+        if (pillar[0] + JUMP_ROW_CROSS_1, pillar[1] + JUMP_COL_CROSS_06_VIDEO) in all_pillars:
+            pillar_to_cross_neighbors[pillar].append((pillar[0] + JUMP_ROW_CROSS_1, pillar[1] + JUMP_COL_CROSS_06_VIDEO))
 
-        if (pillar[0] - JUMP_ROW_CROSS_1, pillar[1] + JUMP_COL_CROSS) in all_pillars:
-            pillar_to_cross_neighbors[pillar].append((pillar[0] - JUMP_ROW_CROSS_1, pillar[1] + JUMP_COL_CROSS))
+        if (pillar[0] - JUMP_ROW_CROSS_1, pillar[1] + JUMP_COL_CROSS_06_VIDEO) in all_pillars:
+            pillar_to_cross_neighbors[pillar].append((pillar[0] - JUMP_ROW_CROSS_1, pillar[1] + JUMP_COL_CROSS_06_VIDEO))
 
-        if (pillar[0] - JUMP_ROW_CROSS_1, pillar[1] - JUMP_COL_CROSS) in all_pillars:
-            pillar_to_cross_neighbors[pillar].append((pillar[0] - JUMP_ROW_CROSS_1, pillar[1] - JUMP_COL_CROSS))
+        if (pillar[0] - JUMP_ROW_CROSS_1, pillar[1] - JUMP_COL_CROSS_06_VIDEO) in all_pillars:
+            pillar_to_cross_neighbors[pillar].append((pillar[0] - JUMP_ROW_CROSS_1, pillar[1] - JUMP_COL_CROSS_06_VIDEO))
 
-        if (pillar[0] + JUMP_ROW_CROSS_1, pillar[1] - JUMP_COL_CROSS) in all_pillars:
-            pillar_to_cross_neighbors[pillar].append((pillar[0] + JUMP_ROW_CROSS_1, pillar[1] - JUMP_COL_CROSS))
+        if (pillar[0] + JUMP_ROW_CROSS_1, pillar[1] - JUMP_COL_CROSS_06_VIDEO) in all_pillars:
+            pillar_to_cross_neighbors[pillar].append((pillar[0] + JUMP_ROW_CROSS_1, pillar[1] - JUMP_COL_CROSS_06_VIDEO))
 
         # different number of row jump
-        if (pillar[0] + JUMP_ROW_CROSS_2, pillar[1] + JUMP_COL_CROSS) in all_pillars:
-            pillar_to_cross_neighbors[pillar].append((pillar[0] + JUMP_ROW_CROSS_2, pillar[1] + JUMP_COL_CROSS))
+        if (pillar[0] + JUMP_ROW_CROSS_2, pillar[1] + JUMP_COL_CROSS_06_VIDEO) in all_pillars:
+            pillar_to_cross_neighbors[pillar].append((pillar[0] + JUMP_ROW_CROSS_2, pillar[1] + JUMP_COL_CROSS_06_VIDEO))
 
-        if (pillar[0] - JUMP_ROW_CROSS_2, pillar[1] + JUMP_COL_CROSS) in all_pillars:
-            pillar_to_cross_neighbors[pillar].append((pillar[0] - JUMP_ROW_CROSS_2, pillar[1] + JUMP_COL_CROSS))
+        if (pillar[0] - JUMP_ROW_CROSS_2, pillar[1] + JUMP_COL_CROSS_06_VIDEO) in all_pillars:
+            pillar_to_cross_neighbors[pillar].append((pillar[0] - JUMP_ROW_CROSS_2, pillar[1] + JUMP_COL_CROSS_06_VIDEO))
 
-        if (pillar[0] - JUMP_ROW_CROSS_2, pillar[1] - JUMP_COL_CROSS) in all_pillars:
-            pillar_to_cross_neighbors[pillar].append((pillar[0] - JUMP_ROW_CROSS_2, pillar[1] - JUMP_COL_CROSS))
+        if (pillar[0] - JUMP_ROW_CROSS_2, pillar[1] - JUMP_COL_CROSS_06_VIDEO) in all_pillars:
+            pillar_to_cross_neighbors[pillar].append((pillar[0] - JUMP_ROW_CROSS_2, pillar[1] - JUMP_COL_CROSS_06_VIDEO))
 
-        if (pillar[0] + JUMP_ROW_CROSS_2, pillar[1] - JUMP_COL_CROSS) in all_pillars:
-            pillar_to_cross_neighbors[pillar].append((pillar[0] + JUMP_ROW_CROSS_2, pillar[1] - JUMP_COL_CROSS))
+        if (pillar[0] + JUMP_ROW_CROSS_2, pillar[1] - JUMP_COL_CROSS_06_VIDEO) in all_pillars:
+            pillar_to_cross_neighbors[pillar].append((pillar[0] + JUMP_ROW_CROSS_2, pillar[1] - JUMP_COL_CROSS_06_VIDEO))
 
     return pillar_to_neighbors, pillar_to_cross_neighbors
 
@@ -553,7 +546,7 @@ def get_frame_to_graph():
 
 
 def get_images_path():
-    return PILLARS + '\\New-06-Airyscan Processing-04-actin_drift_corrected_13.2.tif'
+    return PILLARS + VIDEO_06_TIF_PATH
 
 
 def intensity_histogram():
@@ -979,15 +972,6 @@ def normalized_intensities_by_mean_background_intensity():
 # normalized_intensities_by_max_background_intensity()
 # normalized_intensities_by_mean_background_intensity()
 
-# alive_pillars = get_alive_pillars_to_intensities()
-# all_pillars = get_pillar_to_intensities(get_images_path())
-# background_pillars_intensities = {pillar: all_pillars[pillar] for pillar in all_pillars.keys() if
-#                                   pillar not in alive_pillars}
-#
-# background_intensity_values_lst = list(background_pillars_intensities.values())
-# avg_intensity_in_frame = np.mean(background_intensity_values_lst, axis=0)
-# plt.plot(avg_intensity_in_frame)
-# plt.show()
 
 def adf_test(df):
     result = adfuller(df.values)
