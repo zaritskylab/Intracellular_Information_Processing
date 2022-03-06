@@ -20,6 +20,15 @@ import seaborn as sns
 from statsmodels.tsa.stattools import adfuller, grangercausalitytests
 from statsmodels.tsa.api import VAR
 
+_image_path = LAST_IMG_VIDEO_06
+_pillar_to_intensities_path = '../SavedPillarsData/SavedPillarsData_06/pillar_to_intensities_cached.pickle'
+_frame2pillar_path = '../SavedPillarsData/SavedPillarsData_06/frames2pillars_cached.pickle'
+_correlation_alive_normalized_path = '../SavedPillarsData/SavedPillarsData_06/alive_pillar_correlation_normalized_cached.pickle'
+_correlation_alive_not_normalized_path = '../SavedPillarsData/SavedPillarsData_06/alive_pillar_correlation_cached.pickle'
+_all_pillars_correlation_normalized_path = '../SavedPillarsData/SavedPillarsData_06/all_pillar_correlation_normalized_cached.pickle'
+_all_pillars_correlation_not_normalized_path = '../SavedPillarsData/SavedPillarsData_06/all_pillar_correlation_cached.pickle'
+_normalized = True
+
 
 # masks = []
 # images = io.imread(path)
@@ -59,10 +68,12 @@ def find_edges(path: str):
 
     return top_row, bottom_row, left_col, right_col
 
+
 def crop_image(path, top_row, bottom_row, left_col, right_col):
     images = io.imread(path)
     cropped_images = images[0:len(images), top_row:bottom_row + 1, left_col:right_col + 1]
     np.save('cropped images', cropped_images)
+
 
 def set_background_color(img, from_color, to_color):
     # Direction vectors
@@ -98,6 +109,7 @@ def set_background_color(img, from_color, to_color):
                 q.append((adjx, adjy))
                 visited[adjx][adjy] = True
 
+
 def isValid(visited, row, col, img, from_color):
     # If cell lies out of bounds
     if (row < 0 or col < 0 or row >= len(img) or col >= len(img[0])):
@@ -110,18 +122,19 @@ def isValid(visited, row, col, img, from_color):
     # Otherwise
     return img[row][col] == from_color
 
+
 def filter_image(path_to_image):
     print("start: ", datetime.now().time())
     with open(path_to_image, 'rb') as f:
-        images = np.load(f)
+        image = np.load(f)
     kernel = np.ones((10, 10), np.uint8) / 100
-    # box_blur = cv2.filter2D(src=images[0], ddepth=-1, kernel=kernel)
+    # box_blur = cv2.filter2D(src=image[0], ddepth=-1, kernel=kernel)
 
     # fig, ax = try_all_threshold(box_blur, figsize=(10, 8), verbose=False)
     # plt.show()
 
-    for i in range(len(images)):
-        normal_result = rank.mean(images[VIDEO_06_LENGTH], footprint=kernel)
+    for i in range(len(image)):
+        normal_result = rank.mean(image, footprint=kernel)
         plt.imshow(normal_result, cmap=plt.cm.gray)
         plt.show()
 
@@ -200,6 +213,7 @@ def filter_image(path_to_image):
 
     print("end: ", datetime.now().time())
 
+
 def create_mask(radius: int, centers: list):
     mask = np.zeros((1000, 1000), np.uint8)
     mask += 255
@@ -213,27 +227,25 @@ def create_mask(radius: int, centers: list):
     cv2.waitKey(0)
     return mask
 
-def find_centers():
-    start_row_1 = START_ROW_1_06_VIDEO
-    start_col_1 = START_COL_1_06_VIDEO
 
-    row_jump = ROW_JUMP_06_VIDEO
-    col_jump = COL_JUMP_06_VIDEO
+# def find_centers(start_row_1=START_ROW_1_06_VIDEO,
+#                  start_col_1=START_COL_1_06_VIDEO,
+#                  start_row_2=START_ROW_2_06_VIDEO,
+#                  start_col_2=START_COL_2_06_VIDEO,
+#                  row_jump=ROW_JUMP_06_VIDEO,
+#                  col_jump=COL_JUMP_06_VIDEO):
+#     centers = []
+#
+#     for i in range(start_row_1, 1000, row_jump):
+#         for j in range(start_col_1, 1000, col_jump):
+#             centers.append((i, j))
+#
+#     for i in range(start_row_2, 1000, row_jump):
+#         for j in range(start_col_2, 1000, col_jump):
+#             centers.append((i, j))
+#
+#     return centers
 
-    centers = []
-
-    for i in range(start_row_1, 1000, row_jump):
-        for j in range(start_col_1, 1000, col_jump):
-            centers.append((i, j))
-
-    start_row_2 = START_ROW_2_06_VIDEO
-    start_col_2 = START_COL_2_06_VIDEO
-
-    for i in range(start_row_2, 1000, row_jump):
-        for j in range(start_col_2, 1000, col_jump):
-            centers.append((i, j))
-
-    return centers
 
 # def create_pillar_mask(img, center, radius):
 #     mask = np.zeros((1000, 1000), np.uint8)
@@ -294,44 +306,53 @@ def find_centers():
 #     x = 1
 
 
-# def isSafe(img, i, j, vis):
-#     row = len(img)
-#     col = len(img[0])
-#     return ((i >= 0) and (i < row) and
-#             (j >= 0) and (j < col) and
-#             (img[i][j] == 0 and (not vis[i][j])))
-#
-#
-# def BFS(img, vis, si, sj):
-#     # These arrays are used to get row and
-#     # column numbers of 8 neighbours of
-#     # a given cell
-#     size = 0
-#     row = [-1, -1, -1, 0, 0, 1, 1, 1]
-#     col = [-1, 0, 1, -1, 1, -1, 0, 1]
-#
-#     # Simple BFS first step, we enqueue
-#     # source and mark it as visited
-#     q = deque()
-#     q.append([si, sj])
-#     vis[si][sj] = True
-#
-#     # Next step of BFS. We take out
-#     # items one by one from queue and
-#     # enqueue their univisited adjacent
-#     while (len(q) > 0):
-#         temp = q.popleft()
-#
-#         i = temp[0]
-#         j = temp[1]
-#
-#         # Go through all 8 adjacent
-#         for k in range(8):
-#             if (isSafe(img, i + row[k], j + col[k], vis)):
-#                 vis[i + row[k]][j + col[k]] = True
-#                 q.append([i + row[k], j + col[k]])
-#                 size += 1
-#     return size
+def isSafe(img, i, j, vis):
+    row = len(img)
+    col = len(img[0])
+    return ((i >= 0) and (i < row) and
+            (j >= 0) and (j < col) and
+            (img[i][j] == 0 and (not vis[i][j])))
+
+
+def BFS(img, vis, si, sj):
+    # These arrays are used to get row and
+    # column numbers of 8 neighbours of
+    # a given cell
+    if (img[si][sj] != 0):
+        return []
+    size = 0
+    row = [-1, 0, 0, 1]
+    col = [0, -1, 1, 0]
+
+    locations = [(si, sj)]
+
+    # Simple BFS first step, we enqueue
+    # source and mark it as visited
+    q = queue()
+    q.append([si, sj])
+    vis[si][sj] = True
+
+    # Next step of BFS. We take out
+    # items one by one from queue and
+    # enqueue their univisited adjacent
+    while (len(q) > 0):
+        temp = q.popleft()
+
+        i = temp[0]
+        j = temp[1]
+
+        # Go through all adjacents
+        for k in range(len(row)):
+            if (isSafe(img, i + row[k], j + col[k], vis)):
+                vis[i + row[k]][j + col[k]] = True
+                q.append([i + row[k], j + col[k]])
+                locations.append((i + row[k], j + col[k]))
+                size += 1
+                if size >= CIRCLE_AREA * 1.5:
+                    return []
+    return locations
+
+
 #
 #
 # # This function returns number islands (connected
@@ -366,26 +387,30 @@ def find_centers():
 # x1, x2, x3, x4 = find_edges(path)
 # crop_image(path, x1, x2, x3, x4)
 
+# Accepting tif path
 def get_images(path):
     images = io.imread(path)
     return images
 
+
 def get_last_image(path_to_image):
     with open(path_to_image, 'rb') as f:
-        images = np.load(f)
+        image = np.load(f)
     kernel = np.ones((10, 10), np.uint8) / 100
-    # box_blur = cv2.filter2D(src=images[0], ddepth=-1, kernel=kernel)
+    # box_blur = cv2.filter2D(src=image[0], ddepth=-1, kernel=kernel)
 
     # fig, ax = try_all_threshold(box_blur, figsize=(10, 8), verbose=False)
     # plt.show()
-    # TODO: VIDEO_06_LENGTH instead of -1 if error
-    return rank.mean(images[-1], footprint=kernel)
+    # return rank.mean(image, footprint=kernel)
+    if len(image.shape) == 3:
+        return image[-1]
+    return image
 
-def show_last_image_masked(video_path = VIDEO_06,
-                           mask_path = PATH_MASKS_VIDEO_06_15_35):
-    last_img = get_last_image(video_path)
-    # plt.imshow(last_img, cmap=plt.cm.gray)
-    # plt.show()
+
+def show_last_image_masked(mask_path=PATH_MASKS_VIDEO_06_15_35):
+    last_img = get_last_image(_image_path)
+    plt.imshow(last_img, cmap=plt.cm.gray)
+    plt.show()
 
     with open(mask_path, 'rb') as f:
         pillars_mask = np.load(f)
@@ -393,7 +418,7 @@ def show_last_image_masked(video_path = VIDEO_06,
         mx = ma.masked_array(last_img, pillars_mask)
         plt.imshow(mx, cmap=plt.cm.gray)
         # add the centers location on the image
-        centers = find_centers()
+        # centers = find_centers()
         # for center in centers:
         #     s = '(' + str(center[0]) + ',' + str(center[1]) + ')'
         #     plt.text(center[VIDEO_06_LENGTH], center[0], s=s, fontsize=7, color='red')
@@ -401,8 +426,12 @@ def show_last_image_masked(video_path = VIDEO_06,
         plt.show()
 
 
-def build_pillars_mask(masks_path = PATH_MASKS_VIDEO_06_15_35):
-    centers = find_centers()
+def build_pillars_mask(masks_path=PATH_MASKS_VIDEO_06_15_35,
+                       logic_centers=True):
+    if logic_centers:
+        centers = find_centers_with_logic()
+    # else:
+    #     centers = find_centers()
     small_mask = create_mask(SMALL_MASK_RADIUS_06, centers)
     large_mask = create_mask(LARGE_MASK_RADIUS_06, centers)
     pillars_mask = large_mask - small_mask
@@ -415,8 +444,183 @@ def build_pillars_mask(masks_path = PATH_MASKS_VIDEO_06_15_35):
     return pillars_mask
 
 
+def find_centers_with_logic():
+    last_img = get_last_image(_image_path)
+    alive_centers = get_alive_centers(last_img)
+    return generate_centers_from_live_centers(alive_centers, len(last_img))
+
+
+def get_alive_centers(img):
+    img = cv2.GaussianBlur(img, (5, 5), 0)
+    max_pixel = img.max()
+    # find otsu's threshold value with OpenCV function
+    ret, otsu = cv2.threshold(img, 0, max_pixel, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    img[img < ret] = 0
+    img[img > 0] = 1
+    # plt.imshow(last_img, cmap=plt.cm.gray)
+    # plt.show()
+    alive_centers = set()
+    e1 = int(len(img) / 5)
+    e4 = e1 * 4
+    visited = set()
+    for row in range(e1, e4):
+        col = e1
+        while col < e4:
+            if not (row, col) in visited and kinda_center(img, row, col):
+                circle_area, center = get_center(img, row, col)
+                if len(circle_area) == 0:
+                    col += 1
+                else:
+                    visited.update(circle_area)
+                    alive_centers.add(center)
+                    col += CIRCLE_SEARCH_JUMP_SIZE
+            else:
+                col += 1
+    return alive_centers
+
+
+def generate_centers_from_live_centers(live_centers, matrix_size):
+    return generate_centers_and_rules_from_live_centers(live_centers, matrix_size)[0]
+
+
+def generate_centers_and_rules_from_live_centers(alive_centers, matrix_size):
+    points = list(alive_centers)
+    target = (matrix_size / 2, matrix_size / 2)
+    closest_to_middle = min(points, key=lambda point: math.hypot(target[1] - point[1], target[0] - point[0]))
+    points.remove(closest_to_middle)
+    closest1 = min(points,
+                   key=lambda point: math.hypot(closest_to_middle[1] - point[1], closest_to_middle[0] - point[0]))
+    points.remove(closest1)
+    closest2 = min(points,
+                   key=lambda point: math.hypot(closest_to_middle[1] - point[1], closest_to_middle[0] - point[0]))
+
+    rule1 = (closest_to_middle[0] - closest1[0], closest_to_middle[1] - closest1[1])
+    rule2 = (closest_to_middle[0] - closest2[0], closest_to_middle[1] - closest2[1])
+
+    generated_centers_in_line = {closest_to_middle}
+    row = closest_to_middle[0]
+    col = closest_to_middle[1]
+
+    while -matrix_size <= row < matrix_size * 2 and -matrix_size <= col < matrix_size * 2:
+        generated_centers_in_line.add((row, col))
+        row += rule1[0]
+        col += rule1[1]
+
+    row = closest_to_middle[0]
+    col = closest_to_middle[1]
+
+    while -matrix_size <= row < matrix_size * 2 and col >= -matrix_size and col < matrix_size * 2:
+        generated_centers_in_line.add((row, col))
+        row -= rule1[0]
+        col -= rule1[1]
+
+    generated_centers = set(generated_centers_in_line)
+
+    for center in generated_centers_in_line:
+        row = center[0]
+        col = center[1]
+        while -matrix_size <= row < matrix_size * 2 and col >= -matrix_size and col < matrix_size * 2:
+            generated_centers.add((row, col))
+            row += rule2[0]
+            col += rule2[1]
+    for center in generated_centers_in_line:
+        row = center[0]
+        col = center[1]
+        while -matrix_size <= row < matrix_size * 2 and col >= -matrix_size and col < matrix_size * 2:
+            generated_centers.add((row, col))
+            row -= rule2[0]
+            col -= rule2[1]
+    centers_in_range = [center for center in list(generated_centers) if
+                        0 <= center[0] < matrix_size and 0 <= center[1] < matrix_size]
+    return centers_in_range, rule1, rule2
+
+
+def get_pillar_to_neighbors():
+    last_img = get_last_image(_image_path)
+    alive_centers = get_alive_centers(last_img)
+    centers_lst, rule_jump_1, rule_jump_2 = generate_centers_and_rules_from_live_centers(alive_centers, len(last_img))
+    pillar_to_neighbors = {}
+    for p in centers_lst:
+        neighbors_lst = set()
+
+        n1 = (p[0] - rule_jump_1[0], p[1] - rule_jump_1[1])
+        if n1 in centers_lst:
+            neighbors_lst.add(n1)
+
+        n2 = (p[0] + rule_jump_1[0], p[1] + rule_jump_1[1])
+        if n2 in centers_lst:
+            neighbors_lst.add(n2)
+
+        n3 = (p[0] - rule_jump_2[0], p[1] - rule_jump_2[1])
+        if n3 in centers_lst:
+            neighbors_lst.add(n3)
+
+        n4 = (p[0] + rule_jump_2[0], p[1] + rule_jump_2[1])
+        if n4 in centers_lst:
+            neighbors_lst.add(n4)
+
+        n_minus1_minus2 = (n1[0] - rule_jump_2[0], n1[1] - rule_jump_2[1])
+        if n_minus1_minus2 in centers_lst:
+            neighbors_lst.add(n_minus1_minus2)
+
+        n_minus1_plus2 = (n1[0] + rule_jump_2[0], n1[1] + rule_jump_2[1])
+        if n_minus1_plus2 in centers_lst:
+            neighbors_lst.add(n_minus1_plus2)
+
+        n_plus1_minus2 = (n2[0] - rule_jump_2[0], n2[1] - rule_jump_2[1])
+        if n_plus1_minus2 in centers_lst:
+            neighbors_lst.add(n_plus1_minus2)
+
+        n_plus1_plus2 = (n2[0] + rule_jump_2[0], n2[1] + rule_jump_2[1])
+        if n_plus1_plus2 in centers_lst:
+            neighbors_lst.add(n_plus1_plus2)
+
+        pillar_to_neighbors[p] = list(neighbors_lst)
+
+    return pillar_to_neighbors
+
+
+def kinda_center(img, row, col):
+    col_zeros = img[
+                row:row + 1,
+                col - CIRCLE_ZERO_VALIDATE_SEARCH_LENGTH: col + CIRCLE_ZERO_VALIDATE_SEARCH_LENGTH]
+    if np.any(col_zeros):
+        return False
+    row_zeros = img[
+                row - CIRCLE_ZERO_VALIDATE_SEARCH_LENGTH: row + CIRCLE_ZERO_VALIDATE_SEARCH_LENGTH,
+                col: col + 1]
+    if np.any(row_zeros):
+        return False
+
+    return img[row][col + CIRCLE_ONE_VALIDATE_SEARCH_LENGTH] == 1 \
+           and img[row][col - CIRCLE_ONE_VALIDATE_SEARCH_LENGTH] == 1 \
+           and img[row - CIRCLE_ONE_VALIDATE_SEARCH_LENGTH][col] == 1 \
+           and img[row + CIRCLE_ONE_VALIDATE_SEARCH_LENGTH][col] == 1
+
+
+def get_center(img, row, col):
+    rows = len(img)
+    cols = len(img[0])
+    # Mark all cells as not visited
+    vis = [[False for i in range(rows)]
+           for i in range(cols)]
+    circle_area = BFS(img, vis, row, col)
+    if len(circle_area) == 0:
+        return [], (0, 0)
+    return circle_area, get_circle_center(circle_area)
+
+
+def get_circle_center(circle_area):
+    X = [tup[0] for tup in circle_area]
+    Y = [tup[1] for tup in circle_area]
+    avg_X = sum(X) / len(X)
+    avg_Y = sum(Y) / len(Y)
+
+    return (int(avg_X), int(avg_Y))
+
+
 def get_mask_for_each_pillar():
-    centers = find_centers()
+    centers = find_centers_with_logic()
     thickness = -1
     pillar_to_mask_dict = {}
     for center in centers:
@@ -434,8 +638,8 @@ def get_mask_for_each_pillar():
 
 
 def get_pillar_to_intensities(path):
-    if os.path.isfile('../SavedPillarsData/pillar_to_intensities.pickle'):
-        with open('../SavedPillarsData/pillar_to_intensities.pickle', 'rb') as handle:
+    if os.path.isfile(_pillar_to_intensities_path):
+        with open(_pillar_to_intensities_path, 'rb') as handle:
             pillar2frame_intensity = pickle.load(handle)
             return pillar2frame_intensity
 
@@ -457,63 +661,71 @@ def get_pillar_to_intensities(path):
         # pillar2frames[pillar_id] = curr_pillar_masked_frames
         pillar2frame_intensity[pillar_id] = curr_pillar_intensity
 
-    with open('../SavedPillarsData/pillar_to_intensities.pickle', 'wb') as handle:
+    with open(_pillar_to_intensities_path, 'wb') as handle:
         pickle.dump(pillar2frame_intensity, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     return pillar2frame_intensity
 
 
-def get_pillar_to_neighbors():
-    pillar_to_neighbors = {}
-    all_pillars = find_centers()
-
-    # "direct" neighbors
-    for pillar in all_pillars:
-        pillar_to_neighbors[pillar] = []
-
-        if (pillar[0] + ROW_JUMP_06_VIDEO, pillar[1]) in all_pillars:
-            pillar_to_neighbors[pillar].append((pillar[0] + ROW_JUMP_06_VIDEO, pillar[1]))
-
-        if (pillar[0] - ROW_JUMP_06_VIDEO, pillar[1]) in all_pillars:
-            pillar_to_neighbors[pillar].append((pillar[0] - ROW_JUMP_06_VIDEO, pillar[1]))
-
-        if (pillar[0], pillar[1] + COL_JUMP_06_VIDEO) in all_pillars:
-            pillar_to_neighbors[pillar].append((pillar[0], pillar[1] + COL_JUMP_06_VIDEO))
-
-        if (pillar[0], pillar[1] - COL_JUMP_06_VIDEO) in all_pillars:
-            pillar_to_neighbors[pillar].append((pillar[0], pillar[1] - COL_JUMP_06_VIDEO))
-
-    pillar_to_cross_neighbors = {}
-    # cross neighbors
-    for pillar in all_pillars:
-        pillar_to_cross_neighbors[pillar] = []
-
-        if (pillar[0] + JUMP_ROW_CROSS_1_06, pillar[1] + JUMP_COL_CROSS_06_VIDEO) in all_pillars:
-            pillar_to_cross_neighbors[pillar].append((pillar[0] + JUMP_ROW_CROSS_1_06, pillar[1] + JUMP_COL_CROSS_06_VIDEO))
-
-        if (pillar[0] - JUMP_ROW_CROSS_1_06, pillar[1] + JUMP_COL_CROSS_06_VIDEO) in all_pillars:
-            pillar_to_cross_neighbors[pillar].append((pillar[0] - JUMP_ROW_CROSS_1_06, pillar[1] + JUMP_COL_CROSS_06_VIDEO))
-
-        if (pillar[0] - JUMP_ROW_CROSS_1_06, pillar[1] - JUMP_COL_CROSS_06_VIDEO) in all_pillars:
-            pillar_to_cross_neighbors[pillar].append((pillar[0] - JUMP_ROW_CROSS_1_06, pillar[1] - JUMP_COL_CROSS_06_VIDEO))
-
-        if (pillar[0] + JUMP_ROW_CROSS_1_06, pillar[1] - JUMP_COL_CROSS_06_VIDEO) in all_pillars:
-            pillar_to_cross_neighbors[pillar].append((pillar[0] + JUMP_ROW_CROSS_1_06, pillar[1] - JUMP_COL_CROSS_06_VIDEO))
-
-        # different number of row jump
-        if (pillar[0] + JUMP_ROW_CROSS_2_06, pillar[1] + JUMP_COL_CROSS_06_VIDEO) in all_pillars:
-            pillar_to_cross_neighbors[pillar].append((pillar[0] + JUMP_ROW_CROSS_2_06, pillar[1] + JUMP_COL_CROSS_06_VIDEO))
-
-        if (pillar[0] - JUMP_ROW_CROSS_2_06, pillar[1] + JUMP_COL_CROSS_06_VIDEO) in all_pillars:
-            pillar_to_cross_neighbors[pillar].append((pillar[0] - JUMP_ROW_CROSS_2_06, pillar[1] + JUMP_COL_CROSS_06_VIDEO))
-
-        if (pillar[0] - JUMP_ROW_CROSS_2_06, pillar[1] - JUMP_COL_CROSS_06_VIDEO) in all_pillars:
-            pillar_to_cross_neighbors[pillar].append((pillar[0] - JUMP_ROW_CROSS_2_06, pillar[1] - JUMP_COL_CROSS_06_VIDEO))
-
-        if (pillar[0] + JUMP_ROW_CROSS_2_06, pillar[1] - JUMP_COL_CROSS_06_VIDEO) in all_pillars:
-            pillar_to_cross_neighbors[pillar].append((pillar[0] + JUMP_ROW_CROSS_2_06, pillar[1] - JUMP_COL_CROSS_06_VIDEO))
-
-    return pillar_to_neighbors, pillar_to_cross_neighbors
+# def get_pillar_to_neighbors():
+#     pillar_to_neighbors = {}
+#     all_pillars = find_centers()
+#
+#     # "direct" neighbors
+#     for pillar in all_pillars:
+#         pillar_to_neighbors[pillar] = []
+#
+#         if (pillar[0] + ROW_JUMP_06_VIDEO, pillar[1]) in all_pillars:
+#             pillar_to_neighbors[pillar].append((pillar[0] + ROW_JUMP_06_VIDEO, pillar[1]))
+#
+#         if (pillar[0] - ROW_JUMP_06_VIDEO, pillar[1]) in all_pillars:
+#             pillar_to_neighbors[pillar].append((pillar[0] - ROW_JUMP_06_VIDEO, pillar[1]))
+#
+#         if (pillar[0], pillar[1] + COL_JUMP_06_VIDEO) in all_pillars:
+#             pillar_to_neighbors[pillar].append((pillar[0], pillar[1] + COL_JUMP_06_VIDEO))
+#
+#         if (pillar[0], pillar[1] - COL_JUMP_06_VIDEO) in all_pillars:
+#             pillar_to_neighbors[pillar].append((pillar[0], pillar[1] - COL_JUMP_06_VIDEO))
+#
+#     pillar_to_cross_neighbors = {}
+#     # cross neighbors
+#     for pillar in all_pillars:
+#         pillar_to_cross_neighbors[pillar] = []
+#
+#         if (pillar[0] + JUMP_ROW_CROSS_1_06, pillar[1] + JUMP_COL_CROSS_06_VIDEO) in all_pillars:
+#             pillar_to_cross_neighbors[pillar].append(
+#                 (pillar[0] + JUMP_ROW_CROSS_1_06, pillar[1] + JUMP_COL_CROSS_06_VIDEO))
+#
+#         if (pillar[0] - JUMP_ROW_CROSS_1_06, pillar[1] + JUMP_COL_CROSS_06_VIDEO) in all_pillars:
+#             pillar_to_cross_neighbors[pillar].append(
+#                 (pillar[0] - JUMP_ROW_CROSS_1_06, pillar[1] + JUMP_COL_CROSS_06_VIDEO))
+#
+#         if (pillar[0] - JUMP_ROW_CROSS_1_06, pillar[1] - JUMP_COL_CROSS_06_VIDEO) in all_pillars:
+#             pillar_to_cross_neighbors[pillar].append(
+#                 (pillar[0] - JUMP_ROW_CROSS_1_06, pillar[1] - JUMP_COL_CROSS_06_VIDEO))
+#
+#         if (pillar[0] + JUMP_ROW_CROSS_1_06, pillar[1] - JUMP_COL_CROSS_06_VIDEO) in all_pillars:
+#             pillar_to_cross_neighbors[pillar].append(
+#                 (pillar[0] + JUMP_ROW_CROSS_1_06, pillar[1] - JUMP_COL_CROSS_06_VIDEO))
+#
+#         # different number of row jump
+#         if (pillar[0] + JUMP_ROW_CROSS_2_06, pillar[1] + JUMP_COL_CROSS_06_VIDEO) in all_pillars:
+#             pillar_to_cross_neighbors[pillar].append(
+#                 (pillar[0] + JUMP_ROW_CROSS_2_06, pillar[1] + JUMP_COL_CROSS_06_VIDEO))
+#
+#         if (pillar[0] - JUMP_ROW_CROSS_2_06, pillar[1] + JUMP_COL_CROSS_06_VIDEO) in all_pillars:
+#             pillar_to_cross_neighbors[pillar].append(
+#                 (pillar[0] - JUMP_ROW_CROSS_2_06, pillar[1] + JUMP_COL_CROSS_06_VIDEO))
+#
+#         if (pillar[0] - JUMP_ROW_CROSS_2_06, pillar[1] - JUMP_COL_CROSS_06_VIDEO) in all_pillars:
+#             pillar_to_cross_neighbors[pillar].append(
+#                 (pillar[0] - JUMP_ROW_CROSS_2_06, pillar[1] - JUMP_COL_CROSS_06_VIDEO))
+#
+#         if (pillar[0] + JUMP_ROW_CROSS_2_06, pillar[1] - JUMP_COL_CROSS_06_VIDEO) in all_pillars:
+#             pillar_to_cross_neighbors[pillar].append(
+#                 (pillar[0] + JUMP_ROW_CROSS_2_06, pillar[1] - JUMP_COL_CROSS_06_VIDEO))
+#
+#     return pillar_to_neighbors, pillar_to_cross_neighbors
 
 
 def get_frame_to_graph():
@@ -595,8 +807,8 @@ def intensity_histogram():
 
 
 def get_frame_to_alive_pillars():
-    if os.path.isfile('../SavedPillarsData/frames2pillars.pickle'):
-        with open('../SavedPillarsData/frames2pillars.pickle', 'rb') as handle:
+    if os.path.isfile(_frame2pillar_path):
+        with open(_frame2pillar_path, 'rb') as handle:
             frame_to_alive_pillars = pickle.load(handle)
             return frame_to_alive_pillars
     frame_to_alive_pillars = {}
@@ -623,23 +835,23 @@ def get_frame_to_alive_pillars():
         frame_to_alive_pillars[frame_num] = relevant_pillars_in_frame
         # frame_to_background_pillars[frame_num] = background_pillars
         frame_num += 1
-    # with open('../SavedPillarsData/background_gray_scale_pillars.pickle', 'wb') as handle:
+    # with open('../SavedPillarsData_05/background_gray_scale_pillars.pickle', 'wb') as handle:
     #     pickle.dump(frame_to_background_pillars, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    with open('../SavedPillarsData/frames2pillars.pickle', 'wb') as handle:
+    with open(_frame2pillar_path, 'wb') as handle:
         pickle.dump(frame_to_alive_pillars, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     return frame_to_alive_pillars
 
 
-def get_alive_pillars_correlation(normalized=False):
-    path = get_alive_pillars_corr_path(normalized)
+def get_alive_pillars_correlation():
+    path = get_alive_pillars_corr_path()
 
     if os.path.isfile(path):
         with open(path, 'rb') as handle:
             correlation = pickle.load(handle)
             return correlation
 
-    relevant_pillars_dict = get_alive_pillars_to_intensities(normalized)
+    relevant_pillars_dict = get_alive_pillars_to_intensities()
 
     pillar_intensity_df = pd.DataFrame({str(k): v for k, v in relevant_pillars_dict.items()})
     alive_pillars_corr = pillar_intensity_df.corr()
@@ -650,40 +862,46 @@ def get_alive_pillars_correlation(normalized=False):
     return alive_pillars_corr
 
 
-def get_alive_pillars_corr_path(normalized):
-    if normalized:
-        path = '../SavedPillarsData/alive_pillar_correlation_normalized.pickle'
+def get_alive_pillars_corr_path():
+    if _normalized:
+        path = _correlation_alive_normalized_path
     else:
-        path = '../SavedPillarsData/alive_pillar_correlation.pickle'
+        path = _correlation_alive_not_normalized_path
 
     return path
 
 
-def get_alive_pillars_to_intensities(normalized_intensities=False):
+def get_alive_pillars_lst():
     frame_to_pillars = get_frame_to_alive_pillars()
-    if not normalized_intensities:
-        pillar_intensity_dict = get_pillar_to_intensities(get_images_path())
-    else:
-        pillar_intensity_dict = normalized_intensities_by_mean_background_intensity()
-
     any_time_live_pillars = set()
     for pillars in frame_to_pillars.values():
         any_time_live_pillars.update(pillars)
 
-    relevant_pillars_dict = {pillar: pillar_intensity_dict[pillar] for pillar in any_time_live_pillars}
-
-    return relevant_pillars_dict
+    return list(any_time_live_pillars)
 
 
-def get_all_pillars_correlation(normalized=False):
-    path = get_all_pillars_corr_path(normalized)
+def get_alive_pillars_to_intensities():
+    if _normalized:
+        pillar_intensity_dict = normalized_intensities_by_mean_background_intensity()
+    else:
+        pillar_intensity_dict = get_pillar_to_intensities(get_images_path())
+
+    alive_pillars = get_alive_pillars_lst()
+
+    alive_pillars_dict = {pillar: pillar_intensity_dict[pillar] for pillar in alive_pillars}
+
+    return alive_pillars_dict
+
+
+def get_all_pillars_correlation():
+    path = get_all_pillars_corr_path()
 
     if os.path.isfile(path):
         with open(path, 'rb') as handle:
             correlation = pickle.load(handle)
             return correlation
 
-    if normalized:
+    if _normalized:
         pillar_intensity_dict = normalized_intensities_by_mean_background_intensity()
     else:
         pillar_intensity_dict = get_pillar_to_intensities(get_images_path())
@@ -697,44 +915,90 @@ def get_all_pillars_correlation(normalized=False):
     return all_pillars_corr
 
 
-def get_all_pillars_corr_path(normalized):
-    if normalized:
-        path = '../SavedPillarsData/all_pillar_correlation_normalized.pickle'
+def get_all_pillars_corr_path():
+    if _normalized:
+        path = _all_pillars_correlation_normalized_path
     else:
-        path = '../SavedPillarsData/alive_pillar_correlation.pickle'
+        path = _all_pillars_correlation_not_normalized_path
 
     return path
 
 
+# def correlation_plot(only_alive=True):
+#     my_G = nx.Graph()
+#     nodes_loc = find_centers()
+#     neighbors1, neighbors2 = get_pillar_to_neighbors()
+#     node_loc2index = {}
+#     for i in range(len(nodes_loc)):
+#         node_loc2index[nodes_loc[i]] = i
+#         my_G.add_node(i)
+#     alive_pillars_correlation = get_alive_pillars_correlation(normalized=True)
+#     all_pillars_corr = get_all_pillars_correlation(normalized=True)
+#
+#     if only_alive:
+#         correlation = alive_pillars_correlation
+#     else:
+#         correlation = all_pillars_corr
+#
+#     for n1 in neighbors1.keys():
+#         for n2 in neighbors1[n1]:
+#             my_G.add_edge(node_loc2index[n1], node_loc2index[n2])
+#             try:
+#                 my_G[node_loc2index[n1]][node_loc2index[n2]]['weight'] = correlation[str(n1)][str(n2)]
+#             except:
+#                 x = 1
+#     for n1 in neighbors2.keys():
+#         for n2 in neighbors2[n1]:
+#             my_G.add_edge(node_loc2index[n1], node_loc2index[n2])
+#             try:
+#                 my_G[node_loc2index[n1]][node_loc2index[n2]]['weight'] = correlation[str(n1)][str(n2)]
+#
+#             except:
+#                 x = 1
+#
+#     edges, weights = zip(*nx.get_edge_attributes(my_G, 'weight').items())
+#     cmap = plt.cm.seismic
+#     sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=-1, vmax=1))
+#     frame2pillars = get_frame_to_alive_pillars()
+#     nodes_index2size = [10] * len(nodes_loc)
+#     for node in nodes_loc:
+#         for i in range(len(frame2pillars)):
+#             if node in frame2pillars[i + 1]:
+#                 nodes_index2size[node_loc2index[node]] = len(frame2pillars) - ((i // 13) * 13)
+#                 break
+#     nodes_loc_y_inverse = [(loc[1], 1000 - loc[0]) for loc in nodes_loc]
+#
+#     nx.draw(my_G, nodes_loc_y_inverse, with_labels=True, node_color='gray', edgelist=edges, edge_color=weights,
+#             width=3.0,
+#             edge_cmap=cmap,
+#             node_size=nodes_index2size)
+#     plt.colorbar(sm)
+#     plt.show()
+#     x = 1
+
 def correlation_plot(only_alive=True):
     my_G = nx.Graph()
-    nodes_loc = find_centers()
-    neighbors1, neighbors2 = get_pillar_to_neighbors()
+    last_img = get_last_image(_image_path)
+    alive_centers = get_alive_centers(last_img)
+    nodes_loc = generate_centers_from_live_centers(alive_centers, len(last_img))
+    neighbors = get_pillar_to_neighbors()
     node_loc2index = {}
     for i in range(len(nodes_loc)):
         node_loc2index[nodes_loc[i]] = i
         my_G.add_node(i)
-    alive_pillars_correlation = get_alive_pillars_correlation(normalized=True)
-    all_pillars_corr = get_all_pillars_correlation(normalized=True)
+    alive_pillars_correlation = get_alive_pillars_correlation()
+    all_pillars_corr = get_all_pillars_correlation()
 
     if only_alive:
         correlation = alive_pillars_correlation
     else:
         correlation = all_pillars_corr
 
-    for n1 in neighbors1.keys():
-        for n2 in neighbors1[n1]:
+    for n1 in neighbors.keys():
+        for n2 in neighbors[n1]:
             my_G.add_edge(node_loc2index[n1], node_loc2index[n2])
             try:
                 my_G[node_loc2index[n1]][node_loc2index[n2]]['weight'] = correlation[str(n1)][str(n2)]
-            except:
-                x = 1
-    for n1 in neighbors2.keys():
-        for n2 in neighbors2[n1]:
-            my_G.add_edge(node_loc2index[n1], node_loc2index[n2])
-            try:
-                my_G[node_loc2index[n1]][node_loc2index[n2]]['weight'] = correlation[str(n1)][str(n2)]
-
             except:
                 x = 1
 
@@ -761,7 +1025,7 @@ def correlation_plot(only_alive=True):
 
 def indirect_alive_neighbors_correlation_plot(pillar_location, only_alive=True):
     my_G = nx.Graph()
-    nodes_loc = find_centers()
+    nodes_loc = find_centers_with_logic()
     node_loc2index = {}
     for i in range(len(nodes_loc)):
         node_loc2index[nodes_loc[i]] = i
@@ -811,14 +1075,14 @@ def indirect_alive_neighbors_correlation_plot(pillar_location, only_alive=True):
 
 def gc_plot(gc_df, only_alive=True):
     my_G = nx.Graph().to_directed()
-    nodes_loc = find_centers()
+    nodes_loc = find_centers_with_logic()
     # neighbors1, neighbors2 = get_pillar_to_neighbors()
     node_loc2index = {}
     for i in range(len(nodes_loc)):
         node_loc2index[str(nodes_loc[i])] = i
         my_G.add_node(i)
-    alive_pillars_correlation = get_alive_pillars_correlation(normalized=True)
-    all_pillars_corr = get_all_pillars_correlation(normalized=True)
+    alive_pillars_correlation = get_alive_pillars_correlation()
+    all_pillars_corr = get_all_pillars_correlation()
 
     if only_alive:
         correlation = alive_pillars_correlation
@@ -860,7 +1124,7 @@ def get_indirect_neighbors_correlation(pillar_location, only_alive=True):
     if only_alive:
         pillars_corr = get_alive_pillars_correlation()
     else:
-        pillars_corr = get_all_pillars_correlation(normalized=True)
+        pillars_corr = get_all_pillars_correlation()
 
     pillar_directed_neighbors = get_pillar_directed_neighbors(pillar_location)
 
@@ -911,8 +1175,8 @@ def correlation_histogram(correlations_df):
     plt.show()
 
 
-def plot_pillar_time_series(pillar_location, normalized=False):
-    if normalized:
+def plot_pillar_time_series(pillar_location):
+    if _normalized:
         pillar2intens = normalized_intensities_by_mean_background_intensity()
     else:
         pillar2intens = get_pillar_to_intensities(get_images_path())
@@ -946,7 +1210,7 @@ def normalized_intensities_by_max_background_intensity():
 
 
 def normalized_intensities_by_mean_background_intensity():
-    alive_pillars = get_alive_pillars_to_intensities()
+    alive_pillars = get_alive_pillars_lst()
     all_pillars = get_pillar_to_intensities(get_images_path())
     background_pillars_intensities = {pillar: all_pillars[pillar] for pillar in all_pillars.keys() if
                                       pillar not in alive_pillars}
@@ -1006,8 +1270,8 @@ def grangers_causation_matrix(data, variables, test='ssr_chi2test'):
 
 # p2i = get_pillar_to_intensities(get_images_path())
 # p2i = normalized_intensities_by_max_background_intensity()
-p2i = get_alive_pillars_to_intensities(normalized_intensities=True)
-p2i_df = pd.DataFrame({str(k): v for k, v in p2i.items()})
+# p2i = get_alive_pillars_to_intensities(normalized_intensities=True)
+# p2i_df = pd.DataFrame({str(k): v for k, v in p2i.items()})
 # adf_test(p2i_df['(625, 740)'])
 
 # data stationary
@@ -1037,8 +1301,8 @@ p2i_df = pd.DataFrame({str(k): v for k, v in p2i.items()})
 #         continue
 
 # correlation_plot()
-gc_df = grangers_causation_matrix(p2i_df, p2i_df.columns)
-gc_plot(gc_df)
+# gc_df = grangers_causation_matrix(p2i_df, p2i_df.columns)
+# gc_plot(gc_df)
 # _, pillar_adf_p_value, _, _, _, _ = adfuller(p2i_df['(625, 740)'])
 # p2i_df_transformed = p2i_df.diff().dropna()
 # adf_test(p2i_df_transformed['(625, 740)'])
@@ -1119,3 +1383,15 @@ gc_plot(gc_df)
 # min_estimator_lag = min(estimators_lags)
 
 # x=1
+
+if __name__ == '__main__':
+    # images = get_images(get_images_path())
+    # with open('../SavedPillarsData/SavedPillarsData_06/last_image_06.npy', 'wb') as f:
+    #     np.save(f, images[-1])
+    # masks_path = PATH_MASKS_VIDEO_06_15_35
+    # build_pillars_mask(
+    #     masks_path=masks_path,
+    #     logic_centers=True
+    # )
+    # show_last_image_masked(masks_path)
+    correlation_plot(only_alive=False)

@@ -2,7 +2,6 @@ venv
 .idea/
 PreparedDatasets
 TrainedModels
-SavedPillarsData
 Pillars
 Data
 SavedCellDeathData
@@ -10,11 +9,20 @@ SavedCellDeathData/data.csv
 SavedCellDeathData/DMEM_F12-AA+400uM_FAC&BSO_rmse_results.csv
 SavedCellDeathData/FAC&BSO_PEG_rmse_results.csv
 SavedCellDeathData/FAC&BSO_rmse_results.csv
-SavedPillarsData/cropped images.npy
-SavedPillarsData/not_cropped_images_06.npy
+SavedPillarsData
+SavedPillarsData/SavedPillarsData_05/cropped images.npy
+SavedPillarsData/SavedPillarsData_05/not_cropped_images_06.npy
 not_cropped_images.npy
 Data/Pillars/New-06-Airyscan Processing-04-actin_drift_corrected_13.2.tif
 *.npy
 *.pyc
-SavedCellDeathData_06
-/SavedPillarsData_06/
+SavedCellDeathData_06/
+SavedPillarsData/SavedPillarsData_06
+SavedPillarsData/SavedPillarsData_01
+SavedPillarsData/SavedPillarsData_05
+SavedPillarsData/SavedPillarsData_20
+SavedPillarsData_06/alive_pillar_correlation.pickle
+SavedPillarsData_06/alive_pillar_correlation_normalized.pickle
+SavedPillarsData_06/background_gray_scale_pillars.pickle
+SavedPillarsData_06/pillar_to_intensities.pickle
+/SavedPillarsData/

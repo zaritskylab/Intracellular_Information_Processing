@@ -30,6 +30,9 @@ KL_DIVERGENCE = 'kl_divergence'
 
 FILE_NAME = 'File Name'
 
+
+# data video 06
+
 START_ROW_1_06_VIDEO = 49
 
 START_COL_1_06_VIDEO = 3
@@ -54,10 +57,45 @@ SMALL_MASK_RADIUS_06 = 15
 
 LARGE_MASK_RADIUS_06 = 35
 
-VIDEO_06 = '../SavedPillarsData/not_cropped_images_06.npy'
+# data video 06
 
-PATH_MASKS_VIDEO_06_15_35 = '../SavedPillarsData/pillars_mask_15_35.npy'
+LAST_IMG_VIDEO_06 = '../SavedPillarsData/SavedPillarsData_06/last_image_06.npy'
+
+PATH_MASKS_VIDEO_06_15_35 = '../SavedPillarsData/SavedPillarsData_06/pillars_mask_15_35.npy'
 
 VIDEO_06_LENGTH = 180
 
 VIDEO_06_TIF_PATH = '\\New-06-Airyscan Processing-04-actin_drift_corrected_13.2.tif'
+
+
+# data video 05
+
+VIDEO_05_TIF_PATH = '\\C1-New-05-Airyscan Processing-02_actin_drift_corrected_13.2.tif'
+
+LAST_IMG_VIDEO_05 = '../SavedPillarsData/SavedPillarsData_05/last_image_05.npy'
+
+PATH_MASKS_VIDEO_05_15_35 = '../SavedPillarsData/SavedPillarsData_05/pillars_mask_15_35.npy'
+
+
+CIRCLE_AREA = 1000
+CIRCLE_SEARCH_JUMP_SIZE = 20
+CIRCLE_ZERO_VALIDATE_SEARCH_LENGTH = 15
+CIRCLE_ONE_VALIDATE_SEARCH_LENGTH = 25
+
+
+# data video 01
+
+VIDEO_01_TIF_PATH = '\\C1-New-Airyscan Processing-01-1_actin_drift_corrected_13.2.tif'
+
+LAST_IMG_VIDEO_01 = '../SavedPillarsData/SavedPillarsData_01/last_image_01.npy'
+
+PATH_MASKS_VIDEO_01_15_35 = '../SavedPillarsData/SavedPillarsData_01/pillars_mask_15_35.npy'
+
+
+# data video 20
+
+VIDEO_20_TIF_PATH = '\\New-20-Airyscan Processing_actin_drift_corrected_13.2..tif'
+
+LAST_IMG_VIDEO_20 = '../SavedPillarsData/SavedPillarsData_20/last_image_20.npy'
+
+PATH_MASKS_VIDEO_20_15_35 = '../SavedPillarsData/SavedPillarsData_20/pillars_mask_15_35.npy'
