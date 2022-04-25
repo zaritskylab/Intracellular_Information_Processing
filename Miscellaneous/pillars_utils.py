@@ -1,10 +1,13 @@
 import math
 import pickle
+import random
+
 from pandocfilters import Math
 from skimage.filters import rank
 from skimage.filters.thresholding import threshold_mean, try_all_threshold
 from skimage.morphology import disk
 from collections import deque as queue, Counter
+from sympy.external.tests.test_scipy import scipy
 from Miscellaneous.global_parameters import *
 from skimage import io
 import matplotlib.pyplot as plt
@@ -19,15 +22,30 @@ import networkx as nx
 import seaborn as sns
 from statsmodels.tsa.stattools import adfuller, grangercausalitytests
 from statsmodels.tsa.api import VAR
+from scipy import stats
+import plotly.express as px
+from scipy.stats.stats import pearsonr
+from scipy.stats import ttest_ind
 
-_image_path = LAST_IMG_VIDEO_06
-_pillar_to_intensities_path = '../SavedPillarsData/SavedPillarsData_06/pillar_to_intensities_cached.pickle'
-_frame2pillar_path = '../SavedPillarsData/SavedPillarsData_06/frames2pillars_cached.pickle'
-_correlation_alive_normalized_path = '../SavedPillarsData/SavedPillarsData_06/alive_pillar_correlation_normalized_cached.pickle'
-_correlation_alive_not_normalized_path = '../SavedPillarsData/SavedPillarsData_06/alive_pillar_correlation_cached.pickle'
-_all_pillars_correlation_normalized_path = '../SavedPillarsData/SavedPillarsData_06/all_pillar_correlation_normalized_cached.pickle'
-_all_pillars_correlation_not_normalized_path = '../SavedPillarsData/SavedPillarsData_06/all_pillar_correlation_cached.pickle'
-_normalized = True
+_last_image_path = LAST_IMG_VIDEO_06
+_fixed_images_path = PILLARS + VIDEO_06_SUBPIXEL_FIXED_TIF_PATH
+_images_path = PILLARS + VIDEO_06_TIF_PATH
+_normalized = False
+_fixed = True
+
+# _pillar_to_intensities_path = '../SavedPillarsData/SavedPillarsData_05/pillar_to_intensities_cached.pickle'
+# _frame2pillar_path = '../SavedPillarsData/SavedPillarsData_05/frames2pillars_cached.pickle'
+# _correlation_alive_normalized_path = '../SavedPillarsData/SavedPillarsData_05/alive_pillar_correlation_normalized_cached.pickle'
+# _correlation_alive_not_normalized_path = '../SavedPillarsData/SavedPillarsData_05/alive_pillar_correlation_cached.pickle'
+# _all_pillars_correlation_normalized_path = '../SavedPillarsData/SavedPillarsData_05/all_pillar_correlation_normalized_cached.pickle'
+# _all_pillars_correlation_not_normalized_path = '../SavedPillarsData/SavedPillarsData_05/all_pillar_correlation_cached.pickle'
+
+_pillar_to_intensities_path = '../SavedPillarsData/SavedPillarsData_06/NewFixedImage/pillar_to_intensities_cached.pickle'
+_frame2pillar_path = '../SavedPillarsData/SavedPillarsData_06/NewFixedImage/frames2pillars_cached.pickle'
+_correlation_alive_normalized_path = '../SavedPillarsData/SavedPillarsData_06/NewFixedImage/alive_pillar_correlation_normalized_cached.pickle'
+_correlation_alive_not_normalized_path = '../SavedPillarsData/SavedPillarsData_06/NewFixedImage/alive_pillar_correlation_cached.pickle'
+_all_pillars_correlation_normalized_path = '../SavedPillarsData/SavedPillarsData_06/NewFixedImage/all_pillar_correlation_normalized_cached.pickle'
+_all_pillars_correlation_not_normalized_path = '../SavedPillarsData/SavedPillarsData_06/NewFixedImage/all_pillar_correlation_cached.pickle'
 
 
 # masks = []
@@ -396,19 +414,16 @@ def get_images(path):
 def get_last_image(path_to_image):
     with open(path_to_image, 'rb') as f:
         image = np.load(f)
-    kernel = np.ones((10, 10), np.uint8) / 100
-    # box_blur = cv2.filter2D(src=image[0], ddepth=-1, kernel=kernel)
-
-    # fig, ax = try_all_threshold(box_blur, figsize=(10, 8), verbose=False)
-    # plt.show()
-    # return rank.mean(image, footprint=kernel)
+    # kernel = np.ones((10, 10), np.uint8) / 100
+    # image = rank.mean(image, footprint=kernel)
     if len(image.shape) == 3:
         return image[-1]
+
     return image
 
 
 def show_last_image_masked(mask_path=PATH_MASKS_VIDEO_06_15_35):
-    last_img = get_last_image(_image_path)
+    last_img = get_last_image(_last_image_path)
     plt.imshow(last_img, cmap=plt.cm.gray)
     plt.show()
 
@@ -445,9 +460,9 @@ def build_pillars_mask(masks_path=PATH_MASKS_VIDEO_06_15_35,
 
 
 def find_centers_with_logic():
-    last_img = get_last_image(_image_path)
+    last_img = get_last_image(_last_image_path)
     alive_centers = get_alive_centers(last_img)
-    return generate_centers_from_live_centers(alive_centers, len(last_img))
+    return generate_centers_from_alive_centers(alive_centers, len(last_img))
 
 
 def get_alive_centers(img):
@@ -479,11 +494,33 @@ def get_alive_centers(img):
     return alive_centers
 
 
-def generate_centers_from_live_centers(live_centers, matrix_size):
-    return generate_centers_and_rules_from_live_centers(live_centers, matrix_size)[0]
+def generate_centers_from_alive_centers(alive_centers, matrix_size):
+    return generate_centers_and_rules_from_alive_centers(alive_centers, matrix_size)[0]
 
 
-def generate_centers_and_rules_from_live_centers(alive_centers, matrix_size):
+# def generate_neighbors(alive_centers, matrix_size):
+#     centers, rule1, rule2 = generate_centers_and_rules_from_alive_centers(alive_centers, matrix_size)
+#     centers_set = set(centers)
+#     pillar_to_neighbors = {}
+#     for center in centers:
+#         row = center[0]
+#         col = center[1]
+#         nbr1 = (row + rule1[0], col + rule1[1])
+#         nbr2 = (row - rule1[0], col - rule1[1])
+#         nbr3 = (row + rule2[0], col + rule2[1])
+#         nbr4 = (row - rule2[0], col - rule2[1])
+#         nbr5 = (row + rule1[0] + rule2[0], col + rule1[1] + rule2[1])
+#         nbr6 = (row + rule1[0] - rule2[0], col + rule1[1] - rule2[1])
+#         nbr7 = (row - rule1[0] + rule2[0], col - rule1[1] + rule2[1])
+#         nbr8 = (row - rule1[0] - rule2[0], col - rule1[1] - rule2[1])
+#         nbrs_set = {nbr1, nbr2, nbr3, nbr4, nbr5, nbr6, nbr7, nbr8}
+#         neighbors_set = centers_set.intersection(nbrs_set)
+#         pillar_to_neighbors[center] = list(neighbors_set)
+#
+#     return pillar_to_neighbors
+
+
+def generate_centers_and_rules_from_alive_centers(alive_centers, matrix_size):
     points = list(alive_centers)
     target = (matrix_size / 2, matrix_size / 2)
     closest_to_middle = min(points, key=lambda point: math.hypot(target[1] - point[1], target[0] - point[0]))
@@ -532,13 +569,68 @@ def generate_centers_and_rules_from_live_centers(alive_centers, matrix_size):
             col -= rule2[1]
     centers_in_range = [center for center in list(generated_centers) if
                         0 <= center[0] < matrix_size and 0 <= center[1] < matrix_size]
+
     return centers_in_range, rule1, rule2
 
 
+def get_alive_pillars_in_edges_to_l1_neighbors():
+    alive_pillars = get_alive_pillars_lst()
+    all_pillars = get_pillar_to_intensities(get_images_path())
+    background_pillars = [pillar for pillar in all_pillars.keys() if
+                          pillar not in alive_pillars]
+    pillar_to_neighbors = get_pillar_to_neighbors()
+    edge_pillars = set()
+    back_pillars_level_1 = set()
+    edge_pillar_to_back_nbrs_level_1 = {}
+    for pillar in all_pillars:
+        nbrs = pillar_to_neighbors[pillar]
+        if pillar in alive_pillars:
+            back_neighbors = []
+            for n in nbrs:
+                if n in background_pillars:
+                    edge_pillars.add(pillar)
+                    back_neighbors.append(n)
+                    back_pillars_level_1.add(n)
+            if len(back_neighbors) > 0:
+                edge_pillar_to_back_nbrs_level_1[pillar] = back_neighbors
+
+    return edge_pillar_to_back_nbrs_level_1, list(edge_pillars), list(back_pillars_level_1)
+
+
+def get_background_level_1_to_level_2():
+    _, _, back_pillars_level_1 = get_alive_pillars_in_edges_to_l1_neighbors()
+    pillar_to_neighbors = get_pillar_to_neighbors()
+    alive_pillars = get_alive_pillars_lst()
+    all_pillars = get_pillar_to_intensities(get_images_path())
+    background_pillars = [pillar for pillar in all_pillars.keys() if
+                          pillar not in alive_pillars]
+    back_pillars_l1_to_l2 = {}
+    for pillar_l1 in back_pillars_level_1:
+        back_pillars_level_2 = []
+        for n in pillar_to_neighbors[pillar_l1]:
+            if n in background_pillars and n not in back_pillars_level_1:
+                back_pillars_level_2.append(n)
+        if len(back_pillars_level_2) > 0:
+            back_pillars_l1_to_l2[pillar_l1] = back_pillars_level_2
+
+    return back_pillars_l1_to_l2
+
+
+def get_correlations_between_pillars(pillar_to_pillars_dict):
+    all_corr = get_all_pillars_correlation()
+
+    correlations = []
+    for pillar, nbrs in pillar_to_pillars_dict.items():
+        for n in nbrs:
+            correlations.append(all_corr[str(pillar)][str(n)])
+
+    return correlations
+
+
 def get_pillar_to_neighbors():
-    last_img = get_last_image(_image_path)
+    last_img = get_last_image(_last_image_path)
     alive_centers = get_alive_centers(last_img)
-    centers_lst, rule_jump_1, rule_jump_2 = generate_centers_and_rules_from_live_centers(alive_centers, len(last_img))
+    centers_lst, rule_jump_1, rule_jump_2 = generate_centers_and_rules_from_alive_centers(alive_centers, len(last_img))
     pillar_to_neighbors = {}
     for p in centers_lst:
         neighbors_lst = set()
@@ -655,6 +747,8 @@ def get_pillar_to_intensities(path):
         curr_pillar_intensity = []
         # curr_pillar_masked_frames = []
         for frame in images:
+            # kernel = np.ones((10, 10), np.uint8) / 100
+            # frame_filtered = rank.mean(frame, footprint=kernel)
             frame_masked = np.where(pillar_mask, frame, 0)
             curr_pillar_intensity.append(np.sum(frame_masked))
             # curr_pillar_masked_frames.append(frame_masked)
@@ -758,7 +852,10 @@ def get_frame_to_graph():
 
 
 def get_images_path():
-    return PILLARS + VIDEO_06_TIF_PATH
+    if _fixed:
+        return _fixed_images_path
+    else:
+        return _images_path
 
 
 def intensity_histogram():
@@ -976,17 +1073,32 @@ def get_all_pillars_corr_path():
 #     plt.show()
 #     x = 1
 
-def correlation_plot(only_alive=True):
+def correlation_plot(only_alive=True, neighbors_str='all', alive_correlation_type='all'):
     my_G = nx.Graph()
-    last_img = get_last_image(_image_path)
+    last_img = get_last_image(_last_image_path)
     alive_centers = get_alive_centers(last_img)
-    nodes_loc = generate_centers_from_live_centers(alive_centers, len(last_img))
-    neighbors = get_pillar_to_neighbors()
+    nodes_loc = generate_centers_from_alive_centers(alive_centers, len(last_img))
+    if neighbors_str == 'alive2back':
+        neighbors = get_alive_pillars_in_edges_to_l1_neighbors()[0]
+    elif neighbors_str == 'back2back':
+        neighbors = get_background_level_1_to_level_2()
+    elif neighbors_str == 'random':
+        neighbors = get_random_neighbors()
+    else:
+        neighbors = get_pillar_to_neighbors()
+
     node_loc2index = {}
     for i in range(len(nodes_loc)):
         node_loc2index[nodes_loc[i]] = i
         my_G.add_node(i)
-    alive_pillars_correlation = get_alive_pillars_correlation()
+
+    if alive_correlation_type == 'all':
+        alive_pillars_correlation = get_alive_pillars_correlation()
+    elif alive_correlation_type == 'symmetric':
+        alive_pillars_correlation = alive_pillars_symmetric_correlation()
+    elif alive_correlation_type == 'asymmetric':
+        alive_pillars_correlation = alive_pillars_asymmetric_correlation()
+        my_G = my_G.to_directed()
     all_pillars_corr = get_all_pillars_correlation()
 
     if only_alive:
@@ -1073,7 +1185,7 @@ def indirect_alive_neighbors_correlation_plot(pillar_location, only_alive=True):
     x = 1
 
 
-def gc_plot(gc_df, only_alive=True):
+def build_directed_graph(gc_df, only_alive=True):
     my_G = nx.Graph().to_directed()
     nodes_loc = find_centers_with_logic()
     # neighbors1, neighbors2 = get_pillar_to_neighbors()
@@ -1081,8 +1193,10 @@ def gc_plot(gc_df, only_alive=True):
     for i in range(len(nodes_loc)):
         node_loc2index[str(nodes_loc[i])] = i
         my_G.add_node(i)
-    alive_pillars_correlation = get_alive_pillars_correlation()
+    # alive_pillars_correlation = get_alive_pillars_correlation()
+    alive_pillars_correlation = alive_pillars_symmetric_correlation()
     all_pillars_corr = get_all_pillars_correlation()
+    neighbors = get_pillar_to_neighbors()
 
     if only_alive:
         correlation = alive_pillars_correlation
@@ -1091,7 +1205,7 @@ def gc_plot(gc_df, only_alive=True):
 
     for col in gc_df.keys():
         for row, _ in gc_df.iterrows():
-            if gc_df[col][row] < 0.05:
+            if gc_df[col][row] < 0.05 and eval(row) in neighbors[eval(col)]:
                 my_G.add_edge(node_loc2index[col], node_loc2index[row])
                 try:
                     my_G[node_loc2index[col]][node_loc2index[row]]['weight'] = correlation[col][row]
@@ -1111,11 +1225,10 @@ def gc_plot(gc_df, only_alive=True):
 
     edges, weights = zip(*nx.get_edge_attributes(my_G, 'weight').items())
     # edges = list(filter(lambda x: x[0] == 52, edges))
-    nx.draw(my_G, nodes_loc_y_inverse, with_labels=True, node_color='gray', edgelist=edges, edge_color=weights,
+    nx.draw(my_G, nodes_loc_y_inverse, with_labels=True, node_color='gray', edgelist=edges, edge_color="tab:red",
             width=3.0,
-            edge_cmap=cmap,
             node_size=nodes_index2size)
-    plt.colorbar(sm)
+    # plt.colorbar(sm)
     plt.show()
     x = 1
 
@@ -1170,24 +1283,37 @@ def correlation_histogram(correlations_df):
             if i != j:
                 corr.add(correlations[i][j])
     corr_array = np.array(list(corr))
+    mean_corr = np.mean(corr_array)
     ax = sns.histplot(data=corr_array, kde=True)
     plt.xlabel("Correlation")
     plt.show()
 
+    return mean_corr
 
-def plot_pillar_time_series(pillar_location):
+
+def plot_pillar_time_series():
     if _normalized:
         pillar2intens = normalized_intensities_by_mean_background_intensity()
+        # pillar2intens = normalized_intensities_by_zscore()
     else:
         pillar2intens = get_pillar_to_intensities(get_images_path())
-    pillar_loc = pillar_location
-    intensities = pillar2intens[pillar_loc]
-    x = [i * 19.87 for i in range(len(intensities))]
-    intensities = [i * 0.0519938 for i in intensities]
-    plt.plot(x, intensities)
+
+    intensities_1 = pillar2intens[(588, 669)]
+    intensities_2 = pillar2intens[(472, 603)]
+    # intensities_3 = pillar2intens[(94, 172)]
+    x = [i * 19.87 for i in range(len(intensities_1))]
+    intensities_1 = [i * 0.0519938 for i in intensities_1]
+    intensities_2 = [i * 0.0519938 for i in intensities_2]
+    # intensities_3 = [i * 0.0519938 for i in intensities_3]
+    plt.plot(x, intensities_1, label='(588, 669)')
+    plt.plot(x, intensities_2, label='(472, 603)')
+    # plt.plot(x, intensities_3, label='(94, 172)')
+
+    # plt.plot(x, intensities)
     plt.xlabel('Time (sec)')
     plt.ylabel('Intensity (micron)')
-    plt.title('Pillar ' + str(pillar_loc))
+    # plt.title('Pillar ' + str(pillar_loc))
+    plt.legend()
     plt.show()
 
 
@@ -1223,6 +1349,78 @@ def normalized_intensities_by_mean_background_intensity():
             all_pillars[pillar_item[0]][i] = sub_int
 
     return all_pillars
+
+
+def normalized_intensities_by_zscore():
+    all_pillars = get_pillar_to_intensities(get_images_path())
+    all_pillars_int_lst = list(all_pillars.values())
+    all_pillars_zscore_int = stats.zscore(all_pillars_int_lst, axis=1)
+
+    for i, pillar_item in enumerate(all_pillars.items()):
+        for j, intensity in enumerate(pillar_item[1]):
+            all_pillars[pillar_item[0]][j] = all_pillars_zscore_int[i][j]
+
+    return all_pillars
+
+
+def get_alive_pillars_to_alive_neighbors():
+    pillar_to_neighbors = get_pillar_to_neighbors()
+    alive_pillars = get_alive_pillars_lst()
+    alive_pillars_to_alive_neighbors = {}
+    for p, nbrs in pillar_to_neighbors.items():
+        if p in alive_pillars:
+            alive_nbrs = []
+            for nbr in nbrs:
+                if nbr in alive_pillars:
+                    alive_nbrs.append(nbr)
+            alive_pillars_to_alive_neighbors[p] = alive_nbrs
+
+    return alive_pillars_to_alive_neighbors
+
+
+def get_random_neighbors():
+    pillar_to_nbrs = get_alive_pillars_to_alive_neighbors()
+    alive_pillars = list(pillar_to_nbrs.keys())
+    new_neighbors_dict = {}
+
+    for pillar, nbrs in pillar_to_nbrs.items():
+        num_of_nbrs = len(nbrs)
+        if pillar in new_neighbors_dict.keys():
+            num_of_nbrs = num_of_nbrs - len(new_neighbors_dict[pillar])
+        relevant_pillars = alive_pillars
+        relevant_pillars = [p for p in relevant_pillars if p not in nbrs and p != pillar]
+        new_nbrs = []
+        for i in range(num_of_nbrs):
+            new_nbr = random.choice(relevant_pillars)
+            new_nbrs.append(new_nbr)
+            if new_nbr in new_neighbors_dict.keys():
+                new_neighbors_dict[new_nbr].append(pillar)
+            else:
+                new_neighbors_dict[new_nbr] = [pillar]
+            relevant_pillars.remove(new_nbr)
+        new_neighbors_dict[pillar] = new_nbrs
+
+    return new_neighbors_dict
+
+
+def neighbors_correlation_histogram(correlations_df, neighbors_dict, symmetric_corr=False):
+    sym_corr = set()
+    asym_corr = []
+    for pillar, nbrs in neighbors_dict.items():
+        for nbr in nbrs:
+            if symmetric_corr:
+                sym_corr.add(correlations_df[str(pillar)][str(nbr)])
+            else:
+                asym_corr.append(correlations_df[str(pillar)][str(nbr)])
+    if symmetric_corr:
+        corr = np.array(list(sym_corr))
+    else:
+        corr = asym_corr
+    mean_corr = np.mean(corr)
+    # ax = sns.histplot(data=corr, kde=True)
+    # plt.xlabel("Correlation")
+    # plt.show()
+    return mean_corr
 
 
 # correlation_plot(only_alive=False)
@@ -1384,14 +1582,234 @@ def grangers_causation_matrix(data, variables, test='ssr_chi2test'):
 
 # x=1
 
+
+def alive_pillars_symmetric_correlation():
+    frame_to_pillars = get_frame_to_alive_pillars()
+    pillar_to_frame = {}
+    for k, v_lst in frame_to_pillars.items():
+        for item in v_lst:
+            if item not in pillar_to_frame:
+                pillar_to_frame[item] = k
+
+    alive_pillars_intens = get_alive_pillars_to_intensities()
+    alive_pillars = list(alive_pillars_intens.keys())
+    alive_pillars_str = [str(p) for p in alive_pillars]
+    pillars_corr = pd.DataFrame(0, index=alive_pillars_str, columns=alive_pillars_str)
+
+    # Symmetric correlation - calc correlation of 2 pillars start from the frame they are both alive: maxFrame(A, B)
+    for p1 in alive_pillars:
+        p1_living_frame = pillar_to_frame[p1]
+        for p2 in alive_pillars:
+            p2_living_frame = pillar_to_frame[p2]
+            both_alive_frame = max(p1_living_frame, p2_living_frame)
+            p1_relevant_intens = alive_pillars_intens[p1][both_alive_frame - 1:]
+            p2_relevant_intens = alive_pillars_intens[p2][both_alive_frame - 1:]
+            pillars_corr.loc[str(p2), str(p1)] = pearsonr(p1_relevant_intens, p2_relevant_intens)[0]
+
+    return pillars_corr
+
+
+def alive_pillars_asymmetric_correlation():
+    frame_to_pillars = get_frame_to_alive_pillars()
+    pillar_to_frame = {}
+    for k, v_lst in frame_to_pillars.items():
+        for item in v_lst:
+            if item not in pillar_to_frame:
+                pillar_to_frame[item] = k
+
+    alive_pillars_intens = get_alive_pillars_to_intensities()
+    alive_pillars = list(alive_pillars_intens.keys())
+    alive_pillars_str = [str(p) for p in alive_pillars]
+    pillars_corr = pd.DataFrame(0, index=alive_pillars_str, columns=alive_pillars_str)
+
+    # Asymmetric correlation - calc correlation with every pillar start from the frame p1 is alive
+    for p1 in alive_pillars:
+        alive_from_frame = pillar_to_frame[p1]
+        p1_relevant_intens = alive_pillars_intens[p1][alive_from_frame - 1:]
+        for p2 in alive_pillars:
+            p2_relevant_intens = alive_pillars_intens[p2][alive_from_frame - 1:]
+            pillars_corr.loc[str(p2), str(p1)] = pearsonr(p1_relevant_intens, p2_relevant_intens)[0]
+
+    return pillars_corr
+
+
 if __name__ == '__main__':
     # images = get_images(get_images_path())
-    # with open('../SavedPillarsData/SavedPillarsData_06/last_image_06.npy', 'wb') as f:
+    # with open('../SavedPillarsData/SavedPillarsData_06/NewFixedImage/last_image_06.npy', 'wb') as f:
     #     np.save(f, images[-1])
-    # masks_path = PATH_MASKS_VIDEO_06_15_35
+    # masks_path = PATH_MASKS_VIDEO_01_15_35
     # build_pillars_mask(
     #     masks_path=masks_path,
     #     logic_centers=True
     # )
     # show_last_image_masked(masks_path)
-    correlation_plot(only_alive=False)
+    correlation_plot(only_alive=True, neighbors_str='all', alive_correlation_type='symmetric')
+    correlation_histogram(get_all_pillars_correlation())
+    mean_corr = correlation_histogram(alive_pillars_asymmetric_correlation())
+    plot_pillar_time_series()
+    means = []
+    rand = []
+    mean_original_nbrs = neighbors_correlation_histogram(alive_pillars_asymmetric_correlation(),
+                                                         get_alive_pillars_to_alive_neighbors(), symmetric_corr=False)
+    for i in range(2):
+        mean_random_nbrs = neighbors_correlation_histogram(alive_pillars_asymmetric_correlation(),
+                                                           get_random_neighbors(), symmetric_corr=False)
+        means.append(mean_random_nbrs)
+        rand.append('random' + str(i + 1))
+    means.append(mean_original_nbrs)
+    rand.append('original')
+    fig, ax = plt.subplots()
+    ax.scatter(rand, means)
+    plt.ylabel('Average Correlation')
+    plt.xticks(rotation=45)
+    plt.show()
+
+    edge_to_l1, _, _ = get_alive_pillars_in_edges_to_l1_neighbors()
+    back_l1_l2 = get_background_level_1_to_level_2()
+    corr_alive_edge_to_back_l1 = get_correlations_between_pillars(edge_to_l1)
+    corr_back2back = get_correlations_between_pillars(back_l1_l2)
+    ax = sns.histplot(data=corr_alive_edge_to_back_l1, kde=True)
+    plt.xlabel("Correlation alive on edge to back level1")
+    plt.show()
+    ax = sns.histplot(data=corr_back2back, kde=True)
+    plt.xlabel("Correlation back level1 to back level2")
+    plt.show()
+    x = 1
+
+    # images = get_images(get_images_path())
+    # fixed_images = get_images(PILLARS + '\\FixedImages\\new_fixed_05.tif')
+    # for i in range(len(images)):
+    #     t = images[i]
+    #     t_1 = images[i+1]
+    #     t_fixed = fixed_images[i]
+    #     t_1_fixes = fixed_images[i+1]
+    #
+    #     original_sub = t_1 - t
+    #     fixed_sub = t_1_fixes - t_fixed
+    #
+    #     if np.mean(np.square(original_sub)) != np.mean(np.square(fixed_sub)):
+    #         x=1
+    #     plt.imshow(original_sub, cmap=plt.cm.gray)
+    #     plt.imshow(fixed_sub, cmap=plt.cm.gray)
+    #     plt.show()
+
+    alive_pillars = get_alive_pillars_to_intensities()
+    alive_pillars_first_frame = get_frame_to_alive_pillars()[1]
+    all_pillars = get_pillar_to_intensities(get_images_path())
+    background_pillars_intensities = {pillar: all_pillars[pillar] for pillar in all_pillars.keys() if
+                                      pillar not in alive_pillars}
+    alive_pillars_first_frame_intens = {pillar: all_pillars[pillar] for pillar in alive_pillars.keys() if
+                                        pillar in alive_pillars_first_frame}
+
+    alive_pillars_df = pd.DataFrame({str(k): v for k, v in alive_pillars_first_frame_intens.items()})
+    alive_pillars_corr = alive_pillars_df.corr()
+
+    pillars = {}
+    if _normalized:
+        all_pillars_to_intens = normalized_intensities_by_mean_background_intensity()
+    else:
+        all_pillars_to_intens = get_pillar_to_intensities(get_images_path())
+
+    for p in list(background_pillars_intensities.keys()):
+        pillars[p] = all_pillars_to_intens[p]
+    for p in list(alive_pillars_first_frame_intens.keys()):
+        pillars[p] = all_pillars_to_intens[p]
+
+    pillar_intensity_df = pd.DataFrame({str(k): v for k, v in pillars.items()})
+    pillars_corr = pillar_intensity_df.corr()
+
+    alive_back_corr = []
+    for p in pillars_corr.columns:
+        for p2 in pillars_corr:
+            if (eval(p) in background_pillars_intensities and eval(p2) in background_pillars_intensities) or (
+                    eval(p) in alive_pillars_first_frame and eval(p2) in alive_pillars_first_frame):
+                continue
+            else:
+                alive_back_corr.append(pillars_corr[p][p2])
+
+    alive_pillars_unique_corr = alive_pillars_corr.stack().loc[
+        lambda x: x.index.get_level_values(0) < x.index.get_level_values(1)]
+    alive_pillars_unique_corr.index = alive_pillars_unique_corr.index.map('_'.join)
+    alive_pillars_unique_corr = alive_pillars_unique_corr.to_frame().T
+    alive_pillars_unique_corr_lst = alive_pillars_unique_corr.transpose()[0].tolist()
+    t_alive2alive_and_alive2back, p_alive2alive_and_alive2back = ttest_ind(alive_pillars_unique_corr_lst,
+                                                                           alive_back_corr, equal_var=False)
+    t_alive2alive_and_edge2l1, p_alive2alive_and_edge2l1 = ttest_ind(alive_pillars_unique_corr_lst,
+                                                                     corr_alive_edge_to_back_l1,
+                                                                     equal_var=False)
+    t_alive2back_and_edge2l1, p_alive2back_and_edge2l1 = ttest_ind(alive_back_corr, corr_alive_edge_to_back_l1,
+                                                                   equal_var=False)
+
+    back_pillars1 = [(70, 617), (9, 663), (36, 891), (97, 845), (36, 891), (0, 587), (106, 921)]
+    back_pillars2 = [(77, 115), (86, 191), (147, 145), (217, 175), (25, 237), (95, 267)]
+    back_pillars3 = [(700, 887), (831, 871), (892, 825), (944, 703), (840, 947), (910, 977)]
+    back_pillars4 = [(741, 111), (881, 171), (863, 19), (890, 247), (994, 3)]
+    alive_pillars = [(341, 661), (567, 325), (375, 387)]
+
+    bp_list = [back_pillars1, back_pillars2, back_pillars3, back_pillars4, alive_pillars]
+    pillars = {}
+    if _normalized:
+        all_pillars_to_intens = normalized_intensities_by_mean_background_intensity()
+    else:
+        all_pillars_to_intens = get_pillar_to_intensities(get_images_path())
+    bp_dict = {}
+    for i, bp in enumerate(bp_list):
+        lst = []
+        for p in bp:
+            lst.append(all_pillars_to_intens[p])
+            bp_dict[i] = lst
+
+    for i in range(len(bp_list)):
+        bp_dict[i] = [np.mean(elts) for elts in zip(*bp_dict[i])]
+
+    x = [i * 31.38 for i in range(len(bp_dict[0]))]
+    plt.plot(bp_dict[0])
+    plt.plot(bp_dict[1])
+    plt.plot(bp_dict[2])
+    plt.plot(bp_dict[3])
+    plt.plot(bp_dict[4])
+    plt.xlabel('Time (sec)')
+    plt.ylabel('Intensity')
+    plt.legend()
+    plt.show()
+    x = 1
+
+    # back_pillars = [(70, 617), (9, 663), (36, 891), (97, 845), (36, 891), (0, 587), (106, 921)]
+    # back_pillars = [(77, 115), (86, 191), (147, 145), (217, 175), (25, 237), (95, 267)]
+    # back_pillars = [(700, 887), (831, 871), (892, 825), (944, 703), (840, 947), (910, 977)]
+    back_pillars = [(741, 111), (881, 171), (863, 19), (890, 247), (994, 3)]
+
+    alive_pillars = [(341, 661), (567, 325), (375, 387)]
+    pillars = {}
+    if _normalized:
+        all_pillars_to_intens = normalized_intensities_by_mean_background_intensity()
+    else:
+        all_pillars_to_intens = get_pillar_to_intensities(get_images_path())
+
+    for p in back_pillars:
+        pillars[p] = all_pillars_to_intens[p]
+    for p in alive_pillars:
+        pillars[p] = all_pillars_to_intens[p]
+
+    # # x = [i * 19.87 for i in range(len(intensities_1))]
+    # x = [i for i in range(len(images))]
+    # plt.plot(x, avg1)
+    # plt.plot(x, avg2)
+    # plt.plot(x, avg3)
+    # plt.plot(x, avg4)
+    # plt.legend()
+    # plt.show()
+
+    # pillar_intensity_df = pd.DataFrame({str(k): v for k, v in pillars.items()})
+    # pillars_corr = pillar_intensity_df.corr()
+    #
+    # p_corr1 = pillars_corr[str(alive_pillars[0])].drop(['(341, 661)', '(567, 325)', '(375, 387)'])
+    # p_corr2 = pillars_corr[str(alive_pillars[1])].drop(['(341, 661)', '(567, 325)', '(375, 387)'])
+    # p_corr3 = pillars_corr[str(alive_pillars[2])].drop(['(341, 661)', '(567, 325)', '(375, 387)'])
+    # plt.plot(p_corr1, label='(341, 661)')
+    # plt.plot(p_corr2, label='(567, 325)')
+    # plt.plot(p_corr3, label='(375, 387)')
+    # plt.xlabel('Back Pillars')
+    # plt.ylabel('Correlation')
+    # plt.legend()
+    # plt.show()
