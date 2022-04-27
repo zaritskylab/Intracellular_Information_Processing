@@ -1,9 +1,9 @@
-import numpy as np
-from Miscellaneous.pillars_utils import *
+from Miscellaneous.analyzer import *
+import networkx as nx
+import seaborn as sns
+from Miscellaneous.consts import *
+from Miscellaneous.pillar_neighbors import *
 
-
-_last_image_path = LAST_IMG_VIDEO_06
-_normalized = False
 
 def show_last_image_masked(mask_path=PATH_MASKS_VIDEO_06_15_35):
     """
@@ -11,7 +11,7 @@ def show_last_image_masked(mask_path=PATH_MASKS_VIDEO_06_15_35):
     :param mask_path:
     :return:
     """
-    last_img = get_last_image(_last_image_path)
+    last_img = get_last_image(last_image_path)
     plt.imshow(last_img, cmap=plt.cm.gray)
     plt.show()
 
@@ -63,8 +63,9 @@ def indirect_alive_neighbors_correlation_plot(pillar_location, only_alive=True):
     :param only_alive:
     :return:
     """
+
     my_G = nx.Graph()
-    nodes_loc = find_centers_with_logic()
+    nodes_loc = find_centers_with_logic(last_image_path)
     node_loc2index = {}
     for i in range(len(nodes_loc)):
         node_loc2index[nodes_loc[i]] = i
@@ -95,7 +96,8 @@ def indirect_alive_neighbors_correlation_plot(pillar_location, only_alive=True):
 
     cmap = plt.cm.seismic
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=-1, vmax=1))
-    frame2pillars = get_frame_to_alive_pillars()
+    pillar2mask = get_mask_for_each_pillar()
+    frame2pillars = get_frame_to_alive_pillars(pillar2mask)
     nodes_index2size = [10] * len(nodes_loc)
     for node in nodes_loc:
         for i in range(len(frame2pillars)):
@@ -111,7 +113,9 @@ def indirect_alive_neighbors_correlation_plot(pillar_location, only_alive=True):
     plt.show()
 
 
-def correlation_plot(only_alive=True, neighbors_str='all', alive_correlation_type='all'):
+def correlation_plot(only_alive=True,
+                     neighbors_str='all',
+                     alive_correlation_type='all'):
     """
     Plotting graph of correlation between neighboring pillars
     Each point represent pillar in its exact position in the image, and the size of each point represent how many
@@ -122,7 +126,7 @@ def correlation_plot(only_alive=True, neighbors_str='all', alive_correlation_typ
     :return:
     """
     my_G = nx.Graph()
-    last_img = get_last_image(_last_image_path)
+    last_img = get_last_image(last_image_path)
     alive_centers = get_alive_centers(last_img)
     nodes_loc = generate_centers_from_alive_centers(alive_centers, len(last_img))
     if neighbors_str == 'alive2back':
@@ -164,7 +168,8 @@ def correlation_plot(only_alive=True, neighbors_str='all', alive_correlation_typ
     edges, weights = zip(*nx.get_edge_attributes(my_G, 'weight').items())
     cmap = plt.cm.seismic
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=-1, vmax=1))
-    frame2pillars = get_frame_to_alive_pillars()
+    pillar2mask = get_mask_for_each_pillar()
+    frame2pillars = get_frame_to_alive_pillars(pillar2mask)
     nodes_index2size = [10] * len(nodes_loc)
     for node in nodes_loc:
         for i in range(len(frame2pillars)):
@@ -190,7 +195,7 @@ def build_gc_directed_graph(gc_df, only_alive=True):
     :return:
     """
     my_G = nx.Graph().to_directed()
-    nodes_loc = find_centers_with_logic()
+    nodes_loc = find_centers_with_logic(last_image_path)
     # neighbors1, neighbors2 = get_pillar_to_neighbors()
     node_loc2index = {}
     for i in range(len(nodes_loc)):
@@ -217,7 +222,9 @@ def build_gc_directed_graph(gc_df, only_alive=True):
 
     cmap = plt.cm.seismic
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=-1, vmax=1))
-    frame2pillars = get_frame_to_alive_pillars()
+
+    pillar2mask = get_mask_for_each_pillar()
+    frame2pillars = get_frame_to_alive_pillars(pillar2mask)
     nodes_index2size = [10] * len(nodes_loc)
     for node in nodes_loc:
         for i in range(len(frame2pillars)):
@@ -261,7 +268,7 @@ def plot_pillar_time_series():
     Plotting a time series graph of the pillar intensity over time
     :return:
     """
-    if _normalized:
+    if normalized:
         pillar2intens = normalized_intensities_by_mean_background_intensity()
     else:
         pillar2intens = get_pillar_to_intensities(get_images_path())

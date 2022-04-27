@@ -1,8 +1,5 @@
-from Miscellaneous.pillars_utils import *
-
-
-_last_image_path = LAST_IMG_VIDEO_06
-
+from Miscellaneous.pillars_mask import *
+import random
 
 
 def get_alive_pillars_in_edges_to_l1_neighbors():
@@ -11,9 +8,10 @@ def get_alive_pillars_in_edges_to_l1_neighbors():
     :return: dictionary mapping the alive pillars to their background neighbors, list of the alive pillars in the edges,
             list of the level one background pillars
     """
-    alive_pillars = get_alive_pillars_lst()
-    all_pillars = get_pillar_to_intensities(get_images_path())
-    background_pillars = [pillar for pillar in all_pillars.keys() if
+    pillar2mask = get_mask_for_each_pillar()
+    alive_pillars = get_alive_pillars_lst(pillar2mask)
+    all_pillars = pillar2mask.keys()
+    background_pillars = [pillar for pillar in all_pillars if
                           pillar not in alive_pillars]
     pillar_to_neighbors = get_pillar_to_neighbors()
     edge_pillars = set()
@@ -41,9 +39,10 @@ def get_background_level_1_to_level_2():
     """
     _, _, back_pillars_level_1 = get_alive_pillars_in_edges_to_l1_neighbors()
     pillar_to_neighbors = get_pillar_to_neighbors()
-    alive_pillars = get_alive_pillars_lst()
-    all_pillars = get_pillar_to_intensities(get_images_path())
-    background_pillars = [pillar for pillar in all_pillars.keys() if
+    pillar2mask = get_mask_for_each_pillar()
+    alive_pillars = get_alive_pillars_lst(pillar2mask)
+    all_pillars = pillar2mask.keys()
+    background_pillars = [pillar for pillar in all_pillars if
                           pillar not in alive_pillars]
     back_pillars_l1_to_l2 = {}
     for pillar_l1 in back_pillars_level_1:
@@ -62,7 +61,7 @@ def get_pillar_to_neighbors():
     Mapping each pillar to its neighbors
     :return:
     """
-    last_img = get_last_image(_last_image_path)
+    last_img = get_last_image(last_image_path)
     alive_centers = get_alive_centers(last_img)
     centers_lst, rule_jump_1, rule_jump_2 = generate_centers_and_rules_from_alive_centers(alive_centers, len(last_img))
     pillar_to_neighbors = {}
@@ -106,30 +105,6 @@ def get_pillar_to_neighbors():
     return pillar_to_neighbors
 
 
-def get_indirect_neighbors_correlation(pillar_location, only_alive=True):
-    """
-    Create dataframe of correlation between pillar and its indirect neighbors (start from neighbors level 2)
-    :param pillar_location:
-    :param only_alive:
-    :return:
-    """
-    if only_alive:
-        pillars_corr = get_alive_pillars_correlation()
-    else:
-        pillars_corr = get_all_pillars_correlation()
-
-    pillar_directed_neighbors = get_pillar_directed_neighbors(pillar_location)
-
-    pillar_directed_neighbors_str = []
-    for tup in pillar_directed_neighbors:
-        if tup != pillar_location:
-            pillar_directed_neighbors_str.append(str(tup))
-    pillars_corr = pillars_corr.drop(pillar_directed_neighbors_str, axis=0)
-    pillars_corr = pillars_corr.drop(pillar_directed_neighbors_str, axis=1)
-
-    return pillars_corr
-
-
 def get_pillar_indirect_neighbors_dict(pillar_location):
     """
     Mapping pillar to its indirect neighbors (start from level 2 neighbors)
@@ -170,7 +145,8 @@ def get_alive_pillars_to_alive_neighbors():
     :return:
     """
     pillar_to_neighbors = get_pillar_to_neighbors()
-    alive_pillars = get_alive_pillars_lst()
+    pillar2mask = get_mask_for_each_pillar()
+    alive_pillars = get_alive_pillars_lst(pillar2mask)
     alive_pillars_to_alive_neighbors = {}
     for p, nbrs in pillar_to_neighbors.items():
         if p in alive_pillars:

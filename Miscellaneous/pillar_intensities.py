@@ -1,11 +1,7 @@
-import os
+from Miscellaneous.pillars_mask import *
+from Miscellaneous.consts import *
 import pickle
-import numpy as np
-
-
-
-_pillar_to_intensities_path = '../SavedPillarsData/SavedPillarsData_06/NewFixedImage/pillar_to_intensities_cached.pickle'
-_normalized = False
+from scipy import stats
 
 
 def get_pillar_to_intensities(path):
@@ -14,8 +10,8 @@ def get_pillar_to_intensities(path):
     :param path:
     :return:
     """
-    if os.path.isfile(_pillar_to_intensities_path):
-        with open(_pillar_to_intensities_path, 'rb') as handle:
+    if os.path.isfile(pillar_to_intensities_path):
+        with open(pillar_to_intensities_path, 'rb') as handle:
             pillar2frame_intensity = pickle.load(handle)
             return pillar2frame_intensity
 
@@ -39,7 +35,7 @@ def get_pillar_to_intensities(path):
         # pillar2frames[pillar_id] = curr_pillar_masked_frames
         pillar2frame_intensity[pillar_id] = curr_pillar_intensity
 
-    with open(_pillar_to_intensities_path, 'wb') as handle:
+    with open(pillar_to_intensities_path, 'wb') as handle:
         pickle.dump(pillar2frame_intensity, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     return pillar2frame_intensity
@@ -50,12 +46,13 @@ def get_alive_pillars_to_intensities():
     Mapping only alive pillars to theirs intensity in every frame
     :return:
     """
-    if _normalized:
+    if normalized:
         pillar_intensity_dict = normalized_intensities_by_mean_background_intensity()
     else:
         pillar_intensity_dict = get_pillar_to_intensities(get_images_path())
 
-    alive_pillars = get_alive_pillars_lst()
+    pillar2mask = get_mask_for_each_pillar()
+    alive_pillars = get_alive_pillars_lst(pillar2mask)
 
     alive_pillars_dict = {pillar: pillar_intensity_dict[pillar] for pillar in alive_pillars}
 
@@ -89,7 +86,8 @@ def normalized_intensities_by_mean_background_intensity():
     Normalization of pillars intensities by the mean intensity of the background
     :return:
     """
-    alive_pillars = get_alive_pillars_lst()
+    pillar2mask = get_mask_for_each_pillar()
+    alive_pillars = get_alive_pillars_lst(pillar2mask)
     all_pillars = get_pillar_to_intensities(get_images_path())
     background_pillars_intensities = {pillar: all_pillars[pillar] for pillar in all_pillars.keys() if
                                       pillar not in alive_pillars}

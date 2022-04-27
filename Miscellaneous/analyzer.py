@@ -1,12 +1,14 @@
 import os
 import pickle
 
+from scipy.stats import pearsonr
 
-_correlation_alive_normalized_path = '../SavedPillarsData/SavedPillarsData_06/NewFixedImage/alive_pillar_correlation_normalized_cached.pickle'
-_correlation_alive_not_normalized_path = '../SavedPillarsData/SavedPillarsData_06/NewFixedImage/alive_pillar_correlation_cached.pickle'
-_all_pillars_correlation_normalized_path = '../SavedPillarsData/SavedPillarsData_06/NewFixedImage/all_pillar_correlation_normalized_cached.pickle'
-_all_pillars_correlation_not_normalized_path = '../SavedPillarsData/SavedPillarsData_06/NewFixedImage/all_pillar_correlation_cached.pickle'
-_normalized = False
+from Miscellaneous.pillar_intensities import *
+from Miscellaneous.pillars_utils import *
+from Miscellaneous.pillar_neighbors import *
+from Miscellaneous.consts import *
+import pandas as pd
+
 
 
 def get_correlations_between_neighboring_pillars(pillar_to_pillars_dict):
@@ -53,10 +55,10 @@ def get_alive_pillars_corr_path():
     Get the cached correlation of alive pillars
     :return:
     """
-    if _normalized:
-        path = _correlation_alive_normalized_path
+    if normalized:
+        path = correlation_alive_normalized_path
     else:
-        path = _correlation_alive_not_normalized_path
+        path = correlation_alive_not_normalized_path
 
     return path
 
@@ -73,7 +75,7 @@ def get_all_pillars_correlation():
             correlation = pickle.load(handle)
             return correlation
 
-    if _normalized:
+    if normalized:
         pillar_intensity_dict = normalized_intensities_by_mean_background_intensity()
     else:
         pillar_intensity_dict = get_pillar_to_intensities(get_images_path())
@@ -92,10 +94,10 @@ def get_all_pillars_corr_path():
     Get the cached correlation of all pillars
     :return:
     """
-    if _normalized:
-        path = _all_pillars_correlation_normalized_path
+    if normalized:
+        path = all_pillars_correlation_normalized_path
     else:
-        path = _all_pillars_correlation_not_normalized_path
+        path = all_pillars_correlation_not_normalized_path
 
     return path
 
@@ -106,7 +108,8 @@ def alive_pillars_symmetric_correlation():
     maximum_frame(pillar a start to live, pillar b start to live) -> correlation(a, b) == correlation(b, a)
     :return:
     """
-    frame_to_pillars = get_frame_to_alive_pillars()
+    pillar2mask = get_mask_for_each_pillar()
+    frame_to_pillars = get_frame_to_alive_pillars(pillar2mask)
     pillar_to_frame = {}
     for k, v_lst in frame_to_pillars.items():
         for item in v_lst:
@@ -137,7 +140,8 @@ def alive_pillars_asymmetric_correlation():
     -> correlation(a, b) != correlation(b, a)
     :return:
     """
-    frame_to_pillars = get_frame_to_alive_pillars()
+    pillar2mask = get_mask_for_each_pillar()
+    frame_to_pillars = get_frame_to_alive_pillars(pillar2mask)
     pillar_to_frame = {}
     for k, v_lst in frame_to_pillars.items():
         for item in v_lst:
@@ -156,5 +160,28 @@ def alive_pillars_asymmetric_correlation():
         for p2 in alive_pillars:
             p2_relevant_intens = alive_pillars_intens[p2][alive_from_frame - 1:]
             pillars_corr.loc[str(p2), str(p1)] = pearsonr(p1_relevant_intens, p2_relevant_intens)[0]
+
+    return pillars_corr
+
+def get_indirect_neighbors_correlation(pillar_location, only_alive=True):
+    """
+    Create dataframe of correlation between pillar and its indirect neighbors (start from neighbors level 2)
+    :param pillar_location:
+    :param only_alive:
+    :return:
+    """
+    if only_alive:
+        pillars_corr = get_alive_pillars_correlation()
+    else:
+        pillars_corr = get_all_pillars_correlation()
+
+    pillar_directed_neighbors = get_pillar_directed_neighbors(pillar_location)
+
+    pillar_directed_neighbors_str = []
+    for tup in pillar_directed_neighbors:
+        if tup != pillar_location:
+            pillar_directed_neighbors_str.append(str(tup))
+    pillars_corr = pillars_corr.drop(pillar_directed_neighbors_str, axis=0)
+    pillars_corr = pillars_corr.drop(pillar_directed_neighbors_str, axis=1)
 
     return pillars_corr

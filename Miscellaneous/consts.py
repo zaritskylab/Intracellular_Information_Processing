@@ -1,3 +1,6 @@
+import os
+
+
 AVG_NEIGHBORS_TIME_OF_DEATH = 'avg_neighbors_time_death'
 
 NORMALIZED_DIST_TO_CELL_DEAD_NEIGHBORS = 'dist_to_cell_dead_neighbors'
@@ -53,9 +56,9 @@ JUMP_COL_CROSS_06_VIDEO = 67
 
 INTENSITY_THRESHOLD_06 = 2700000
 
-SMALL_MASK_RADIUS_06 = 15
+SMALL_MASK_RADIUS = 15
 
-LARGE_MASK_RADIUS_06 = 35
+LARGE_MASK_RADIUS = 35
 
 # SMALL_MASK_RADIUS_06 = 18
 #
@@ -123,3 +126,48 @@ LAST_IMG_VIDEO_20 = '../SavedPillarsData/SavedPillarsData_20/last_image_20.npy'
 LAST_IMG_VIDEO_20_FIXED = '../SavedPillarsData/SavedPillarsData_20/NewFixedImage/last_image_20.npy'
 
 PATH_MASKS_VIDEO_20_15_35 = '../SavedPillarsData/SavedPillarsData_20/pillars_mask_15_35.npy'
+
+SHOWFIG = True
+SAVEFIG = not SHOWFIG
+
+RECENT_DEATH_ONLY_FLAG = False
+
+WINDOW_SIZE = 5
+
+DIST_THRESHOLD_IN_PIXELS = 200
+
+EPSILON = 1e-15
+
+USE_LOG = False
+
+CONFIG_FILES_DIR_PATH = os.sep.join(os.getcwd().split(os.sep)[:-1] + ['config_files'])
+
+ALL_EXPERIMENTS_FILES_MAIN_DIR = os.sep.join(os.getcwd().split(os.sep)[:-1] + ['Data', 'Experiments_XYT_CSV'])
+
+METADATA_FILE_FULL_PATH = os.sep.join([ALL_EXPERIMENTS_FILES_MAIN_DIR, 'ExperimentsMetaData.csv'])
+
+COMPRESSED_FILE_MAIN_DIR = os.sep.join([ALL_EXPERIMENTS_FILES_MAIN_DIR, 'CompressedTime_XYT_CSV'])
+
+NON_COMPRESSED_FILE_MAIN_DIR = os.sep.join([ALL_EXPERIMENTS_FILES_MAIN_DIR, 'OriginalTimeMinutesData'])
+
+ALL_TREATMENT_EXPERIMENTS_DIR = os.sep.join([ALL_EXPERIMENTS_FILES_MAIN_DIR, 'AllTreatmentExperiments'])
+
+PILLARS = os.sep.join(os.getcwd().split(os.sep)[:-1] + ['Data', 'Pillars'])
+
+FIXED_IMAGES = os.sep.join([PILLARS, 'FixedImages'])
+
+LOWER_DEATH_PERCENTILE_BOUNDARY = 0.1
+UPPER_DEATH_PERCENTILE_BOUNDARY = 0.9
+
+last_image_path = LAST_IMG_VIDEO_06
+fixed_images_path = PILLARS + VIDEO_06_SUBPIXEL_FIXED_TIF_PATH
+images_path = PILLARS + VIDEO_06_TIF_PATH
+normalized = False
+fixed = True
+pillar_to_intensities_path = '../SavedPillarsData/SavedPillarsData_06/NewFixedImage/pillar_to_intensities_cached.pickle'
+correlation_alive_normalized_path = '../SavedPillarsData/SavedPillarsData_06/NewFixedImage/alive_pillar_correlation_normalized_cached.pickle'
+correlation_alive_not_normalized_path = '../SavedPillarsData/SavedPillarsData_06/NewFixedImage/alive_pillar_correlation_cached.pickle'
+all_pillars_correlation_normalized_path = '../SavedPillarsData/SavedPillarsData_06/NewFixedImage/all_pillar_correlation_normalized_cached.pickle'
+all_pillars_correlation_not_normalized_path = '../SavedPillarsData/SavedPillarsData_06/NewFixedImage/all_pillar_correlation_cached.pickle'
+frame2pillar_path = '../SavedPillarsData/SavedPillarsData_06/NewFixedImage/frames2pillars_cached.pickle'
+
