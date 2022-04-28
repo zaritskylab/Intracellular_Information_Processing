@@ -1,0 +1,28 @@
+{
+  "mask_radius": {
+    "small_radius": 15,
+    "large_radius": 35
+  },
+  "video": {
+    "id": "06",
+    "tif_path": "\\New-06-Airyscan Processing-04-actin_drift_corrected_13.2.tif"
+  },
+  "normalized": false,
+  "fixed": true,
+  "operations": [
+    {
+      "correlation_graph": {
+        "only_alive": true,
+        "neighbors_str": "all",
+        "alive_correlation_type": "symmetric"
+      }
+    },
+    {
+      "correlation_graph": {
+        "only_alive": false,
+        "neighbors_str": "all",
+        "alive_correlation_type": "symmetric"
+      }
+    }
+  ]
+}
