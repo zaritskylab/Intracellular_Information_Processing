@@ -11,17 +11,20 @@
   "fixed": true,
   "operations": [
     {
-      "correlation_graph": {
+      "correlation_plot": {
         "only_alive": true,
-        "neighbors_str": "all",
+        "neighbors": "all",
         "alive_correlation_type": "symmetric"
       }
     },
     {
-      "correlation_graph": {
-        "only_alive": false,
-        "neighbors_str": "all",
-        "alive_correlation_type": "symmetric"
+      "correlation_histogram": {
+        "alive": true
+      }
+    },
+    {
+      "compare_neighbors_corr_histogram_random_vs_real": {
+        "random_amount" : 2
       }
     }
   ]
