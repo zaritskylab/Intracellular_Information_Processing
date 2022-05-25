@@ -4,12 +4,15 @@
     "large_radius": 35
   },
   "video": {
-    "id": "06",
-    "tif_path": "\\New-06-Airyscan Processing-04-actin_drift_corrected_13.2.tif"
+    "id": "09",
+    "tif_path": "\\New-09-Airyscan Processing-acti.tif"
   },
   "normalized": false,
   "fixed": true,
   "operations": [
+    {
+      "_show_pillars_mask": {}
+    },
     {
       "_correlation_plot": {
         "only_alive": true,

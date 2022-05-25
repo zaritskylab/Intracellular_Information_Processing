@@ -4,12 +4,15 @@
     "large_radius": 35
   },
   "video": {
-    "id": "06",
-    "tif_path": "\\New-06-Airyscan Processing-04-actin_drift_corrected_13.2.tif"
+    "id": "08",
+    "tif_path": "\\New-08-Airyscan Processing-actin drift_corrected.tif"
   },
   "normalized": false,
   "fixed": true,
   "operations": [
+    {
+      "_show_pillars_mask": {}
+    },
     {
       "_correlation_plot": {
         "only_alive": true,
@@ -31,10 +34,10 @@
       "_gc_graph": {}
     },
     {
-      "_in_out_gc_edges": {}
+      "_edges_distribution_plots": {}
     },
     {
-      "_edges_distribution_plots": {}
+      "_in_out_gc_edges": {}
     },
     {
       "_gc_edge_prob": {}

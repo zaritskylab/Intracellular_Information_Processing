@@ -4,26 +4,26 @@
     "large_radius": 35
   },
   "video": {
-    "id": "06",
-    "tif_path": "\\New-06-Airyscan Processing-04-actin_drift_corrected_13.2.tif"
+    "id": "01",
+    "tif_path": "\\C1-New-Airyscan Processing-01-1_actin_drift_corrected_13.2.tif"
   },
   "normalized": false,
   "fixed": true,
   "operations": [
     {
-      "_correlation_plot": {
+      "correlation_plot": {
         "only_alive": true,
         "neighbors": "all",
         "alive_correlation_type": "symmetric"
       }
     },
     {
-      "_correlation_histogram": {
+      "correlation_histogram": {
         "alive": true
       }
     },
     {
-      "_compare_neighbors_corr_histogram_random_vs_real": {
+      "compare_neighbors_corr_histogram_random_vs_real": {
         "random_amount": 5
       }
     },
@@ -31,19 +31,19 @@
       "_gc_graph": {}
     },
     {
-      "_in_out_gc_edges": {}
+      "edges_distribution_plots": {}
     },
     {
-      "_edges_distribution_plots": {}
+      "in_out_gc_edges": {}
     },
     {
-      "_gc_edge_prob": {}
+      "gc_edge_prob": {}
     },
     {
-      "_in_out_degree": {}
+      "in_out_degree": {}
     },
     {
-      "_reciprocity": {}
+      "reciprocity": {}
     },
     {
       "heterogeneity" : {}
