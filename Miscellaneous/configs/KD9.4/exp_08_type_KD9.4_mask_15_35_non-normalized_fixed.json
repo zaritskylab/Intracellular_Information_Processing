@@ -1,0 +1,71 @@
+{
+  "use_cache": false,
+  "metadata": {
+    "micron": 0.0408922,
+    "radius_in_micron": 1
+  },
+  "mask_radius": {
+    "small_radius": 15,
+    "large_radius": 35
+  },
+  "experiment": {
+    "id": "08",
+    "tif_path": "\\New-08-Airyscan Processing-09-actin drift_corrected-1 a-act_KD9.4.tif"
+  },
+  "perturbation": {
+    "type": "KD9.4"
+  },
+  "normalized": false,
+  "fixed": true,
+  "operations": [
+    {
+      "show_pillars_mask": {}
+    },
+    {
+      "correlation_plot": {
+        "only_alive": true,
+        "neighbors": "all",
+        "alive_correlation_type": "symmetric"
+      }
+    },
+    {
+      "neighbors_correlation_histogram": {
+        "neighbors": "real_neighbors"
+      }
+    },
+    {
+      "correlation_histogram": {
+        "alive": true
+      }
+    },
+    {
+      "compare_neighbors_corr_histogram_random_vs_real": {
+        "random_amount": 5
+      }
+    },
+    {
+      "gc_graph": {}
+    },
+    {
+      "_edges_distribution_plots": {}
+    },
+    {
+      "_in_out_gc_edges": {}
+    },
+    {
+      "gc_edge_prob": {}
+    },
+    {
+      "gc_edge_prob_original_vs_random": {}
+    },
+    {
+      "_in_out_degree": {}
+    },
+    {
+      "reciprocity": {}
+    },
+    {
+      "heterogeneity": {}
+    }
+  ]
+}

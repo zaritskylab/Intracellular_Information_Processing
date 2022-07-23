@@ -1,0 +1,68 @@
+{
+  "use_cache": true,
+  "mask_radius": {
+    "small_radius": 15,
+    "large_radius": 35
+  },
+  "percentage_from_perfect_circle_mask": 0.87,
+  "experiment": {
+    "id": "11",
+    "tif_path": "\\2019-02-11 New-Airyscan Processing-02 a-act_KD9.4.tif"
+  },
+  "perturbation": {
+    "type": "KD9.4"
+  },
+  "normalized": false,
+  "fixed": true,
+  "operations": [
+    {
+      "show_pillars_mask": {}
+    },
+    {
+      "_correlation_plot": {
+        "only_alive": true,
+        "neighbors": "all",
+        "alive_correlation_type": "symmetric"
+      }
+    },
+    {
+      "_neighbors_correlation_histogram": {
+        "neighbors": "real_neighbors"
+      }
+    },
+    {
+      "_correlation_histogram": {
+        "alive": true
+      }
+    },
+    {
+      "_compare_neighbors_corr_histogram_random_vs_real": {
+        "random_amount": 10
+      }
+    },
+    {
+      "_gc_graph": {}
+    },
+    {
+      "_edges_distribution_plots": {}
+    },
+    {
+      "_in_out_gc_edges": {}
+    },
+    {
+      "gc_edge_prob": {}
+    },
+    {
+      "gc_edge_prob_original_vs_random": {}
+    },
+    {
+      "_in_out_degree": {}
+    },
+    {
+      "reciprocity": {}
+    },
+    {
+      "heterogeneity": {}
+    }
+  ]
+}

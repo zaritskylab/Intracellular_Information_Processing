@@ -1,25 +1,17 @@
 import glob
 import json
-import math
-import os
 import pickle
 from typing import *
 import numpy as np
 import pandas as pd
-from numpy import median
 from scipy.spatial import Voronoi
 from scipy.stats import linregress, zscore
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error as mse
 from sklearn.metrics.pairwise import euclidean_distances as euc_dis
-from sklearn.model_selection import train_test_split
 from typing import List
 
-from Miscellaneous.global_parameters import *
-from Miscellaneous.consts import *
-from Miscellaneous.global_parameters import *
-from matplotlib.lines import Line2D
-import random
+from Pillars.consts import *
 
 
 def get_all_unique_treatments(meta_data_file_full_path: str = None):
@@ -378,7 +370,7 @@ def create_trainable_dataset(file_path: str, file_path_2: str = None):
     :return:
     """
 
-    with open('config.json') as json_file:
+    with open('configs/13.2/exp_06_type_13.2_mask_15_35_non-normalized_fixed.json') as json_file:
         config = json.load(json_file)
 
     if os.path.isdir(file_path):
