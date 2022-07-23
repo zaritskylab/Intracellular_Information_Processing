@@ -1,20 +1,36 @@
 {
+  "use_cache": false,
+  "metadata": {
+    "micron": 0.0408922,
+    "radius_in_micron": 1
+  },
   "mask_radius": {
     "small_radius": 15,
     "large_radius": 35
   },
-  "video": {
-    "id": "01",
-    "tif_path": "\\C1-New-Airyscan Processing-01-1_actin_drift_corrected_13.2.tif"
+  "experiment": {
+    "id": "08",
+    "tif_path": "\\New-08-Airyscan Processing-09-actin drift_corrected-1 a-act_KD9.4.tif"
+  },
+  "perturbation": {
+    "type": "KD9.4"
   },
   "normalized": false,
   "fixed": true,
   "operations": [
     {
+      "show_pillars_mask": {}
+    },
+    {
       "correlation_plot": {
         "only_alive": true,
         "neighbors": "all",
         "alive_correlation_type": "symmetric"
+      }
+    },
+    {
+      "neighbors_correlation_histogram": {
+        "neighbors": "real_neighbors"
       }
     },
     {
@@ -28,25 +44,28 @@
       }
     },
     {
-      "_gc_graph": {}
+      "gc_graph": {}
     },
     {
-      "edges_distribution_plots": {}
+      "_edges_distribution_plots": {}
     },
     {
-      "in_out_gc_edges": {}
+      "_in_out_gc_edges": {}
     },
     {
       "gc_edge_prob": {}
     },
     {
-      "in_out_degree": {}
+      "gc_edge_prob_original_vs_random": {}
+    },
+    {
+      "_in_out_degree": {}
     },
     {
       "reciprocity": {}
     },
     {
-      "heterogeneity" : {}
+      "heterogeneity": {}
     }
   ]
 }

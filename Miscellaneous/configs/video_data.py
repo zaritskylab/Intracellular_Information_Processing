@@ -16,7 +16,7 @@ LAST_IMG_VIDEO_05_FIXED = '../SavedPillarsData/SavedPillarsData_05/NewFixedImage
 
 # data video 06
 LAST_IMG_VIDEO_06 = '../SavedPillarsData/SavedPillarsData_06/last_image_06.npy'
-PATH_MASKS_VIDEO_06_15_35 = '../../SavedPillarsData/SavedPillarsData_06/pillars_mask_15_35.npy'
+PATH_MASKS_VIDEO_06_15_35 = '../../SavedPillarsData/13.2/SavedPillarsData_06/pillars_mask_15_35.npy'
 VIDEO_06_TIF_PATH = '\\New-06-Airyscan Processing-04-actin_drift_corrected_13.2.tif'
 VIDEO_06_FIXED_TIF_PATH = '\\fixed_06.tif'
 VIDEO_06_SUBPIXEL_FIXED_TIF_PATH = '\\FixedImages\\new_fixed_06.tif'

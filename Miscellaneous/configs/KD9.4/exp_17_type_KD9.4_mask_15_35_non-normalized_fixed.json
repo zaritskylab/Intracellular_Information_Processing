@@ -3,9 +3,12 @@
     "small_radius": 15,
     "large_radius": 35
   },
-  "video": {
-    "id": "12",
-    "tif_path": "\\New-12-Airyscan Processing_actin_drift_corrected.tif"
+  "experiment": {
+    "id": "17",
+    "tif_path": "\\2019-02-17 New-Airyscan Processing-01-1 a-act_KD9.4.tif"
+  },
+    "perturbation": {
+    "type": "KD9.4"
   },
   "normalized": false,
   "fixed": true,
@@ -18,6 +21,11 @@
         "only_alive": true,
         "neighbors": "all",
         "alive_correlation_type": "symmetric"
+      }
+    },
+    {
+      "_neighbors_correlation_histogram": {
+        "neighbors": "real_neighbors"
       }
     },
     {
@@ -34,22 +42,22 @@
       "_gc_graph": {}
     },
     {
-      "_in_out_gc_edges": {}
-    },
-    {
       "_edges_distribution_plots": {}
     },
     {
-      "_gc_edge_prob": {}
+      "_in_out_gc_edges": {}
     },
-     {
+    {
+      "gc_edge_prob": {}
+    },
+    {
       "_in_out_degree": {}
     },
     {
       "_reciprocity": {}
     },
     {
-      "heterogeneity" : {}
+      "_heterogeneity" : {}
     }
   ]
 }

@@ -3,18 +3,30 @@
     "small_radius": 15,
     "large_radius": 35
   },
-  "video": {
-    "id": "06",
-    "tif_path": "\\New-06-Airyscan Processing-04-actin_drift_corrected_13.2.tif"
+  "percentage_from_perfect_circle_mask": 0.87,
+  "experiment": {
+    "id": "30",
+    "tif_path": "\\New-30-Airyscan Processing_actin_drift_corrected.tif"
+  },
+  "perturbation": {
+    "type": "5.3"
   },
   "normalized": false,
   "fixed": true,
   "operations": [
     {
+      "_show_pillars_mask": {}
+    },
+    {
       "_correlation_plot": {
         "only_alive": true,
         "neighbors": "all",
         "alive_correlation_type": "symmetric"
+      }
+    },
+    {
+      "_neighbors_correlation_histogram": {
+        "neighbors": "real_neighbors"
       }
     },
     {
@@ -37,7 +49,7 @@
       "_edges_distribution_plots": {}
     },
     {
-      "_gc_edge_prob": {}
+      "gc_edge_prob": {}
     },
     {
       "_in_out_degree": {}
@@ -46,7 +58,7 @@
       "_reciprocity": {}
     },
     {
-      "heterogeneity" : {}
+      "_heterogeneity": {}
     }
   ]
 }

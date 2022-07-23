@@ -370,7 +370,7 @@ def create_trainable_dataset(file_path: str, file_path_2: str = None):
     :return:
     """
 
-    with open('configs/vid_06_mask_15_35_non-normalized_fixed.json') as json_file:
+    with open('configs/13.2/exp_06_type_13.2_mask_15_35_non-normalized_fixed.json') as json_file:
         config = json.load(json_file)
 
     if os.path.isdir(file_path):
