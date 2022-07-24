@@ -2,7 +2,6 @@ venv
 .idea/
 PreparedDatasets
 TrainedModels
-Pillars
 Data
 SavedCellDeathData
 SavedCellDeathData/data.csv

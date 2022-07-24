@@ -1,4 +1,9 @@
 {
+  "use_cache": true,
+  "metadata": {
+    "micron": 0.0519938,
+    "micron_radius": 1
+  },
   "mask_radius": {
     "small_radius": 15,
     "large_radius": 35
@@ -7,7 +12,7 @@
     "id": "53",
     "tif_path": "\\C1-Experiment-53-Airyscan Processing-04-1_actin_drift_corrected a-act_KD9.4.tif"
   },
-    "perturbation": {
+  "perturbation": {
     "type": "KD9.4"
   },
   "normalized": false,
@@ -24,7 +29,7 @@
       }
     },
     {
-      "_neighbors_correlation_histogram": {
+      "neighbors_correlation_histogram": {
         "neighbors": "real_neighbors"
       }
     },
@@ -39,7 +44,7 @@
       }
     },
     {
-      "_gc_graph": {}
+      "gc_graph": {}
     },
     {
       "_edges_distribution_plots": {}
@@ -51,13 +56,16 @@
       "gc_edge_prob": {}
     },
     {
+      "_gc_edge_prob_original_vs_random": {}
+    },
+    {
       "_in_out_degree": {}
     },
     {
-      "_reciprocity": {}
+      "reciprocity": {}
     },
     {
-      "_heterogeneity" : {}
+      "heterogeneity": {}
     }
   ]
 }

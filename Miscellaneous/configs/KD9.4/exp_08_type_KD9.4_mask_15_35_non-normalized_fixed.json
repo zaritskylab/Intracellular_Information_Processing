@@ -1,8 +1,8 @@
 {
-  "use_cache": false,
+  "use_cache": true,
   "metadata": {
     "micron": 0.0408922,
-    "radius_in_micron": 1
+    "micron_radius": 1
   },
   "mask_radius": {
     "small_radius": 15,
@@ -19,32 +19,32 @@
   "fixed": true,
   "operations": [
     {
-      "show_pillars_mask": {}
+      "_show_pillars_mask": {}
     },
     {
-      "correlation_plot": {
+      "_correlation_plot": {
         "only_alive": true,
         "neighbors": "all",
         "alive_correlation_type": "symmetric"
       }
     },
     {
-      "neighbors_correlation_histogram": {
+      "_neighbors_correlation_histogram": {
         "neighbors": "real_neighbors"
       }
     },
     {
-      "correlation_histogram": {
+      "_correlation_histogram": {
         "alive": true
       }
     },
     {
-      "compare_neighbors_corr_histogram_random_vs_real": {
+      "_compare_neighbors_corr_histogram_random_vs_real": {
         "random_amount": 5
       }
     },
     {
-      "gc_graph": {}
+      "_gc_graph": {}
     },
     {
       "_edges_distribution_plots": {}

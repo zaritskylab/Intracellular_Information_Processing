@@ -1,4 +1,9 @@
 {
+  "use_cache": false,
+  "metadata": {
+    "micron": 0.0519938,
+    "micron_radius": 1
+  },
   "mask_radius": {
     "small_radius": 15,
     "large_radius": 35
@@ -14,6 +19,9 @@
   "normalized": false,
   "fixed": true,
   "operations": [
+    {
+      "_show_pillars_mask": {}
+    },
     {
       "_correlation_plot": {
         "only_alive": true,
@@ -37,7 +45,7 @@
       }
     },
     {
-      "_gc_graph": {}
+      "gc_graph": {}
     },
     {
       "_edges_distribution_plots": {}
@@ -47,6 +55,9 @@
     },
     {
       "gc_edge_prob": {}
+    },
+    {
+      "gc_edge_prob_original_vs_random": {}
     },
     {
       "_in_out_degree": {}

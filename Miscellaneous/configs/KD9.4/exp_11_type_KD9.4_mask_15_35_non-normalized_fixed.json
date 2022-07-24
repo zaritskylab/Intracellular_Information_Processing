@@ -1,5 +1,9 @@
 {
   "use_cache": true,
+  "metadata": {
+    "micron": 0.0408922,
+    "micron_radius": 1
+  },
   "mask_radius": {
     "small_radius": 15,
     "large_radius": 35
@@ -16,7 +20,7 @@
   "fixed": true,
   "operations": [
     {
-      "show_pillars_mask": {}
+      "_show_pillars_mask": {}
     },
     {
       "_correlation_plot": {

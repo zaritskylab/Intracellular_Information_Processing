@@ -1,4 +1,8 @@
 {
+  "metadata": {
+    "micron": 0.0519938,
+    "micron_radius": 1
+  },
   "mask_radius": {
     "small_radius": 15,
     "large_radius": 35

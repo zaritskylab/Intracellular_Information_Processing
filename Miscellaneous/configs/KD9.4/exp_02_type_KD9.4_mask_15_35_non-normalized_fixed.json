@@ -1,4 +1,9 @@
 {
+  "use_cache": false,
+  "metadata": {
+    "micron": 0.0519938,
+    "micron_radius": 1
+  },
   "mask_radius": {
     "small_radius": 15,
     "large_radius": 35
@@ -7,7 +12,7 @@
     "id": "02",
     "tif_path": "\\C1-New-02-Airyscan Processing-01_actin_drift_corrected a-act_KD9.4.tif"
   },
-    "perturbation": {
+  "perturbation": {
     "type": "KD9.4"
   },
   "normalized": false,
@@ -60,7 +65,7 @@
       "reciprocity": {}
     },
     {
-      "heterogeneity" : {}
+      "heterogeneity": {}
     }
   ]
 }
