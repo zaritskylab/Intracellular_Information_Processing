@@ -23,7 +23,7 @@ def create_mask_of_circles(radius: int, centers: list):
     return mask
 
 
-def get_mask_for_each_pillar():
+def get_last_img_mask_for_each_pillar():
     """
     Mapping each pillar to its fitting mask
     :return:
@@ -34,18 +34,10 @@ def get_mask_for_each_pillar():
             pillar_to_neighbors = pickle.load(handle)
             return pillar_to_neighbors
 
-    centers = find_centers_with_logic()
-    thickness = -1
+    centers = find_all_centers_with_logic()
     pillar_to_mask_dict = {}
     for center in centers:
-        small_mask_template = np.zeros((Consts.IMAGE_SIZE, Consts.IMAGE_SIZE), np.uint8)
-        cv2.circle(small_mask_template, (center[1], center[0]), Consts.SMALL_MASK_RADIUS, 255, thickness)
-
-        large_mask_template = np.zeros((Consts.IMAGE_SIZE, Consts.IMAGE_SIZE), np.uint8)
-        cv2.circle(large_mask_template, (center[1], center[0]), Consts.LARGE_MASK_RADIUS, 255, thickness)
-
-        mask = large_mask_template - small_mask_template
-
+        mask = get_mask_for_center(center)
         pillar_to_mask_dict[center] = mask
 
     if Consts.USE_CACHE:
@@ -55,6 +47,16 @@ def get_mask_for_each_pillar():
     return pillar_to_mask_dict
 
 
+def get_mask_for_center(center):
+    thickness = -1
+    small_mask_template = np.zeros((Consts.IMAGE_SIZE, Consts.IMAGE_SIZE), np.uint8)
+    cv2.circle(small_mask_template, (center[1], center[0]), Consts.SMALL_MASK_RADIUS, 255, thickness)
+    large_mask_template = np.zeros((Consts.IMAGE_SIZE, Consts.IMAGE_SIZE), np.uint8)
+    cv2.circle(large_mask_template, (center[1], center[0]), Consts.LARGE_MASK_RADIUS, 255, thickness)
+    mask = large_mask_template - small_mask_template
+    return mask
+
+
 def build_pillars_mask():
     """
     Building the mask to the image by substitute 2 masks of circles with different radius to create the full image mask
@@ -62,7 +64,7 @@ def build_pillars_mask():
     :param logic_centers:
     :return:
     """
-    centers = find_centers_with_logic()
+    centers = find_all_centers_with_logic()
     small_mask = create_mask_of_circles(Consts.SMALL_MASK_RADIUS, centers)
     large_mask = create_mask_of_circles(Consts.LARGE_MASK_RADIUS, centers)
     pillars_mask = large_mask - small_mask

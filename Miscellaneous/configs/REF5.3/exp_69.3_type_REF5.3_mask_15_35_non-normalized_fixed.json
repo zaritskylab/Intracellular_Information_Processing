@@ -1,7 +1,7 @@
 {
-  "use_cache": false,
+  "use_cache": true,
   "metadata": {
-    "micron": 0.0519938,
+    "micron": 0.1559815,
     "micron_radius": 1
   },
   "mask_radius": {
@@ -10,12 +10,13 @@
   },
   "percentage_from_perfect_circle_mask": 1,
   "experiment": {
-    "id": "08",
-    "tif_path": "\\New-08-Airyscan Processing-actin drift_corrected.tif"
+    "id": "69.3",
+    "tif_path": "\\New-69_#3.tif"
   },
   "perturbation": {
-    "type": "5.3"
+    "type": "REF5.3"
   },
+  "output_path_type": "69_3",
   "normalized": false,
   "fixed": true,
   "operations": [

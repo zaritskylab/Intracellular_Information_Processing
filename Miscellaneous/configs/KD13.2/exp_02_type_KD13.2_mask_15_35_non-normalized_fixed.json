@@ -1,7 +1,7 @@
 {
-  "use_cache": false,
+  "use_cache": true,
   "metadata": {
-    "micron": 0.0519938,
+    "micron": 0.0408922,
     "micron_radius": 1
   },
   "mask_radius": {
@@ -10,12 +10,13 @@
   },
   "percentage_from_perfect_circle_mask": 1,
   "experiment": {
-    "id": "08",
-    "tif_path": "\\New-08-Airyscan Processing-actin drift_corrected.tif"
+    "id": "02",
+    "tif_path": "\\New-02-Airyscan Processing-03-1 a-act_KD13.2.tif"
   },
   "perturbation": {
-    "type": "5.3"
+    "type": "KD13.2"
   },
+  "output_path_type": "13_2",
   "normalized": false,
   "fixed": true,
   "operations": [
@@ -30,12 +31,12 @@
       }
     },
     {
-      "_neighbors_correlation_histogram": {
+      "neighbors_correlation_histogram": {
         "neighbors": "real_neighbors"
       }
     },
     {
-      "_correlation_histogram": {
+      "correlation_histogram": {
         "alive": true
       }
     },
@@ -45,7 +46,7 @@
       }
     },
     {
-      "_gc_graph": {}
+      "gc_graph": {}
     },
     {
       "_edges_distribution_plots": {}

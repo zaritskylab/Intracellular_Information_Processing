@@ -1,4 +1,5 @@
 {
+  "use_cache": false,
   "metadata": {
     "micron": 0.0519938,
     "micron_radius": 1
@@ -7,7 +8,7 @@
     "small_radius": 15,
     "large_radius": 35
   },
-  "percentage_from_perfect_circle_mask": 0.87,
+  "percentage_from_perfect_circle_mask": 1,
   "experiment": {
     "id": "09",
     "tif_path": "\\New-09-Airyscan Processing-acti.tif"
@@ -17,6 +18,7 @@
   },
   "normalized": false,
   "fixed": true,
+  "use_otsu": false,
   "operations": [
     {
       "_show_pillars_mask": {}
@@ -54,6 +56,9 @@
     },
     {
       "gc_edge_prob": {}
+    },
+    {
+      "gc_edge_prob_original_vs_random": {}
     },
     {
       "_in_out_degree": {}

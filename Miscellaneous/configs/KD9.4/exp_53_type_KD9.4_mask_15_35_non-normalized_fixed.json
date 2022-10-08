@@ -15,6 +15,7 @@
   "perturbation": {
     "type": "KD9.4"
   },
+  "output_path_type": "9_4",
   "normalized": false,
   "fixed": true,
   "operations": [
@@ -34,7 +35,7 @@
       }
     },
     {
-      "_correlation_histogram": {
+      "correlation_histogram": {
         "alive": true
       }
     },
@@ -56,7 +57,7 @@
       "gc_edge_prob": {}
     },
     {
-      "_gc_edge_prob_original_vs_random": {}
+      "gc_edge_prob_original_vs_random": {}
     },
     {
       "_in_out_degree": {}

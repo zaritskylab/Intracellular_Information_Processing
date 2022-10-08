@@ -1,5 +1,5 @@
 {
-  "use_cache": false,
+  "use_cache": true,
   "metadata": {
     "micron": 0.0519938,
     "micron_radius": 1
@@ -10,12 +10,13 @@
   },
   "percentage_from_perfect_circle_mask": 1,
   "experiment": {
-    "id": "08",
-    "tif_path": "\\New-08-Airyscan Processing-actin drift_corrected.tif"
+    "id": "01",
+    "tif_path": "\\C1-New-Airyscan Processing-01_actin_drift_corrected a-act_KD13.2.tif"
   },
   "perturbation": {
-    "type": "5.3"
+    "type": "KD13.2"
   },
+  "output_path_type": "13_2",
   "normalized": false,
   "fixed": true,
   "operations": [

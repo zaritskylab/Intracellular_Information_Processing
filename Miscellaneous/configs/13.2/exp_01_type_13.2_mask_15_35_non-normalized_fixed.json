@@ -1,5 +1,5 @@
 {
-  "use_cache": false,
+  "use_cache": true,
   "metadata": {
     "micron": 0.0519938,
     "micron_radius": 1
@@ -16,6 +16,7 @@
   "perturbation": {
     "type": "13.2"
   },
+  "output_path_type": "13_2",
   "normalized": false,
   "fixed": true,
   "operations": [
@@ -30,12 +31,12 @@
       }
     },
     {
-      "_neighbors_correlation_histogram": {
+      "neighbors_correlation_histogram": {
         "neighbors": "real_neighbors"
       }
     },
     {
-      "_correlation_histogram": {
+      "correlation_histogram": {
         "alive": true
       }
     },
@@ -63,10 +64,10 @@
       "_in_out_degree": {}
     },
     {
-      "_reciprocity": {}
+      "reciprocity": {}
     },
     {
-      "_heterogeneity": {}
+      "heterogeneity": {}
     }
   ]
 }

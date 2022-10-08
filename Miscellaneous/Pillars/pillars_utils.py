@@ -9,6 +9,7 @@ import cv2
 import numpy as np
 from datetime import datetime
 import numpy.ma as ma
+from collections import defaultdict
 from Pillars.consts import *
 
 
@@ -325,18 +326,13 @@ def get_last_image():
     return image
 
 
-def get_image_whiten(build_image=False):
+def get_last_image_whiten(build_image=False):
     if build_image:
         img = create_image_by_max_value()
     else:
         img = get_last_image()
 
     img = np.interp(img, (img.min(), img.max()), (0, 255)).astype('uint8')
-    # img[(img >= 25) & (img <= 50)] = 50
-    # # img[(img >= 21) & (img <= 50)] = 50
-    # img[(img >= 81) & (img <= 100)] = 100
-    # img[(img >= 101) & (img <= 150)] = 150
-    # img[(img >= 151) & (img <= 200)] = 200
 
     img[(img < Consts.pixel_to_whiten)] = 0
     img[(img >= Consts.pixel_to_whiten)] = 255
@@ -344,14 +340,14 @@ def get_image_whiten(build_image=False):
     return img
 
 
-def find_centers_with_logic():
+def find_all_centers_with_logic():
     if Consts.USE_CACHE and os.path.isfile(Consts.centers_cache_path):
         with open(Consts.centers_cache_path, 'rb') as handle:
             centers = pickle.load(handle)
             return centers
 
     last_img = get_last_image()
-    alive_centers = get_alive_centers(last_img)
+    alive_centers = get_alive_centers()
     centers = generate_centers_from_alive_centers(alive_centers, len(last_img))
 
     if Consts.USE_CACHE:
@@ -370,9 +366,10 @@ def get_image_by_threshold(img):
     img = cv2.GaussianBlur(img, (5, 5), 0)
     max_pixel = img.max()
     # find otsu's threshold value with OpenCV function
-    ret, otsu = cv2.threshold(img, 0, max_pixel, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    # TODO: if otsu not work properly
-    ret = 500
+    if Consts.use_otsu:
+        ret, otsu = cv2.threshold(img, 0, max_pixel, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    else:
+        ret = 500
     img[img < ret] = 0
     img[img > 0] = 1
     # plt.imshow(img, cmap=plt.cm.gray)
@@ -380,36 +377,47 @@ def get_image_by_threshold(img):
     return img
 
 
-def get_alive_centers(img):
-    # cache
-    if Consts.USE_CACHE and os.path.isfile(Consts.alive_centers_cache_path):
-        with open(Consts.alive_centers_cache_path, 'rb') as handle:
-            alive_centers = pickle.load(handle)
-            return alive_centers
+# We use the all_centers_by_last_frame so we won't run BFS for all possible location but only on given centers
+def get_alive_centers(img=None, all_centers_by_last_frame=None):
+    if img is None and all_centers_by_last_frame is None:
+        if Consts.USE_CACHE and os.path.isfile(Consts.last_img_alive_centers_cache_path):
+            with open(Consts.last_img_alive_centers_cache_path, 'rb') as handle:
+                alive_centers = pickle.load(handle)
+                return alive_centers
+        img = get_last_image_whiten()
 
     img = get_image_by_threshold(img)
 
     alive_centers = set()
-    e1 = int(len(img) / 5)
-    e4 = e1 * 4
-    visited = set()
-    for row in range(e1, e4):
-        col = e1
-        while col < e4:
-            if not (row, col) in visited and kinda_center(img, row, col):
-                circle_area, center = get_center(img, row, col)
-                if len(circle_area) == 0:
-                    col += 1
-                else:
-                    visited.update(circle_area)
-                    alive_centers.add(center)
-                    col += Consts.CIRCLE_SEARCH_JUMP_SIZE
-                    # col += 1
-            else:
-                col += 1
 
-    if Consts.USE_CACHE:
-        with open(Consts.alive_centers_cache_path, 'wb') as handle:
+    visited = set()
+    if all_centers_by_last_frame is None:
+        for row in range(0, len(img)):
+            col = 0
+            while col < len(img):
+                if not (row, col) in visited and kinda_center(img, row, col):
+                    circle_area, center = get_center(img, row, col)
+                    if len(circle_area) == 0:
+                        col += 1
+                    else:
+                        visited.update(circle_area)
+                        alive_centers.add(center)
+                        col += Consts.CIRCLE_RADIUS
+                else:
+                    col += 1
+    else:
+        for possible_location_to_search_alive_center in all_centers_by_last_frame:
+            row, col = possible_location_to_search_alive_center
+            # If valid location
+            if row >= 0 and row < len(img) and col > 0 and col <= len(img[0]):
+                if not (row, col) in visited and kinda_center(img, row, col):
+                    circle_area, center = get_center(img, row, col)
+                    if len(circle_area) != 0:
+                        visited.update(circle_area)
+                        alive_centers.add(center)
+
+    if img is None and all_centers_by_last_frame is None and Consts.USE_CACHE:
+        with open(Consts.last_img_alive_centers_cache_path, 'wb') as handle:
             pickle.dump(alive_centers, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     return alive_centers
@@ -420,24 +428,15 @@ def generate_centers_from_alive_centers(alive_centers, matrix_size):
 
 
 def generate_centers_and_rules_from_alive_centers(alive_centers, matrix_size):
-    points = list(alive_centers)
     target = (matrix_size / 2, matrix_size / 2)
-    closest_to_middle = min(points, key=lambda point: math.hypot(target[1] - point[1], target[0] - point[0]))
-    points.remove(closest_to_middle)
-    closest1 = min(points,
-                   key=lambda point: math.hypot(closest_to_middle[1] - point[1], closest_to_middle[0] - point[0]))
-    points.remove(closest1)
-    closest2 = min(points,
-                   key=lambda point: math.hypot(closest_to_middle[1] - point[1], closest_to_middle[0] - point[0]))
+    closest_to_middle = min(alive_centers, key=lambda point: math.hypot(target[1] - point[1], target[0] - point[0]))
 
-    rule1 = (closest_to_middle[0] - closest1[0], closest_to_middle[1] - closest1[1])
-    rule2 = (closest_to_middle[0] - closest2[0], closest_to_middle[1] - closest2[1])
-
-    if -5 <= abs(rule1[0]) - abs(rule2[0]) <= 5 and -5 <= abs(rule1[1]) - abs(rule2[1]) <= 5:
-        points.remove(closest2)
-        closest2 = min(points,
-                       key=lambda point: math.hypot(closest_to_middle[1] - point[1], closest_to_middle[0] - point[0]))
-        rule2 = (closest_to_middle[0] - closest2[0], closest_to_middle[1] - closest2[1])
+    # maybe_rules = get_rules_by_all_centers(alive_centers)
+    # if maybe_rules is not None:
+    #     rule1 = maybe_rules[0]
+    #     rule2 = maybe_rules[1]
+    # else:
+    rule1, rule2 = get_rules_by_middle_centers(alive_centers, closest_to_middle)
 
     generated_centers_in_line = {closest_to_middle}
     row = closest_to_middle[0]
@@ -475,16 +474,87 @@ def generate_centers_and_rules_from_alive_centers(alive_centers, matrix_size):
     centers_in_range = [center for center in list(generated_centers) if
                         0 <= center[0] < matrix_size and 0 <= center[1] < matrix_size]
 
-    # Replaced live generated centers with their actual positions
-    generated_location2original_pillar_loc = {}
+    # Replaced alive generated centers with their actual positions
+    generated_location2real_pillar_loc = {}
     for actual_alive_center in alive_centers:
         closest_generated_center = min(centers_in_range,
-            key=lambda point: math.hypot(actual_alive_center[1] - point[1], actual_alive_center[0] - point[0]))
+                                       key=lambda point: math.hypot(actual_alive_center[1] - point[1],
+                                                                    actual_alive_center[0] - point[0]))
+        if np.linalg.norm(np.array(closest_generated_center) - np.array(actual_alive_center)) < Consts.MAX_DISTANCE_PILLAR_FIXED:
+            centers_in_range.remove(closest_generated_center)
+            centers_in_range.append(actual_alive_center)
+            generated_location2real_pillar_loc[closest_generated_center] = actual_alive_center
+    # Generated center = pillar id.
+    return centers_in_range, rule1, rule2, generated_location2real_pillar_loc
 
-        centers_in_range.remove(closest_generated_center)
-        centers_in_range.append(actual_alive_center)
-        generated_location2original_pillar_loc[closest_generated_center] = actual_alive_center
-    return centers_in_range, rule1, rule2, generated_location2original_pillar_loc
+
+def get_rules_by_middle_centers(alive_centers, closest_to_middle):
+    points = list(alive_centers)
+    points.remove(closest_to_middle)
+    closest1 = min(points,
+                   key=lambda point: math.hypot(closest_to_middle[1] - point[1], closest_to_middle[0] - point[0]))
+    points.remove(closest1)
+    closest2 = min(points,
+                   key=lambda point: math.hypot(closest_to_middle[1] - point[1], closest_to_middle[0] - point[0]))
+    rule1 = (closest_to_middle[0] - closest1[0], closest_to_middle[1] - closest1[1])
+    rule2 = (closest_to_middle[0] - closest2[0], closest_to_middle[1] - closest2[1])
+    # If both rules are pretty much the same rule, meaning we are on the same line.
+    while -5 <= abs(rule1[0]) - abs(rule2[0]) <= 5 and -5 <= abs(rule1[1]) - abs(rule2[1]) <= 5:
+        points.remove(closest2)
+        closest2 = min(points,
+                       key=lambda point: math.hypot(closest_to_middle[1] - point[1], closest_to_middle[0] - point[0]))
+        rule2 = (closest_to_middle[0] - closest2[0], closest_to_middle[1] - closest2[1])
+    return rule1, rule2
+
+
+def get_rules_by_all_centers(alive_centers):
+    if len(alive_centers) < 4:
+        return None
+    distance_counters = defaultdict(int)
+    for center in alive_centers:
+        points = list(alive_centers)
+        points.remove(center)
+        points.sort(key=lambda K: K[0] ** 2 + K[1] ** 2)
+        top4centers = points[:4]
+
+        distance1 = (top4centers[0][0] - center[0], top4centers[0][1] - center[1])
+        distance2 = (top4centers[1][0] - center[0], top4centers[1][1] - center[1])
+        distance3 = (top4centers[2][0] - center[0], top4centers[2][1] - center[1])
+        distance4 = (top4centers[3][0] - center[0], top4centers[3][1] - center[1])
+        distance1_op = (-(top4centers[0][0] - center[0]), -(top4centers[0][1] - center[1]))
+        distance2_op = (-(top4centers[1][0] - center[0]), -(top4centers[1][1] - center[1]))
+        distance3_op = (-(top4centers[2][0] - center[0]), -(top4centers[2][1] - center[1]))
+        distance4_op = (-(top4centers[3][0] - center[0]), -(top4centers[3][1] - center[1]))
+
+        if distance1_op not in distance_counters:
+            distance_counters[distance1] += 1
+        else:
+            distance_counters[distance1_op] += 1
+
+        if distance2_op not in distance_counters:
+            distance_counters[distance2] += 1
+        else:
+            distance_counters[distance2_op] += 1
+
+        if distance3_op not in distance_counters:
+            distance_counters[distance3] += 1
+        else:
+            distance_counters[distance3_op] += 1
+
+        if distance4_op not in distance_counters:
+            distance_counters[distance4] += 1
+        else:
+            distance_counters[distance4_op] += 1
+
+    sorted_rules = sorted(distance_counters.items(),
+                          key=lambda x: (x[1], -math.sqrt(math.pow(x[0][0], 2) + math.pow(x[0][1], 2))), reverse=True)
+    rule1 = sorted_rules[0][0]
+    for rule2 in sorted_rules[1:]:
+        rule2 = rule2[0]
+        # If both rules different, meaning we are not on the same line.
+        if not (-5 <= abs(rule2[0]) - abs(rule1[0]) <= 5 and -5 <= abs(rule2[1]) - abs(rule1[1]) <= 5):
+            return rule1, rule2
+    return None
 
 
 def kinda_center(img, row, col):
@@ -504,8 +574,14 @@ def kinda_center(img, row, col):
     up_is_valid = False
     down_is_valid = False
 
+    SAFETY_DISTANCE_FROM_CIRCLE = 6
+
     for safety_distance in range(Consts.CIRCLE_OUTSIDE_VALIDATE_SEARCH_LENGTH,
-                                 Consts.CIRCLE_OUTSIDE_VALIDATE_SEARCH_LENGTH + 6):
+                                 Consts.CIRCLE_OUTSIDE_VALIDATE_SEARCH_LENGTH + SAFETY_DISTANCE_FROM_CIRCLE):
+
+        if row + safety_distance >= len(img[0]) or row - safety_distance < 0 or col + safety_distance >= len(img[1]) or col - safety_distance < 0:
+            return False
+
         if img[row][col + safety_distance] == 1:
             right_is_valid = True
         if img[row][col - safety_distance] == 1:
@@ -527,12 +603,12 @@ def get_center(img, row, col):
     circle_area = BFS(img, vis, row, col)
     if len(circle_area) == 0:
         return [], (0, 0)
-    return circle_area, get_circle_center(circle_area)
+    return circle_area, get_center_of_points(circle_area)
 
 
-def get_circle_center(circle_area):
-    X = [tup[0] for tup in circle_area]
-    Y = [tup[1] for tup in circle_area]
+def get_center_of_points(circle_area_points):
+    X = [tup[0] for tup in circle_area_points]
+    Y = [tup[1] for tup in circle_area_points]
     avg_X = sum(X) / len(X)
     avg_Y = sum(Y) / len(Y)
 
@@ -546,7 +622,7 @@ def get_images_path():
         return Consts.images_path
 
 
-def get_frame_to_alive_pillars(pillar2mask):
+def get_frame_to_alive_pillars_by_same_mask(pillar2last_mask):
     if Consts.USE_CACHE and os.path.isfile(Consts.frame2pillar_cache_path):
         with open(Consts.frame2pillar_cache_path, 'rb') as handle:
             frame_to_alive_pillars = pickle.load(handle)
@@ -564,7 +640,8 @@ def get_frame_to_alive_pillars(pillar2mask):
 
         relevant_pillars_in_frame = []
         # background_pillars = []
-        for pillar_item in pillar2mask.items():
+        # TODO: [not critical to be fixed ATM] can't check if alive by last mask, need to check for each frame
+        for pillar_item in pillar2last_mask.items():
             curr_pillar = blur * pillar_item[1]
             is_pillar_alive = np.sum(curr_pillar)
             if is_pillar_alive > 0:
@@ -574,8 +651,6 @@ def get_frame_to_alive_pillars(pillar2mask):
         frame_to_alive_pillars[frame_num] = relevant_pillars_in_frame
         # frame_to_background_pillars[frame_num] = background_pillars
         frame_num += 1
-    # with open('../SavedPillarsData_05/background_gray_scale_pillars.pickle', 'wb') as handle:
-    #     pickle.dump(frame_to_background_pillars, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     if Consts.USE_CACHE:
         with open(Consts.frame2pillar_cache_path, 'wb') as handle:
@@ -592,7 +667,7 @@ def get_alive_pillars(pillar2mask):
 
 
 def _get_alive_pillars_lst(pillar2mask):
-    frame_to_pillars = get_frame_to_alive_pillars(pillar2mask)
+    frame_to_pillars = get_frame_to_alive_pillars_by_same_mask(pillar2mask)
     any_time_live_pillars = set()
     for pillars in frame_to_pillars.values():
         any_time_live_pillars.update(pillars)
@@ -604,7 +679,7 @@ def _get_fully_alive_pillars_lst(pillar2mask_dict):
     p_mask = list(pillar2mask_dict.values())[0]
     perfect_circle = p_mask.sum() * Consts.percentage_from_perfect_circle_mask
 
-    img = get_image_whiten(build_image=Consts.build_image)
+    img = get_last_image_whiten(build_image=Consts.build_image)
 
     fully_alive_pillars_lst = []
     for p, mask in pillar2mask_dict.items():
@@ -624,6 +699,24 @@ def create_image_by_max_value():
     new_img = np.max(np.array(images), axis=0)
 
     return new_img
+
+def get_alive_centers_by_frame(images):
+    if Consts.USE_CACHE and os.path.isfile(Consts.frame2alive_pillars_cache_path):
+        with open(Consts.frame2alive_pillars_cache_path, 'rb') as handle:
+            frame_to_alive_pillars = pickle.load(handle)
+            return frame_to_alive_pillars
+
+    all_centers_by_last_frame = find_all_centers_with_logic()
+
+    frame_to_alive_pillars = {}
+    for frame_index, frame in enumerate(images):
+        frame_to_alive_pillars[frame_index] = list(get_alive_centers(frame, all_centers_by_last_frame))
+
+    if Consts.USE_CACHE:
+        with open(Consts.frame2alive_pillars_cache_path, 'wb') as handle:
+            pickle.dump(frame_to_alive_pillars, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+    return frame_to_alive_pillars
 
 # TODO: delete? needed?
 # def get_all_pillars_in_radius_df(gc_df, pillar2mask_dict, radius):

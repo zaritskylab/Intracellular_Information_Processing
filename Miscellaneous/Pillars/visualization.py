@@ -20,8 +20,13 @@ def show_last_image_masked(mask_path=None, pillars_mask=None):
     :return:
     """
     last_img = get_last_image()
-    plt.imshow(last_img, cmap=plt.cm.gray)
+    # # TODO: delete
+    # imgs = get_images(get_images_path())
+    # last_img = imgs[0]
+    # if len(last_img.shape) == 3:
+    #     last_img = last_img[-1]
 
+    plt.imshow(last_img, cmap=plt.cm.gray)
     plt.show()
 
     if mask_path is not None:
@@ -48,7 +53,7 @@ def indirect_alive_neighbors_correlation_plot(pillar_location, only_alive=True):
     """
 
     my_G = nx.Graph()
-    nodes_loc = find_centers_with_logic()
+    nodes_loc = find_all_centers_with_logic()
     node_loc2index = {}
     for i in range(len(nodes_loc)):
         node_loc2index[nodes_loc[i]] = i
@@ -79,8 +84,8 @@ def indirect_alive_neighbors_correlation_plot(pillar_location, only_alive=True):
 
     cmap = plt.cm.seismic
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=-1, vmax=1))
-    pillar2mask = get_mask_for_each_pillar()
-    frame2pillars = get_frame_to_alive_pillars(pillar2mask)
+    pillar2mask = get_last_img_mask_for_each_pillar()
+    frame2pillars = get_frame_to_alive_pillars_by_same_mask(pillar2mask)
     nodes_index2size = [10] * len(nodes_loc)
     for node in nodes_loc:
         for i in range(len(frame2pillars)):
@@ -110,7 +115,7 @@ def correlation_plot(only_alive=True,
     """
     my_G = nx.Graph()
     last_img = get_last_image()
-    alive_centers = get_alive_centers(last_img)
+    alive_centers = get_alive_centers()
     nodes_loc = generate_centers_from_alive_centers(alive_centers, len(last_img))
     if neighbors_str == 'alive2back':
         neighbors = get_alive_pillars_in_edges_to_l1_neighbors()[0]
@@ -130,9 +135,6 @@ def correlation_plot(only_alive=True,
         alive_pillars_correlation = get_alive_pillars_correlation()
     elif alive_correlation_type == 'symmetric':
         alive_pillars_correlation = get_alive_pillars_symmetric_correlation()
-    elif alive_correlation_type == 'asymmetric':
-        alive_pillars_correlation = alive_pillars_asymmetric_correlation()
-        my_G = my_G.to_directed()
     all_pillars_corr = get_all_pillars_correlations()
 
     if only_alive:
@@ -151,8 +153,8 @@ def correlation_plot(only_alive=True,
     edges, weights = zip(*nx.get_edge_attributes(my_G, 'weight').items())
     cmap = plt.cm.seismic
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=-1, vmax=1))
-    pillar2mask = get_mask_for_each_pillar()
-    frame2pillars = get_frame_to_alive_pillars(pillar2mask)
+    pillar2mask = get_last_img_mask_for_each_pillar()
+    frame2pillars = get_frame_to_alive_pillars_by_same_mask(pillar2mask)
     nodes_index2size = [10] * len(nodes_loc)
     for node in nodes_loc:
         for i in range(len(frame2pillars)):
@@ -180,7 +182,7 @@ def build_gc_directed_graph(gc_df, non_stationary_pillars=None, inwards=None, ou
     :return:
     """
     my_G = nx.Graph().to_directed()
-    nodes_loc = find_centers_with_logic()
+    nodes_loc = find_all_centers_with_logic()
     # neighbors1, neighbors2 = get_pillar_to_neighbors()
     node_loc2index = {}
     for i in range(len(nodes_loc)):
@@ -222,8 +224,8 @@ def build_gc_directed_graph(gc_df, non_stationary_pillars=None, inwards=None, ou
         sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=-1, vmax=1))
         # plt.colorbar(sm)
 
-        pillar2mask = get_mask_for_each_pillar()
-        frame2pillars = get_frame_to_alive_pillars(pillar2mask)
+        pillar2mask = get_last_img_mask_for_each_pillar()
+        frame2pillars = get_frame_to_alive_pillars_by_same_mask(pillar2mask)
         nodes_index2size = [10] * len(nodes_loc)
         for node in nodes_loc:
             for i in range(len(frame2pillars)):
@@ -238,7 +240,7 @@ def build_gc_directed_graph(gc_df, non_stationary_pillars=None, inwards=None, ou
         edges, weights = zip(*nx.get_edge_attributes(my_G, 'weight').items())
         # edges = list(filter(lambda x: x[0] == 52, edges))
 
-        img = get_image_whiten(build_image=Consts.build_image)
+        img = get_last_image_whiten(build_image=Consts.build_image)
         fig, ax = plt.subplots()
         ax.imshow(img, cmap='gray')
 
@@ -278,6 +280,8 @@ def build_gc_directed_graph(gc_df, non_stationary_pillars=None, inwards=None, ou
         #         node_size=nodes_index2size)
         nx.draw_networkx_labels(my_G, nodes_loc_y_inverse, font_color="whitesmoke", font_size=8)
 
+        # plt.scatter(get_image_size()[0]/2, get_image_size()[1]/2, s=250, c="red")
+
         # ax.plot()
         plt.show()
         x = 1
@@ -294,12 +298,12 @@ def build_gc_directed_graph_test(gc_df, non_stationary_pillars=None, inwards=Non
     :return:
     """
     my_G = nx.Graph().to_directed()
-    nodes_loc = find_centers_with_logic()
+    nodes_loc = find_all_centers_with_logic()
     # neighbors1, neighbors2 = get_pillar_to_neighbors()
     node_loc2index = {}
-    for i in range(len(nodes_loc)):
-        node_loc2index[str(nodes_loc[i])] = i
-        my_G.add_node(i)
+    for frame in range(len(nodes_loc)):
+        node_loc2index[str(nodes_loc[frame])] = frame
+        my_G.add_node(frame)
     # alive_pillars_correlation = get_alive_pillars_correlation()
     alive_pillars_correlation = get_alive_pillars_symmetric_correlation()
     all_pillars_corr = get_all_pillars_correlations()
@@ -324,20 +328,20 @@ def build_gc_directed_graph_test(gc_df, non_stationary_pillars=None, inwards=Non
         sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=-1, vmax=1))
         # plt.colorbar(sm)
 
-        pillar2mask = get_mask_for_each_pillar()
-        frame2pillars = get_frame_to_alive_pillars(pillar2mask)
+        pillar2mask = get_last_img_mask_for_each_pillar()
+        frame2alive_pillars = get_frame_to_alive_pillars_by_same_mask(pillar2mask)
         nodes_index2size = [10] * len(nodes_loc)
         for node in nodes_loc:
-            for i in range(len(frame2pillars)):
-                if node in frame2pillars[i + 1]:
-                    nodes_index2size[node_loc2index[str(node)]] = len(frame2pillars) - ((i // 13) * 13)
+            for frame in range(len(frame2alive_pillars)):
+                if node in frame2alive_pillars[frame + 1]:
+                    nodes_index2size[node_loc2index[str(node)]] = len(frame2alive_pillars) - ((frame // 13) * 13)
                     break
         nodes_loc_y_inverse = [(loc[1], loc[0]) for loc in nodes_loc]
 
         edges, weights = zip(*nx.get_edge_attributes(my_G, 'weight').items())
         # edges = list(filter(lambda x: x[0] == 52, edges))
 
-        img = get_image_whiten(build_image=Consts.build_image)
+        img = get_last_image_whiten(build_image=Consts.build_image)
         fig, ax = plt.subplots()
         ax.imshow(img, cmap='gray')
 
@@ -558,20 +562,27 @@ def in_out_degree_distribution(in_degree_list, out_degree_list):
     print("Out degree average: " + str(np.mean(out_degree_list)))
 
 
-def features_correlations_heatmap():
-    output_df = get_output_df()
+def features_correlations_heatmap(output_path_type, custom_df=None):
+    if custom_df is None:
+        output_df = get_output_df(output_path_type)
+    else:
+        output_df = custom_df
     f, ax = plt.subplots(figsize=(10, 8))
     corr = output_df.corr()
     sns.heatmap(corr, mask=np.zeros_like(corr, dtype=np.bool), annot=True,
                 cmap=sns.diverging_palette(220, 10, as_cmap=True),
                 square=True, ax=ax)
     ax.tick_params(axis='x', rotation=45)
+    ax.tick_params(axis='y', rotation=45)
     plt.show()
 
 
-def pca_number_of_components():
+def pca_number_of_components(output_path_type, custom_df=None):
     # get the number of components to pca - a rule of thumb is to preserve around 80 % of the variance
-    output_df = get_output_df()
+    if custom_df is None:
+        output_df = get_output_df(output_path_type)
+    else:
+        output_df = custom_df
     x = StandardScaler().fit_transform(output_df)
     pca = PCA()
     pca.fit(x)
@@ -579,14 +590,13 @@ def pca_number_of_components():
     plt.title('Explained Variance by Components')
     plt.xlabel('Number of Components')
     plt.ylabel('Cumulative Explained Variance')
-    plt.plot(range(1, 8), pca.explained_variance_ratio_.cumsum(), marker='o', linestyle='--')
+    plt.plot(range(1, output_df.shape[1]+1), pca.explained_variance_ratio_.cumsum(), marker='o', linestyle='--')
     plt.show()
 
 
-def plot_2d_pca_components(n_components):
+def plot_2d_pca_components(targets_list, output_path_type, n_components, custom_df=None):
     # plot 2D pca of all components in one plot
-    targets = ['exp_01', 'exp_05', 'exp_06', 'exp_08', 'exp_09', 'exp_12', 'exp_20', 'exp_30']
-    pca, principal_components = get_pca(n_components=n_components)
+    pca, principal_components = get_pca(output_path_type, n_components=n_components, custom_df=custom_df)
     labels = {
         str(i): f"PC {i + 1} ({var:.1f}%)"
         for i, var in enumerate(pca.explained_variance_ratio_ * 100)
@@ -594,8 +604,8 @@ def plot_2d_pca_components(n_components):
     fig = px.scatter_matrix(
         principal_components,
         labels=labels,
-        dimensions=range(3),
-        color=targets
+        dimensions=range(principal_components.shape[1]),
+        color=targets_list
     )
     fig.update_traces(diagonal_visible=False)
     fig.show()
@@ -603,7 +613,16 @@ def plot_2d_pca_components(n_components):
 
 def components_feature_weight(pca):
     # Components Feature Weight
-    fig = make_subplots(rows=1, cols=3, subplot_titles=("PC1", "PC2", "PC3"))
+    if len(pca.components_) == 2:
+        subplot_titles = ("PC1", "PC2")
+        cols = 2
+    if len(pca.components_) == 3:
+        subplot_titles = ("PC1", "PC2", "PC3")
+        cols = 3
+    if len(pca.components_) == 4:
+        subplot_titles = ("PC1", "PC2", "PC3", "PC4")
+        cols = 4
+    fig = make_subplots(rows=1, cols=cols, subplot_titles=subplot_titles)
     fig.add_trace(
         go.Scatter(y=pca.components_[0], mode='markers'),
         row=1, col=1
@@ -612,19 +631,32 @@ def components_feature_weight(pca):
         go.Scatter(y=pca.components_[1], mode='markers'),
         row=1, col=2
     )
-    fig.add_trace(
-        go.Scatter(y=pca.components_[2], mode='markers'),
-        row=1, col=3
-    )
+    if len(pca.components_) == 3:
+        fig.add_trace(
+            go.Scatter(y=pca.components_[2], mode='markers'),
+            row=1, col=3
+        )
+    if len(pca.components_) == 4:
+        fig.add_trace(
+            go.Scatter(y=pca.components_[2], mode='markers'),
+            row=1, col=3
+        )
+        fig.add_trace(
+            go.Scatter(y=pca.components_[3], mode='markers'),
+            row=1, col=4
+        )
     fig.update_xaxes(title_text="Feature", row=1, col=2)
     fig.update_yaxes(title_text="Weight", row=1, col=1)
     fig.show()
 
 
-def features_coefficient_heatmap(pca):
-    output_df = get_output_df()
+def features_coefficient_heatmap(pca, output_path_type, custom_df=None):
+    if custom_df is None:
+        output_df = get_output_df(output_path_type)
+    else:
+        output_df = custom_df
     for i in range(len(pca.components_)):
-        ax = sns.heatmap(pca.components_[i].reshape(1, 7),
+        ax = sns.heatmap(pca.components_[i].reshape(1, output_df.shape[1]),
                          cmap='seismic',
                          yticklabels=["PC" + str(i + 1)],
                          xticklabels=list(output_df.columns),
@@ -654,29 +686,42 @@ def gc_edge_probability_original_vs_random(gc_df):
     ax.legend()
     plt.show()
 
-# decide on the number of clustering to k-means. wcss = Within Cluster Sum of Squares
-# wcss = []
-# for i in range(1,9):
-#     kmeans_pca = KMeans(n_clusters=i, init='k-means++', random_state=42)
-#     kmeans_pca.fit(principalComponents)
-#     wcss.append(kmeans_pca.inertia_)
-# plt.figure(figsize=(10, 8))
-# plt.title('K-means with PCA Clusters')
-# plt.xlabel('Number of Clusters')
-# plt.ylabel('WCSS')
-# plt.plot(range(1, 9), wcss, marker='o', linestyle='--')
-# plt.show()
 
-# # implement k-means with pca
-# kmeans_pca = KMeans(n_clusters=2, init='k-means++', random_state=42)
-# kmeans_pca.fit(principalComponents)
-# df_segm_pca_kmeans = pd.concat([output_df.reset_index(drop=True), pd.DataFrame(principalComponents)], axis=1)
-# df_segm_pca_kmeans.columns.values[-2:] = ['Component 1', 'Component 2']
-# df_segm_pca_kmeans['Segment K-means PCA'] = kmeans_pca.labels_
-# df_segm_pca_kmeans['Segment'] = df_segm_pca_kmeans['Segment K-means PCA'].map({0: 'first', 1: 'second'})
-# x_axis = df_segm_pca_kmeans['Component 1']
-# y_axis = df_segm_pca_kmeans['Component 2']
-# plt.figure(figsize=(10, 8))
-# sns.scatterplot(x_axis, y_axis, hue=df_segm_pca_kmeans['Segment'], palette=['g', 'r'])
-# plt.title('Clusters by PCA Components')
-# plt.show()
+# decide on the number of clustering to k-means. wcss = Within Cluster Sum of Squares
+def number_clusters_kmeans(principalComponents):
+    global kmeans_pca
+    wcss = []
+    for i in range(1, 9):
+        kmeans_pca = KMeans(n_clusters=i, init='k-means++', random_state=42)
+        kmeans_pca.fit(principalComponents)
+        wcss.append(kmeans_pca.inertia_)
+    plt.figure(figsize=(10, 8))
+    plt.title('K-means with PCA Clusters')
+    plt.xlabel('Number of Clusters')
+    plt.ylabel('WCSS')
+    plt.plot(range(1, 9), wcss, marker='o', linestyle='--')
+    plt.show()
+
+
+# implement k-means with pca
+def k_means(principalComponents, output_path_type, n_clusters=2, custom_df=None):
+    global kmeans_pca
+    kmeans_pca = KMeans(n_clusters=n_clusters, init='k-means++', random_state=42)
+    kmeans_pca.fit(principalComponents)
+    if custom_df is None:
+        output_df = get_output_df(output_path_type)
+    else:
+        output_df = custom_df
+    df_segm_pca_kmeans = pd.concat([output_df.reset_index(drop=True), pd.DataFrame(principalComponents)], axis=1)
+    n_components = principalComponents.shape[1]
+    df_segm_pca_kmeans.columns.values[-n_components:] = ['Component ' + str(i+1) for i in range(n_components)]
+    df_segm_pca_kmeans['Segment K-means PCA'] = kmeans_pca.labels_
+    df_segm_pca_kmeans['Segment'] = df_segm_pca_kmeans['Segment K-means PCA'].map({0: 'first', 1: 'second'})
+    for i in range(n_components):
+        x_axis = df_segm_pca_kmeans['Component ' + str(i+1)]
+        for j in range(i+1, n_components):
+            y_axis = df_segm_pca_kmeans['Component ' + str(j+1)]
+            plt.figure(figsize=(10, 8))
+            sns.scatterplot(x_axis, y_axis, hue=df_segm_pca_kmeans['Segment'], palette=['g', 'r'])
+            plt.title('Clusters by PCA Components')
+            plt.show()

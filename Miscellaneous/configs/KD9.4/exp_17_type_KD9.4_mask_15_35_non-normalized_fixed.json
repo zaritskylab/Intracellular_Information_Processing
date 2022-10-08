@@ -15,6 +15,7 @@
   "perturbation": {
     "type": "KD9.4"
   },
+  "output_path_type": "9_4",
   "normalized": false,
   "fixed": true,
   "operations": [
@@ -29,12 +30,12 @@
       }
     },
     {
-      "_neighbors_correlation_histogram": {
+      "neighbors_correlation_histogram": {
         "neighbors": "real_neighbors"
       }
     },
     {
-      "_correlation_histogram": {
+      "correlation_histogram": {
         "alive": true
       }
     },
@@ -44,7 +45,7 @@
       }
     },
     {
-      "_gc_graph": {}
+      "gc_graph": {}
     },
     {
       "_edges_distribution_plots": {}

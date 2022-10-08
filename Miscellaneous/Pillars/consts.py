@@ -1,9 +1,11 @@
 import os
 import math
 
+
 class Consts:
     __instance = None
     # Pillars consts that affects cache files
+    RELATIVE_TO = 0.0519938
     # Mask
     SMALL_MASK_RADIUS = 15
     LARGE_MASK_RADIUS = 35
@@ -15,9 +17,12 @@ class Consts:
     # Visualization consts
     only_alive = True
     build_image = True
+    use_otsu = True
     pixel_to_whiten = 10
-    gc_pvalue_threshold = 0.05
+    gc_pvalue_threshold = 0.01
     percentage_from_perfect_circle_mask = 1
+    MAX_DISTANCE_PILLAR_FIXED = 11
+    MAX_DISTANCE_TO_CLOSEST = 5
 
     last_image_path = None
     fixed_images_path = None
@@ -31,12 +36,13 @@ class Consts:
     all_pillars_correlation_normalized_cache_path = None
     all_pillars_correlation_not_normalized_cache_path = None
     frame2pillar_cache_path = None
+    frame2alive_pillars_cache_path = None
     gc_df_cache_path = None
     alive_pillars_corr_cache_path = None
     centers_cache_path = None
     pillar_to_neighbors_cache_path = None
     mask_for_each_pillar_cache_path = None
-    alive_centers_cache_path = None
+    last_img_alive_centers_cache_path = None
     IMAGE_SIZE = 1000
 
     USE_CACHE = True
@@ -44,9 +50,15 @@ class Consts:
 
     # BFS data
     MAX_CIRCLE_AREA = (math.pi * 23 ** 2) * 2
-    CIRCLE_SEARCH_JUMP_SIZE = 20
-    CIRCLE_INSIDE_VALIDATE_SEARCH_LENGTH = CIRCLE_SEARCH_JUMP_SIZE - 5
-    CIRCLE_OUTSIDE_VALIDATE_SEARCH_LENGTH = CIRCLE_SEARCH_JUMP_SIZE + 5
+    CIRCLE_RADIUS = 20
+    CHECK_VALID_CENTER = 5
+    CIRCLE_INSIDE_VALIDATE_SEARCH_LENGTH = CIRCLE_RADIUS - CHECK_VALID_CENTER
+    CIRCLE_OUTSIDE_VALIDATE_SEARCH_LENGTH = CIRCLE_RADIUS + CHECK_VALID_CENTER
+    # CIRCLE_RADIUS = 7
+    # CHECK_VALID_CENTER = 2
+    # CIRCLE_INSIDE_VALIDATE_SEARCH_LENGTH = CIRCLE_RADIUS - 2
+    # CIRCLE_OUTSIDE_VALIDATE_SEARCH_LENGTH = CIRCLE_RADIUS + 2
+
 
     DIST_THRESHOLD_IN_PIXELS = 200
 

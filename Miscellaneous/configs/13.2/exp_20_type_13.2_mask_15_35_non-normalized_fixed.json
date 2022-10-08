@@ -15,9 +15,13 @@
   "perturbation": {
     "type": "13.2"
   },
+  "output_path_type": "13_2",
   "normalized": false,
   "fixed": true,
   "operations": [
+    {
+      "_show_pillars_mask": {}
+    },
     {
       "_correlation_plot": {
         "only_alive": true,
@@ -26,12 +30,12 @@
       }
     },
     {
-      "_neighbors_correlation_histogram": {
+      "neighbors_correlation_histogram": {
         "neighbors": "real_neighbors"
       }
     },
     {
-      "_correlation_histogram": {
+      "correlation_histogram": {
         "alive": true
       }
     },
@@ -41,7 +45,7 @@
       }
     },
     {
-      "_gc_graph": {}
+      "gc_graph": {}
     },
     {
       "_in_out_gc_edges": {}
@@ -53,13 +57,16 @@
       "gc_edge_prob": {}
     },
     {
+      "gc_edge_prob_original_vs_random": {}
+    },
+    {
       "_in_out_degree": {}
     },
     {
-      "_reciprocity": {}
+      "reciprocity": {}
     },
     {
-      "_heterogeneity": {}
+      "heterogeneity": {}
     }
   ]
 }

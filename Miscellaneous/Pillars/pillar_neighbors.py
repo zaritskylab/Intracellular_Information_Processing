@@ -9,7 +9,7 @@ def get_alive_pillars_in_edges_to_l1_neighbors():
     :return: dictionary mapping the alive pillars to their background neighbors, list of the alive pillars in the edges,
             list of the level one background pillars
     """
-    pillar2mask = get_mask_for_each_pillar()
+    pillar2mask = get_last_img_mask_for_each_pillar()
     alive_pillars = get_alive_pillars(pillar2mask)
     all_pillars = pillar2mask.keys()
     background_pillars = [pillar for pillar in all_pillars if
@@ -40,7 +40,7 @@ def get_background_level_1_to_level_2():
     """
     _, _, back_pillars_level_1 = get_alive_pillars_in_edges_to_l1_neighbors()
     pillar_to_neighbors = get_pillar_to_neighbors()
-    pillar2mask = get_mask_for_each_pillar()
+    pillar2mask = get_last_img_mask_for_each_pillar()
     alive_pillars = get_alive_pillars(pillar2mask)
     all_pillars = pillar2mask.keys()
     background_pillars = [pillar for pillar in all_pillars if
@@ -63,20 +63,21 @@ def get_pillar_to_neighbors():
     :return:
     """
 
-    # if Consts.USE_CACHE and os.path.isfile(Consts.pillar_to_neighbors_cache_path):
-    #     with open(Consts.pillar_to_neighbors_cache_path, 'rb') as handle:
-    #         pillar_to_neighbors = pickle.load(handle)
-    #         return pillar_to_neighbors
+    if Consts.USE_CACHE and os.path.isfile(Consts.pillar_to_neighbors_cache_path):
+        with open(Consts.pillar_to_neighbors_cache_path, 'rb') as handle:
+            pillar_to_neighbors = pickle.load(handle)
+            return pillar_to_neighbors
 
     last_img = get_last_image()
-    alive_centers = get_alive_centers(last_img)
-    centers_lst, rule_jump_1, rule_jump_2, generated_location2original_pillar_loc = generate_centers_and_rules_from_alive_centers(alive_centers, len(last_img))
-    original_pillar_loc2generated_location = dict((v, k) for k, v in generated_location2original_pillar_loc.items())
+    alive_centers = get_alive_centers()
+    centers_lst, rule_jump_1, rule_jump_2, generated_location2real_pillar_loc = generate_centers_and_rules_from_alive_centers(alive_centers, len(last_img))
+    real_pillar_loc2generated_location = dict((v, k) for k, v in generated_location2real_pillar_loc.items())
     pillar_to_neighbors = {}
     for pillar_actual_location in centers_lst:
+
         # If pillar_actual_location is the original location (moved), we should treat it as the generated location for the rules
-        if pillar_actual_location in original_pillar_loc2generated_location:
-            pillar_center_to_activate_rule = original_pillar_loc2generated_location[pillar_actual_location]
+        if pillar_actual_location in real_pillar_loc2generated_location:
+            pillar_center_to_activate_rule = real_pillar_loc2generated_location[pillar_actual_location]
         else:
             pillar_center_to_activate_rule = pillar_actual_location
 
@@ -94,7 +95,7 @@ def get_pillar_to_neighbors():
 
         # In case we switched pillar location from rule based to actual live pillar base, we take the actual live pillar location
         neighbors_lst.extend(
-            [generated_location2original_pillar_loc[potential_nbr] for potential_nbr in potential_neighbors if potential_nbr in generated_location2original_pillar_loc]
+            [generated_location2real_pillar_loc[potential_nbr] for potential_nbr in potential_neighbors if potential_nbr in generated_location2real_pillar_loc]
         )
 
         pillar_to_neighbors[pillar_actual_location] = list(set(neighbors_lst))
@@ -146,7 +147,7 @@ def get_alive_pillars_to_alive_neighbors():
     :return:
     """
     pillar_to_neighbors = get_pillar_to_neighbors()
-    pillar2mask = get_mask_for_each_pillar()
+    pillar2mask = get_last_img_mask_for_each_pillar()
     alive_pillars = get_alive_pillars(pillar2mask)
     alive_pillars_to_alive_neighbors = {}
     for p, nbrs in pillar_to_neighbors.items():

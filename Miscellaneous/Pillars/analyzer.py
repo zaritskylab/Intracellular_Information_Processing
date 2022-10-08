@@ -1,5 +1,6 @@
 from scipy.stats import pearsonr
-
+from scipy import stats
+from scipy.stats import ttest_ind
 from Pillars.pillar_intensities import *
 from Pillars.pillars_utils import *
 from Pillars.pillar_neighbors import *
@@ -113,13 +114,13 @@ def get_alive_pillars_symmetric_correlation():
             gc_df = pickle.load(handle)
             return gc_df
 
-    pillar2mask = get_mask_for_each_pillar()
-    frame_to_pillars = get_frame_to_alive_pillars(pillar2mask)
-    pillar_to_frame = {}
-    for k, v_lst in frame_to_pillars.items():
-        for item in v_lst:
-            if item not in pillar_to_frame:
-                pillar_to_frame[item] = k
+    pillar2mask = get_last_img_mask_for_each_pillar()
+    frame_to_alive_pillars = get_frame_to_alive_pillars_by_same_mask(pillar2mask)
+    alive_pillars_to_frame = {}
+    for frame, alive_pillars_in_frame in frame_to_alive_pillars.items():
+        for alive_pillar in alive_pillars_in_frame:
+            if alive_pillar not in alive_pillars_to_frame:
+                alive_pillars_to_frame[alive_pillar] = frame
 
     alive_pillars_intens = get_alive_pillars_to_intensities()
     alive_pillars = list(alive_pillars_intens.keys())
@@ -129,9 +130,9 @@ def get_alive_pillars_symmetric_correlation():
     # epsilon = 0.0001
     # Symmetric correlation - calc correlation of 2 pillars start from the frame they are both alive: maxFrame(A, B)
     for p1 in alive_pillars:
-        p1_living_frame = pillar_to_frame[p1]
+        p1_living_frame = alive_pillars_to_frame[p1]
         for p2 in alive_pillars:
-            p2_living_frame = pillar_to_frame[p2]
+            p2_living_frame = alive_pillars_to_frame[p2]
             both_alive_frame = max(p1_living_frame, p2_living_frame)
             p1_relevant_intens = alive_pillars_intens[p1][both_alive_frame - 1:]
             p2_relevant_intens = alive_pillars_intens[p2][both_alive_frame - 1:]
@@ -145,36 +146,6 @@ def get_alive_pillars_symmetric_correlation():
     if Consts.USE_CACHE:
         with open(Consts.alive_pillars_corr_cache_path, 'wb') as handle:
             pickle.dump(pillars_corr, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-    return pillars_corr
-
-
-def alive_pillars_asymmetric_correlation():
-    """
-    Create dataframe of alive pillars correlation. correlation of pillar first frame of living with all other pillars.
-    -> correlation(a, b) != correlation(b, a)
-    :return:
-    """
-    pillar2mask = get_mask_for_each_pillar()
-    frame_to_pillars = get_frame_to_alive_pillars(pillar2mask)
-    pillar_to_frame = {}
-    for k, v_lst in frame_to_pillars.items():
-        for item in v_lst:
-            if item not in pillar_to_frame:
-                pillar_to_frame[item] = k
-
-    alive_pillars_intens = get_alive_pillars_to_intensities()
-    alive_pillars = list(alive_pillars_intens.keys())
-    alive_pillars_str = [str(p) for p in alive_pillars]
-    pillars_corr = pd.DataFrame(0, index=alive_pillars_str, columns=alive_pillars_str)
-
-    # Asymmetric correlation - calc correlation with every pillar start from the frame p1 is alive
-    for p1 in alive_pillars:
-        alive_from_frame = pillar_to_frame[p1]
-        p1_relevant_intens = alive_pillars_intens[p1][alive_from_frame - 1:]
-        for p2 in alive_pillars:
-            p2_relevant_intens = alive_pillars_intens[p2][alive_from_frame - 1:]
-            pillars_corr.loc[str(p2), str(p1)] = pearsonr(p1_relevant_intens, p2_relevant_intens)[0]
 
     return pillars_corr
 
@@ -209,8 +180,8 @@ def get_number_of_inwards_outwards_gc_edges(gc_df):
     :param gc_df:
     :return:
     """
-    img_size = get_image_size()
-    center = (img_size[0] / 2, img_size[1] / 2)
+    all_alive_centers = get_alive_centers()
+    center = get_center_of_points(all_alive_centers)
     neighbors = get_alive_pillars_to_alive_neighbors()
     inwards = 0
     outwards = 0
@@ -389,28 +360,35 @@ def get_network_heterogeneity(gc_df):
     return g_heterogeneity
 
 
-def get_output_df():
-    output_path = get_output_path()
+def get_output_df(output_path_type):
+    output_path = get_output_path(output_path_type)
 
     output_df = pd.read_csv(output_path, index_col=0)
+    output_df.drop('passed_stationary', axis=1, inplace=True)
 
     return output_df
 
 
-def get_output_path():
+def get_output_path(output_path_type):
     if Consts.inner_cell:
-        output_path = './features output/output_inner_cell.csv'
+        output_path = './features output/output_inner_cell_' + output_path_type +'.csv'
     else:
-        output_path = './features output/output.csv'
+        output_path = './features output/output' + output_path_type + '.csv'
 
     return output_path
 
 
-def get_pca(n_components):
-    output_df = get_output_df()
+def get_pca(output_path_type, n_components, custom_df=None):
+    if custom_df is None:
+        output_df = get_output_df(output_path_type)
+    else:
+        output_df = custom_df
     x = StandardScaler().fit_transform(output_df)
     pca = PCA(n_components=n_components)
     principle_comp = pca.fit_transform(x)
     return pca, principle_comp
 
 
+def t_test(samp_lst_1, samp_lst_2):
+    stat, pval = ttest_ind(samp_lst_1, samp_lst_2)
+    return stat, pval
