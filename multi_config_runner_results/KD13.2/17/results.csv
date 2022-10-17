@@ -1,0 +1,2 @@
+,passed_stationary,nbrs_avg_correlation,random_avg_correlation,total_gc_edges,inwards_edges,outwards_edges,out/in_factor,gc_edge_prob,avg_random_gc_edge_prob,std,reciprocity,heterogeneity
+KD13.2_17,65.22,0.212,-0.006,21,0.286,0.095,0.333,0.172,0.113,0.022,0.190,0.128

@@ -21,7 +21,7 @@
   "fixed": true,
   "operations": [
     {
-      "_show_pillars_mask": {}
+      "show_pillars_mask": {}
     },
     {
       "_correlation_plot": {
@@ -31,12 +31,12 @@
       }
     },
     {
-      "_neighbors_correlation_histogram": {
+      "neighbors_correlation_histogram": {
         "neighbors": "real_neighbors"
       }
     },
     {
-      "_correlation_histogram": {
+      "correlation_histogram": {
         "alive": true
       }
     },
@@ -46,7 +46,7 @@
       }
     },
     {
-      "_gc_graph": {}
+      "gc_graph": {}
     },
     {
       "_edges_distribution_plots": {}

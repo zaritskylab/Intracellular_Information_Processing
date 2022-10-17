@@ -19,9 +19,10 @@
   "output_path_type": "13_2",
   "normalized": false,
   "fixed": true,
+  "pixel_to_whiten": 15,
   "operations": [
     {
-      "_show_pillars_mask": {}
+      "show_pillars_mask": {}
     },
     {
       "_correlation_plot": {

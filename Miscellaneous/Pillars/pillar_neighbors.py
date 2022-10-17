@@ -69,7 +69,8 @@ def get_pillar_to_neighbors():
             return pillar_to_neighbors
 
     last_img = get_last_image()
-    alive_centers = get_alive_centers()
+    alive_centers = get_seen_centers_for_mask()
+
     centers_lst, rule_jump_1, rule_jump_2, generated_location2real_pillar_loc = generate_centers_and_rules_from_alive_centers(alive_centers, len(last_img))
     real_pillar_loc2generated_location = dict((v, k) for k, v in generated_location2real_pillar_loc.items())
     pillar_to_neighbors = {}

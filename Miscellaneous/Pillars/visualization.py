@@ -1,3 +1,5 @@
+from matplotlib.pyplot import axline
+
 from Pillars.analyzer import *
 import networkx as nx
 import seaborn as sns
@@ -27,7 +29,12 @@ def show_last_image_masked(mask_path=None, pillars_mask=None):
     #     last_img = last_img[-1]
 
     plt.imshow(last_img, cmap=plt.cm.gray)
-    plt.show()
+    if Consts.RESULT_FOLDER_PATH is not None:
+        plt.savefig(Consts.RESULT_FOLDER_PATH + "/last_image.png")
+        plt.close()  # close the figure window
+
+    if Consts.BLOCK_TO_SHOW_GRAPH:
+        plt.show()
 
     if mask_path is not None:
         with open(mask_path, 'rb') as f:
@@ -35,13 +42,17 @@ def show_last_image_masked(mask_path=None, pillars_mask=None):
     pillars_mask = 255 - pillars_mask
     mx = ma.masked_array(last_img, pillars_mask)
     plt.imshow(mx, cmap=plt.cm.gray)
+    if Consts.RESULT_FOLDER_PATH is not None:
+        plt.savefig(Consts.RESULT_FOLDER_PATH + "/mask.png")
+        plt.close()  # close the figure window
+    if Consts.BLOCK_TO_SHOW_GRAPH:
     # add the centers location on the image
-    # centers = find_centers()
-    # for center in centers:
-    #     s = '(' + str(center[0]) + ',' + str(center[1]) + ')'
-    #     plt.text(center[VIDEO_06_LENGTH], center[0], s=s, fontsize=7, color='red')
+        # centers = find_centers()
+        # for center in centers:
 
-    plt.show()
+        #     s = '(' + str(center[0]) + ',' + str(center[1]) + ')'
+        #     plt.text(center[VIDEO_06_LENGTH], center[0], s=s, fontsize=7, color='red')
+        plt.show()
 
 
 def indirect_alive_neighbors_correlation_plot(pillar_location, only_alive=True):
@@ -98,7 +109,8 @@ def indirect_alive_neighbors_correlation_plot(pillar_location, only_alive=True):
             edge_cmap=cmap,
             node_size=nodes_index2size)
     plt.colorbar(sm)
-    plt.show()
+    if Consts.BLOCK_TO_SHOW_GRAPH:
+        plt.show()
 
 
 def correlation_plot(only_alive=True,
@@ -115,7 +127,7 @@ def correlation_plot(only_alive=True,
     """
     my_G = nx.Graph()
     last_img = get_last_image()
-    alive_centers = get_alive_centers()
+    alive_centers = get_seen_centers_for_mask()
     nodes_loc = generate_centers_from_alive_centers(alive_centers, len(last_img))
     if neighbors_str == 'alive2back':
         neighbors = get_alive_pillars_in_edges_to_l1_neighbors()[0]
@@ -169,7 +181,8 @@ def correlation_plot(only_alive=True,
             node_size=nodes_index2size,
             vmin=-1, vmax=1, edge_vmin=-1, edge_vmax=1)
     plt.colorbar(sm)
-    plt.show()
+    if Consts.BLOCK_TO_SHOW_GRAPH:
+        plt.show()
     x = 1
 
 
@@ -181,6 +194,13 @@ def build_gc_directed_graph(gc_df, non_stationary_pillars=None, inwards=None, ou
     :param only_alive:
     :return:
     """
+    #
+    # if Consts.USE_CACHE and os.path.isfile(Consts.gc_graph_cache_path):
+    #     with open(Consts.gc_graph_cache_path, 'rb') as handle:
+    #         pillar_to_neighbors = pickle.load(handle)
+    #         return pillar_to_neighbors
+
+
     my_G = nx.Graph().to_directed()
     nodes_loc = find_all_centers_with_logic()
     # neighbors1, neighbors2 = get_pillar_to_neighbors()
@@ -283,7 +303,11 @@ def build_gc_directed_graph(gc_df, non_stationary_pillars=None, inwards=None, ou
         # plt.scatter(get_image_size()[0]/2, get_image_size()[1]/2, s=250, c="red")
 
         # ax.plot()
-        plt.show()
+        if Consts.RESULT_FOLDER_PATH is not None:
+            plt.savefig(Consts.RESULT_FOLDER_PATH + "/gc.png")
+            plt.close()  # close the figure window
+        if Consts.BLOCK_TO_SHOW_GRAPH:
+            plt.show()
         x = 1
     return my_G, p_vals_lst
 
@@ -383,7 +407,8 @@ def build_gc_directed_graph_test(gc_df, non_stationary_pillars=None, inwards=Non
         nx.draw_networkx_labels(my_G, nodes_loc_y_inverse, font_color="whitesmoke")
 
         # ax.plot()
-        plt.show()
+        if Consts.BLOCK_TO_SHOW_GRAPH:
+            plt.show()
         x = 1
     return my_G
 
@@ -404,7 +429,9 @@ def correlation_histogram(correlations_df):
     mean_corr = np.mean(corr_array)
     sns.histplot(data=corr_array, kde=True)
     plt.xlabel("Correlation")
-    plt.show()
+    if Consts.BLOCK_TO_SHOW_GRAPH:
+        plt.show()
+    mean_corr = format(mean_corr, ".3f")
     print("mean correlations: " + str(mean_corr))
     return mean_corr
 
@@ -429,7 +456,9 @@ def neighbors_correlation_histogram(correlations_df, neighbors_dict, original_ne
     else:
         plt.title("Correlation of Randomize Neighbors")
     plt.xlabel("Correlation")
-    plt.show()
+    if Consts.BLOCK_TO_SHOW_GRAPH:
+        plt.show()
+    mean_corr = format(mean_corr, ".3f")
     print("mean correlation between neighbors: " + str(mean_corr))
     return mean_corr
 
@@ -462,7 +491,8 @@ def plot_pillar_time_series():
     plt.ylabel('Intensity (micron)')
     # plt.title('Pillar ' + str(pillar_loc))
     plt.legend()
-    plt.show()
+    if Consts.BLOCK_TO_SHOW_GRAPH:
+        plt.show()
 
 
 def compare_neighbors_corr_histogram_random_vs_real(random_amount):
@@ -488,7 +518,11 @@ def compare_neighbors_corr_histogram_random_vs_real(random_amount):
     ax.scatter(rand, means)
     plt.ylabel('Average Correlation')
     plt.xticks(rotation=45)
-    plt.show()
+    if Consts.RESULT_FOLDER_PATH is not None:
+        plt.savefig(Consts.RESULT_FOLDER_PATH + "/neighbors_corr_histogram_random_vs_real.png")
+        plt.close()  # close the figure window
+    if Consts.BLOCK_TO_SHOW_GRAPH:
+        plt.show()
 
 
 def edges_distribution_plots(gc_df, pillar_intensity_dict=None):
@@ -532,19 +566,22 @@ def edges_distribution_plots(gc_df, pillar_intensity_dict=None):
     sns.histplot(data=no_edge, kde=True)
     plt.xlabel("Correlations")
     plt.title('Correlation of no edges between neighbors')
-    plt.show()
+    if Consts.BLOCK_TO_SHOW_GRAPH:
+        plt.show()
     print("number of neighbors with no edges: " + str(len(no_edge)))
     print("average of neighbors with no edges: " + str(np.mean(no_edge)))
     sns.histplot(data=one_sided_edge, kde=True)
     plt.xlabel("Correlations")
     plt.title('Correlation of 1 sided edges between neighbors')
-    plt.show()
+    if Consts.BLOCK_TO_SHOW_GRAPH:
+        plt.show()
     print("number of neighbors with 1 edge: " + str(len(one_sided_edge)))
     print("average of neighbors with 1 edge: " + str(np.mean(one_sided_edge)))
     sns.histplot(data=two_sided_edge, kde=True)
     plt.xlabel("Correlations")
     plt.title('Correlation of 2 sided edges between neighbors')
-    plt.show()
+    if Consts.BLOCK_TO_SHOW_GRAPH:
+        plt.show()
     print("number of neighbors with 2 edges: " + str(len(two_sided_edge)))
     print("average of neighbors with 2 edges: " + str(np.mean(two_sided_edge)))
 
@@ -553,12 +590,14 @@ def in_out_degree_distribution(in_degree_list, out_degree_list):
     sns.histplot(data=in_degree_list, kde=True)
     plt.xlabel("In Degree")
     plt.title('Pillars In Degree Distribution')
-    plt.show()
+    if Consts.BLOCK_TO_SHOW_GRAPH:
+        plt.show()
     print("In degree average: " + str(np.mean(in_degree_list)))
     sns.histplot(data=out_degree_list, kde=True)
     plt.xlabel("Out Degree")
     plt.title('Pillars Out Degree Distribution')
-    plt.show()
+    if Consts.BLOCK_TO_SHOW_GRAPH:
+        plt.show()
     print("Out degree average: " + str(np.mean(out_degree_list)))
 
 
@@ -574,7 +613,8 @@ def features_correlations_heatmap(output_path_type, custom_df=None):
                 square=True, ax=ax)
     ax.tick_params(axis='x', rotation=45)
     ax.tick_params(axis='y', rotation=45)
-    plt.show()
+    if Consts.BLOCK_TO_SHOW_GRAPH:
+        plt.show()
 
 
 def pca_number_of_components(output_path_type, custom_df=None):
@@ -591,7 +631,8 @@ def pca_number_of_components(output_path_type, custom_df=None):
     plt.xlabel('Number of Components')
     plt.ylabel('Cumulative Explained Variance')
     plt.plot(range(1, output_df.shape[1]+1), pca.explained_variance_ratio_.cumsum(), marker='o', linestyle='--')
-    plt.show()
+    if Consts.BLOCK_TO_SHOW_GRAPH:
+        plt.show()
 
 
 def plot_2d_pca_components(targets_list, output_path_type, n_components, custom_df=None):
@@ -665,26 +706,23 @@ def features_coefficient_heatmap(pca, output_path_type, custom_df=None):
         ax.set_aspect("equal")
         ax.tick_params(axis='x', rotation=20)
         sns.set(rc={"figure.figsize": (3, 3)})
-        plt.show()
+        if Consts.BLOCK_TO_SHOW_GRAPH:
+            plt.show()
 
 
-def gc_edge_probability_original_vs_random(gc_df):
-    gc_edge_prob = []
-    idx = []
-    for i in range(10):
-        prob = probability_for_gc_edge(gc_df, random_neighbors=True)
-        gc_edge_prob.append(prob)
-        idx.append(i)
-    print("avg gc edge probability for random " + str(np.mean(gc_edge_prob)))
-    print("std: " + str(np.std(gc_edge_prob)))
+def gc_edge_probability_original_vs_random(gc_df, gc_edge_prob_lst):
     fig, ax = plt.subplots()
     original = probability_for_gc_edge(gc_df, random_neighbors=False)
-    ax.scatter(0, np.mean(gc_edge_prob), label="random")
+    ax.scatter(0, np.mean(gc_edge_prob_lst), label="random")
     ax.scatter(1, original, label="original")
     plt.ylabel("Edge Probability")
     plt.title("GC Edge Probability - Original vs. Random Neighbors")
     ax.legend()
-    plt.show()
+    if Consts.RESULT_FOLDER_PATH is not None:
+        plt.savefig(Consts.RESULT_FOLDER_PATH + "/gc_probability_original_vs_random.png")
+        plt.close()  # close the figure window
+    if Consts.BLOCK_TO_SHOW_GRAPH:
+        plt.show()
 
 
 # decide on the number of clustering to k-means. wcss = Within Cluster Sum of Squares
@@ -700,7 +738,8 @@ def number_clusters_kmeans(principalComponents):
     plt.xlabel('Number of Clusters')
     plt.ylabel('WCSS')
     plt.plot(range(1, 9), wcss, marker='o', linestyle='--')
-    plt.show()
+    if Consts.BLOCK_TO_SHOW_GRAPH:
+        plt.show()
 
 
 # implement k-means with pca
@@ -724,4 +763,21 @@ def k_means(principalComponents, output_path_type, n_clusters=2, custom_df=None)
             plt.figure(figsize=(10, 8))
             sns.scatterplot(x_axis, y_axis, hue=df_segm_pca_kmeans['Segment'], palette=['g', 'r'])
             plt.title('Clusters by PCA Components')
-            plt.show()
+            if Consts.BLOCK_TO_SHOW_GRAPH:
+                plt.show()
+
+
+def average_correlation_real_vs_random_plot(lst_real, lst_random, title=None):
+    f, ax = plt.subplots(figsize=(6, 6))
+    plt.plot(lst_random, lst_real, 'bo')
+    # plt.axis('square')
+    plt.setp(ax, xlim=(-0.05,1), ylim=(-0.05,1))
+    axline([ax.get_xlim()[0], ax.get_ylim()[0]], [ax.get_xlim()[1], ax.get_ylim()[1]], ls='--')
+    if title:
+        plt.title('Average Correlation' + ' ' + title)
+    else:
+        plt.title('Average Correlation')
+    plt.ylabel('Neighbor pair correlation')
+    plt.xlabel('Random pair correlation')
+    if Consts.BLOCK_TO_SHOW_GRAPH:
+        plt.show()

@@ -21,6 +21,7 @@
   "fixed": true,
   "pixel_to_whiten": 40,
   "max_distance_pillar_fixed": 10,
+  "circle_validation": true,
   "operations": [
     {
       "show_pillars_mask": {}

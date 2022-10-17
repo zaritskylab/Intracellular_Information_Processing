@@ -18,8 +18,8 @@ def create_mask_of_circles(radius: int, centers: list):
     for center in centers:
         cv2.circle(mask, (center[1], center[0]), radius, color, thickness)
 
-    cv2.imshow("mask", mask)
-    cv2.waitKey(0)
+    # cv2.imshow("mask", mask)
+    # cv2.waitKey(0)
     return mask
 
 
@@ -70,8 +70,8 @@ def build_pillars_mask():
     pillars_mask = large_mask - small_mask
     pillars_mask *= 255
 
-    cv2.imshow('pillars_mask', pillars_mask)
+    # cv2.imshow('pillars_mask', pillars_mask)
     # with open(masks_path, 'wb') as f:
     #     np.save(f, pillars_mask)
-    cv2.waitKey(0)
+    # cv2.waitKey(0)
     return pillars_mask

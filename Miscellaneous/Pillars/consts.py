@@ -28,7 +28,7 @@ class Consts:
     fixed_images_path = None
     images_path = None
 
-    consider_as_full_circle_percentage = 80
+    consider_as_full_circle_percentage = 70
 
     pillar_to_intensities_cache_path = None
     correlation_alive_normalized_cache_path = None
@@ -38,19 +38,25 @@ class Consts:
     frame2pillar_cache_path = None
     frame2alive_pillars_cache_path = None
     gc_df_cache_path = None
-    alive_pillars_corr_cache_path = None
+    alive_pillars_sym_corr_cache_path = None
     centers_cache_path = None
     pillar_to_neighbors_cache_path = None
     mask_for_each_pillar_cache_path = None
+    gc_graph_cache_path = None
     last_img_alive_centers_cache_path = None
     IMAGE_SIZE = 1000
+    CORRELATION = "pearson"
+    FRAME_WINDOWS_AMOUNT = 10
 
     USE_CACHE = True
+    RESULT_FOLDER_PATH = None
+    BLOCK_TO_SHOW_GRAPH = True
+    WRITE_OUTPUT = False
 
 
     # BFS data
-    MAX_CIRCLE_AREA = (math.pi * 23 ** 2) * 2
     CIRCLE_RADIUS = 20
+    MAX_CIRCLE_AREA = (math.pi * (CIRCLE_RADIUS + 3) ** 2) * 2
     CHECK_VALID_CENTER = 5
     CIRCLE_INSIDE_VALIDATE_SEARCH_LENGTH = CIRCLE_RADIUS - CHECK_VALID_CENTER
     CIRCLE_OUTSIDE_VALIDATE_SEARCH_LENGTH = CIRCLE_RADIUS + CHECK_VALID_CENTER

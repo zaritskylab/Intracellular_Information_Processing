@@ -106,7 +106,8 @@ def filter_image(path_to_image):
     for i in range(len(image)):
         normal_result = rank.mean(image, footprint=kernel)
         plt.imshow(normal_result, cmap=plt.cm.gray)
-        plt.show()
+        if Consts.BLOCK_TO_SHOW_GRAPH:
+            plt.show()
 
         thresh = threshold_mean(normal_result)
         binary = normal_result > thresh
@@ -132,7 +133,8 @@ def filter_image(path_to_image):
         cv2.imshow('Erosion', img_erosion)
         mx = ma.masked_array(normal_result, img_erosion)
         plt.imshow(mx, cmap=plt.cm.gray)
-        plt.show()
+        if Consts.BLOCK_TO_SHOW_GRAPH:
+            plt.show()
         # img_opening = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)
         # cv2.imshow('Opening', img_opening)
         # img_dilation = cv2.dilate(img_erosion, kernel)
@@ -347,7 +349,7 @@ def find_all_centers_with_logic():
             return centers
 
     last_img = get_last_image()
-    alive_centers = get_alive_centers()
+    alive_centers = get_seen_centers_for_mask()
     centers = generate_centers_from_alive_centers(alive_centers, len(last_img))
 
     if Consts.USE_CACHE:
@@ -378,7 +380,7 @@ def get_image_by_threshold(img):
 
 
 # We use the all_centers_by_last_frame so we won't run BFS for all possible location but only on given centers
-def get_alive_centers(img=None, all_centers_by_last_frame=None):
+def get_seen_centers_for_mask(img=None, all_centers_by_last_frame=None):
     if img is None and all_centers_by_last_frame is None:
         if Consts.USE_CACHE and os.path.isfile(Consts.last_img_alive_centers_cache_path):
             with open(Consts.last_img_alive_centers_cache_path, 'rb') as handle:
@@ -387,7 +389,6 @@ def get_alive_centers(img=None, all_centers_by_last_frame=None):
         img = get_last_image_whiten()
 
     img = get_image_by_threshold(img)
-
     alive_centers = set()
 
     visited = set()
@@ -428,21 +429,23 @@ def generate_centers_from_alive_centers(alive_centers, matrix_size):
 
 
 def generate_centers_and_rules_from_alive_centers(alive_centers, matrix_size):
-    target = (matrix_size / 2, matrix_size / 2)
+    try:
+        target = get_middle_of_dense_centers(alive_centers)
+    except:
+        target = (matrix_size // 2, matrix_size // 2)
     closest_to_middle = min(alive_centers, key=lambda point: math.hypot(target[1] - point[1], target[0] - point[0]))
 
-    # maybe_rules = get_rules_by_all_centers(alive_centers)
-    # if maybe_rules is not None:
-    #     rule1 = maybe_rules[0]
-    #     rule2 = maybe_rules[1]
-    # else:
-    rule1, rule2 = get_rules_by_middle_centers(alive_centers, closest_to_middle)
+    rules = get_rules_by_all_centers(alive_centers)
+    if rules is not None:
+        rule1, rule2 = rules
+    else:
+        rule1, rule2 = get_rules_by_middle_centers(alive_centers, closest_to_middle)
 
     generated_centers_in_line = {closest_to_middle}
     row = closest_to_middle[0]
     col = closest_to_middle[1]
 
-    while -matrix_size <= row < matrix_size * 2 and -matrix_size <= col < matrix_size * 2:
+    while -2 * matrix_size <= row < matrix_size * 2 and -2 * matrix_size <= col < matrix_size * 2:
         generated_centers_in_line.add((row, col))
         row += rule1[0]
         col += rule1[1]
@@ -450,7 +453,7 @@ def generate_centers_and_rules_from_alive_centers(alive_centers, matrix_size):
     row = closest_to_middle[0]
     col = closest_to_middle[1]
 
-    while -matrix_size <= row < matrix_size * 2 and col >= -matrix_size and col < matrix_size * 2:
+    while -2 * matrix_size <= row < matrix_size * 2 and col >= -2 * matrix_size and col < matrix_size * 2:
         generated_centers_in_line.add((row, col))
         row -= rule1[0]
         col -= rule1[1]
@@ -460,14 +463,14 @@ def generate_centers_and_rules_from_alive_centers(alive_centers, matrix_size):
     for center in generated_centers_in_line:
         row = center[0]
         col = center[1]
-        while -matrix_size <= row < matrix_size * 2 and col >= -matrix_size and col < matrix_size * 2:
+        while - 2 * matrix_size <= row < matrix_size * 2 and col >= - 2 * matrix_size and col < matrix_size * 2:
             generated_centers.add((row, col))
             row += rule2[0]
             col += rule2[1]
     for center in generated_centers_in_line:
         row = center[0]
         col = center[1]
-        while -matrix_size <= row < matrix_size * 2 and col >= -matrix_size and col < matrix_size * 2:
+        while -2 *  matrix_size <= row < matrix_size * 2 and col >= -2  * matrix_size and col < matrix_size * 2:
             generated_centers.add((row, col))
             row -= rule2[0]
             col -= rule2[1]
@@ -506,6 +509,76 @@ def get_rules_by_middle_centers(alive_centers, closest_to_middle):
         rule2 = (closest_to_middle[0] - closest2[0], closest_to_middle[1] - closest2[1])
     return rule1, rule2
 
+def get_middle_of_dense_centers(alive_centers):
+    def gauss(x1, x2, y1, y2, radius):
+        """
+        Apply a Gaussian kernel estimation (2-sigma) to distance between points.
+
+        Effectively, this applies a Gaussian kernel with a fixed radius to one
+        of the points and evaluates it at the value of the euclidean distance
+        between the two points (x1, y1) and (x2, y2).
+        The Gaussian is transformed to roughly (!) yield 1.0 for distance 0 and
+        have the 2-sigma located at radius distance.
+        """
+        return (
+                (1.0 / (2.0 * math.pi))
+                * math.exp(
+            -1 * (3.0 * math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2) / radius)) ** 2
+                / 0.4)
+
+    def _kde(x, y):
+        """
+        Estimate the kernel density at a given position.
+
+        Simply sums up all the Gaussian kernel values towards all points
+        (pts_x, pts_y) from position (x, y).
+        """
+        return sum([
+            gauss(x, px, y, py, radius)
+            # math.sqrt((x - px)**2 + (y - py)**2)
+            for px, py in zip(pts_x, pts_y)
+        ])
+    pts_x = np.array([center[0] for center in alive_centers])
+    pts_y = np.array([center[1] for center in alive_centers])
+
+    RESOLUTION = 50
+    LOCALITY = 2.0
+
+    dx = max(pts_x) - min(pts_x)
+    dy = max(pts_y) - min(pts_y)
+
+    delta = min(dx, dy) / RESOLUTION
+    nx = int(dx / delta)
+    ny = int(dy / delta)
+    radius = (1 / LOCALITY) * min(dx, dy)
+
+    grid_x = np.linspace(min(pts_x), max(pts_x), num=nx)
+    grid_y = np.linspace(min(pts_y), max(pts_y), num=ny)
+
+    x, y = np.meshgrid(grid_x, grid_y)
+
+    kde = np.vectorize(_kde)  # Let numpy care for applying our kde to a vector
+    z = kde(x, y)
+
+    xi, yi = np.where(z == np.amax(z))
+    max_x = grid_x[xi][0]
+    max_y = grid_y[yi][0]
+    # print(f"{max_x:.4f}, {max_y:.4f}")
+    #
+    # fig, ax = plt.subplots()
+    # ax.pcolormesh(x, y, z, cmap='inferno', vmin=np.min(z), vmax=np.max(z))
+    # fig.set_size_inches(4, 4)
+    # fig.savefig('density.png', bbox_inches='tight')
+    #
+    # fig, ax = plt.subplots()
+    # ax.scatter(pts_x, pts_y, marker='+', color='blue')
+    # ax.scatter(grid_x[xi], grid_y[yi], marker='+', color='red', s=200)
+    # fig.set_size_inches(4, 4)
+    # fig.savefig('marked.png', bbox_inches='tight')
+
+    return (max_x, max_y)
+
+
 
 def get_rules_by_all_centers(alive_centers):
     if len(alive_centers) < 4:
@@ -514,7 +587,7 @@ def get_rules_by_all_centers(alive_centers):
     for center in alive_centers:
         points = list(alive_centers)
         points.remove(center)
-        points.sort(key=lambda K: K[0] ** 2 + K[1] ** 2)
+        points.sort(key=lambda K: (K[0] - center[0]) ** 2 + (K[1] - center[1]) ** 2)
         top4centers = points[:4]
 
         distance1 = (top4centers[0][0] - center[0], top4centers[0][1] - center[1])
@@ -546,16 +619,47 @@ def get_rules_by_all_centers(alive_centers):
         else:
             distance_counters[distance4_op] += 1
 
-    sorted_rules = sorted(distance_counters.items(),
-                          key=lambda x: (x[1], -math.sqrt(math.pow(x[0][0], 2) + math.pow(x[0][1], 2))), reverse=True)
-    rule1 = sorted_rules[0][0]
+    rules = []
+    for distance_counter in distance_counters.items():
+        rule = distance_counter[0]
+        rules.extend([rule] * distance_counter[1])
+
+    rule_groups = group_points(rules)
+
+    sorted_rules = sorted(rule_groups, key=lambda x: len(x), reverse=True)
+    max_rules = sorted_rules[0]
+    rule1 = max(max_rules, key=max_rules.count)
+
     for rule2 in sorted_rules[1:]:
-        rule2 = rule2[0]
+        rule2 = max(rule2, key=rule2.count)
         # If both rules different, meaning we are not on the same line.
         if not (-5 <= abs(rule2[0]) - abs(rule1[0]) <= 5 and -5 <= abs(rule2[1]) - abs(rule1[1]) <= 5):
             return rule1, rule2
     return None
 
+def group_points(points):
+    groups = []
+    while points:
+        far_points = []
+        ref = points.pop()
+        groups.append([ref])
+        for point in points:
+            d = get_distance(ref, point)
+            if d < 3:
+                groups[-1].append(point)
+            else:
+                far_points.append(point)
+
+        points = far_points
+
+    # perform average operation on each group
+    return groups
+
+def get_distance(ref, point):
+    # print('ref: {} , point: {}'.format(ref, point))
+    x1, y1 = ref
+    x2, y2 = point
+    return math.hypot(x2 - x1, y2 - y1)
 
 def kinda_center(img, row, col):
     col_zeros = img[
@@ -603,7 +707,9 @@ def get_center(img, row, col):
     circle_area = BFS(img, vis, row, col)
     if len(circle_area) == 0:
         return [], (0, 0)
-    return circle_area, get_center_of_points(circle_area)
+    maybe_center = get_center_of_points(circle_area)
+    centralized_center = centralize_center(img, maybe_center)
+    return circle_area, centralized_center
 
 
 def get_center_of_points(circle_area_points):
@@ -613,6 +719,56 @@ def get_center_of_points(circle_area_points):
     avg_Y = sum(Y) / len(Y)
 
     return (int(avg_X), int(avg_Y))
+
+# The center we got is based on average, we want to make sure this is not caused by noise, so we try
+# normalize it if needed
+def centralize_center(img, center):
+    FIND_NEW_CENTER_IN_DISTANCE = Consts.CIRCLE_RADIUS // 2
+    best_center = center
+    max_gap_center = float('inf')
+    for row_movement in range(-FIND_NEW_CENTER_IN_DISTANCE, FIND_NEW_CENTER_IN_DISTANCE + 1):
+        for col_movement in range(-FIND_NEW_CENTER_IN_DISTANCE, FIND_NEW_CENTER_IN_DISTANCE + 1):
+            optional_center = (center[0] + row_movement, center[1] + col_movement)
+
+            if img[optional_center[0], optional_center[1]] == 1:
+                break
+
+            current_loc = (center[0] + row_movement, center[1] + col_movement)
+
+            # Check distance to left until end of circle
+            while img[current_loc[0], current_loc[1]] == 0:
+                current_loc = (current_loc[0], current_loc[1] - 1)
+            distance_to_end_of_circle_left = abs(optional_center[1] - current_loc[1])
+
+            # Check distance to right until end of circle
+            current_loc = (center[0] + row_movement, center[1] + col_movement)
+            while img[current_loc[0], current_loc[1]] == 0:
+                current_loc = (current_loc[0], current_loc[1] + 1)
+            distance_to_end_of_circle_right = abs(optional_center[1] - current_loc[1])
+
+            current_loc = (center[0] + row_movement, center[1] + col_movement)
+
+            # Check distance to top until end of circle
+            while img[current_loc[0], current_loc[1]] == 0:
+                current_loc = (current_loc[0] - 1, current_loc[1])
+            distance_to_end_of_circle_top = abs(optional_center[0] - current_loc[0])
+
+            # Check distance to down until end of circle
+            current_loc = (center[0] + row_movement, center[1] + col_movement)
+            while img[current_loc[0], current_loc[1]] == 0:
+                current_loc = (current_loc[0] + 1, current_loc[1])
+            distance_to_end_of_circle_down = abs(optional_center[0] - current_loc[0])
+
+            horizontal_diff = abs(distance_to_end_of_circle_left - distance_to_end_of_circle_right)
+            vertical_diff = abs(distance_to_end_of_circle_top - distance_to_end_of_circle_down)
+            # If center might be valid
+            if horizontal_diff <= 1 and vertical_diff <= 1:
+                # If better than current
+                if horizontal_diff + vertical_diff < max_gap_center:
+                    max_gap_center = horizontal_diff + vertical_diff
+                    best_center = optional_center
+
+    return best_center
 
 
 def get_images_path():
@@ -677,7 +833,7 @@ def _get_alive_pillars_lst(pillar2mask):
 
 def _get_fully_alive_pillars_lst(pillar2mask_dict):
     p_mask = list(pillar2mask_dict.values())[0]
-    perfect_circle = p_mask.sum() * Consts.percentage_from_perfect_circle_mask
+    max_intensity_in_mask = p_mask.sum() * Consts.percentage_from_perfect_circle_mask
 
     img = get_last_image_whiten(build_image=Consts.build_image)
 
@@ -686,7 +842,7 @@ def _get_fully_alive_pillars_lst(pillar2mask_dict):
         frame_masked = np.where(mask, img, 0)
         # plt.imshow(frame_masked, cmap=plt.cm.gray)
         # plt.show()
-        if (np.sum(frame_masked) / perfect_circle) * 100 > Consts.consider_as_full_circle_percentage:
+        if (np.sum(frame_masked) / max_intensity_in_mask) * 100 > Consts.consider_as_full_circle_percentage:
             fully_alive_pillars_lst.append(p)
             # plt.imshow(frame_masked, cmap=plt.cm.gray)
             # plt.show()
@@ -710,7 +866,7 @@ def get_alive_centers_by_frame(images):
 
     frame_to_alive_pillars = {}
     for frame_index, frame in enumerate(images):
-        frame_to_alive_pillars[frame_index] = list(get_alive_centers(frame, all_centers_by_last_frame))
+        frame_to_alive_pillars[frame_index] = list(get_seen_centers_for_mask(frame, all_centers_by_last_frame))
 
     if Consts.USE_CACHE:
         with open(Consts.frame2alive_pillars_cache_path, 'wb') as handle:

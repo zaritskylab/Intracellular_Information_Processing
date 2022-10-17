@@ -1,5 +1,5 @@
 {
-  "use_cache": true,
+  "use_cache": false,
   "metadata": {
     "micron": 0.1559815,
     "micron_radius": 1
@@ -21,9 +21,10 @@
   "fixed": true,
   "pixel_to_whiten": 50,
   "max_distance_pillar_fixed": 10.5,
+  "circle_validation": true,
   "operations": [
     {
-      "show_pillars_mask": {}
+      "_show_pillars_mask": {}
     },
     {
       "_correlation_plot": {

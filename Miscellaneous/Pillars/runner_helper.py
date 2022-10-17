@@ -7,4 +7,4 @@ def get_circle_radius(config_data):
     micron_radius = exp_metadata["micron_radius"]
     pxl_radius = micron_radius / micron
 
-    return math.ceil(pxl_radius)
+    return pxl_radius

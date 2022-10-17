@@ -20,7 +20,7 @@
   "fixed": true,
   "operations": [
     {
-      "_show_pillars_mask": {}
+      "show_pillars_mask": {}
     },
     {
       "_correlation_plot": {

@@ -201,6 +201,7 @@ def get_non_stationary_pillars_lst():
     non_stationary_pillars.extend(non_stationary_kpss)
 
     total_passed = 1 - len(set(non_stationary_pillars)) / len(p2i_df_diff.columns)
-    print("total passed stationary test: " + str(total_passed * 100) + "%")
+    total_passed_percentage = format(total_passed * 100, ".2f")
+    print("total passed stationary test: " + str(total_passed_percentage) + "%")
 
-    return non_stationary_pillars, total_passed
+    return non_stationary_pillars, total_passed_percentage

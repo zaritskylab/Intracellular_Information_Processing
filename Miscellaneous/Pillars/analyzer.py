@@ -1,4 +1,4 @@
-from scipy.stats import pearsonr
+from scipy.stats import pearsonr, kendalltau
 from scipy import stats
 from scipy.stats import ttest_ind
 from Pillars.pillar_intensities import *
@@ -50,6 +50,36 @@ def get_alive_pillars_correlation():
     return alive_pillars_corr
 
 
+def get_alive_pillars_correlations_frame_windows():
+    # TODO: cache
+    pillar_intensity_dict = get_alive_pillars_to_intensities()
+
+    all_pillar_intensity_df = pd.DataFrame({str(k): v for k, v in pillar_intensity_dict.items()})
+
+    all_pillar_intensity_df_array = np.array_split(all_pillar_intensity_df, Consts.FRAME_WINDOWS_AMOUNT)
+
+    return [df.corr(method=Consts.CORRELATION) for df in all_pillar_intensity_df_array]
+
+
+def get_pairs_of_top_corr(n=5):
+    correlations = get_alive_pillars_symmetric_correlation()
+    sorted_correlations = correlations.where(np.triu(np.ones(correlations.shape), k=1).astype(bool)).stack().sort_values(ascending=False)
+    corr_frames_wind = get_alive_pillars_correlations_frame_windows()
+    i = 0
+    top_pairs_corr_in_each_frames_window = []
+    for pillars, value in sorted_correlations.items():
+        if i == n:
+            break
+        pair_corr_in_each_frames_window = []
+        for df in corr_frames_wind:
+            corr = df.loc[pillars[0], pillars[1]]
+            pair_corr_in_each_frames_window.append(corr)
+        top_pairs_corr_in_each_frames_window.append(pair_corr_in_each_frames_window)
+        i += 1
+
+    return top_pairs_corr_in_each_frames_window
+
+
 def get_alive_pillars_corr_path():
     """
     Get the cached correlation of alive pillars
@@ -81,13 +111,31 @@ def get_all_pillars_correlations():
         pillar_intensity_dict = get_pillar_to_intensities(get_images_path())
 
     all_pillar_intensity_df = pd.DataFrame({str(k): v for k, v in pillar_intensity_dict.items()})
-    all_pillars_corr = all_pillar_intensity_df.corr()
+    if Consts.CORRELATION == "pearson":
+        all_pillars_corr = all_pillar_intensity_df.corr()
+    if Consts.CORRELATION == "kendall":
+        all_pillars_corr = all_pillar_intensity_df.corr(method='kendall')
 
     if Consts.USE_CACHE:
         with open(path, 'wb') as handle:
             pickle.dump(all_pillars_corr, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     return all_pillars_corr
+
+
+def get_all_pillars_correlations_frame_windows():
+    # TODO: cache
+
+    if Consts.normalized:
+        pillar_intensity_dict = normalized_intensities_by_mean_background_intensity()
+    else:
+        pillar_intensity_dict = get_pillar_to_intensities(get_images_path())
+
+    all_pillar_intensity_df = pd.DataFrame({str(k): v for k, v in pillar_intensity_dict.items()})
+
+    all_pillar_intensity_df_array = np.array_split(all_pillar_intensity_df, Consts.FRAME_WINDOWS_AMOUNT)
+
+    return [df.corr(method=Consts.CORRELATION) for df in all_pillar_intensity_df_array]
 
 
 def get_all_pillars_corr_path():
@@ -109,8 +157,8 @@ def get_alive_pillars_symmetric_correlation():
     maximum_frame(pillar a start to live, pillar b start to live) -> correlation(a, b) == correlation(b, a)
     :return:
     """
-    if Consts.USE_CACHE and os.path.isfile(Consts.alive_pillars_corr_cache_path):
-        with open(Consts.alive_pillars_corr_cache_path, 'rb') as handle:
+    if Consts.USE_CACHE and os.path.isfile(Consts.alive_pillars_sym_corr_cache_path):
+        with open(Consts.alive_pillars_sym_corr_cache_path, 'rb') as handle:
             gc_df = pickle.load(handle)
             return gc_df
 
@@ -137,14 +185,17 @@ def get_alive_pillars_symmetric_correlation():
             p1_relevant_intens = alive_pillars_intens[p1][both_alive_frame - 1:]
             p2_relevant_intens = alive_pillars_intens[p2][both_alive_frame - 1:]
             if len(p1_relevant_intens) > 1 and len(p2_relevant_intens) > 1:
-                pillars_corr.loc[str(p2), str(p1)] = pearsonr(p1_relevant_intens, p2_relevant_intens)[0]
+                if Consts.CORRELATION == "pearson":
+                    pillars_corr.loc[str(p2), str(p1)] = pearsonr(p1_relevant_intens, p2_relevant_intens)[0]
+                if Consts.CORRELATION == "kendall":
+                    pillars_corr.loc[str(p2), str(p1)] = kendalltau(p1_relevant_intens, p2_relevant_intens)[0]
             # if pillars_corr.loc[str(p2), str(p1)] == 1.0 or pillars_corr.loc[str(p2), str(p1)] == 1:
             #     pillars_corr.loc[str(p2), str(p1)] -= epsilon
             # if pillars_corr.loc[str(p2), str(p1)] == 0.0 or pillars_corr.loc[str(p2), str(p1)] == 0:
             #     pillars_corr.loc[str(p2), str(p1)] += epsilon
 
     if Consts.USE_CACHE:
-        with open(Consts.alive_pillars_corr_cache_path, 'wb') as handle:
+        with open(Consts.alive_pillars_sym_corr_cache_path, 'wb') as handle:
             pickle.dump(pillars_corr, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     return pillars_corr
@@ -180,8 +231,8 @@ def get_number_of_inwards_outwards_gc_edges(gc_df):
     :param gc_df:
     :return:
     """
-    all_alive_centers = get_alive_centers()
-    center = get_center_of_points(all_alive_centers)
+    all_alive_centers = get_seen_centers_for_mask()
+    cell_center = get_center_of_points(all_alive_centers)
     neighbors = get_alive_pillars_to_alive_neighbors()
     inwards = 0
     outwards = 0
@@ -197,22 +248,30 @@ def get_number_of_inwards_outwards_gc_edges(gc_df):
                 total_edges += 1
                 # ang = math.degrees(math.atan2(center[1] - int_col[1], center[0] - int_col[0]) - math.atan2(int_row[1] - int_col[1], int_row[0] - int_col[0]))
                 # ang = ang + 360 if ang < 0 else ang
-                ang = get_angle(int_col, int_row, center)
-                if math.dist(int_col, center) < math.dist(int_row, center) and ang >= 135:
+                ang = get_angle(int_col, int_row, cell_center)
+                if math.dist(int_col, cell_center) < math.dist(int_row, cell_center) and ang >= 135:
                     outwards += 1
                     out_edges.append((col, row))
-                elif math.dist(int_col, center) > math.dist(int_row, center) and ang <= 45:
+                elif math.dist(int_col, cell_center) > math.dist(int_row, cell_center) and ang <= 45:
                     inwards += 1
                     in_edges.append((col, row))
     if total_edges == 0:
         in_percentage, out_percentage = 0, 0
     else:
-        in_percentage = (inwards / total_edges)
-        out_percentage = (outwards / total_edges)
+        in_percentage = inwards / total_edges
+        out_percentage = outwards / total_edges
     print("Number of total edges: " + str(total_edges))
-    print("Number of inwards gc edges: " + str(inwards) + " (" + str(in_percentage * 100) + "%)")
-    print("Number of outwards gc edges: " + str(outwards) + " (" + str(out_percentage * 100) + "%)")
-    return inwards, outwards, in_edges, out_edges, in_percentage, out_percentage
+    print("Number of inwards gc edges: " + str(inwards) + " (" + format(in_percentage * 100, ".2f") + "%)")
+    print("Number of outwards gc edges: " + str(outwards) + " (" + format(out_percentage * 100, ".2f") + "%)")
+    if in_percentage > 0:
+        out_in_factor = format(out_percentage/in_percentage, ".3f")
+        print("out/in factor: " + str(out_in_factor))
+    else:
+        out_in_factor = 'inf'
+        print("out/in factor: in edges = 0")
+    in_percentage = format(in_percentage, ".3f")
+    out_percentage = format(out_percentage, ".3f")
+    return total_edges, inwards, outwards, in_edges, out_edges, in_percentage, out_percentage, out_in_factor
 
 
 def get_angle(col, row, center):
@@ -256,6 +315,20 @@ def probability_for_gc_edge(gc_df, random_neighbors=False):
     print("The probability for a gc edge is " + str(prob_for_gc_edge))
 
     return prob_for_gc_edge
+
+
+def avg_gc_edge_probability_original_vs_random(gc_df):
+    gc_edge_probs_lst = []
+    idx = []
+    for i in range(10):
+        prob = probability_for_gc_edge(gc_df, random_neighbors=True)
+        gc_edge_probs_lst.append(prob)
+        idx.append(i)
+    avg_random_gc_edge_prob = format(np.mean(gc_edge_probs_lst), ".3f")
+    std = format(np.std(gc_edge_probs_lst), ".3f")
+    print("avg gc edge probability for random " + str(avg_random_gc_edge_prob))
+    print("std: " + str(std))
+    return gc_edge_probs_lst, avg_random_gc_edge_prob, std
 
 
 def get_pillar_in_out_degree(gc_df):
@@ -317,7 +390,7 @@ def get_network_reciprocity(gc_df):
         print("There are no edges for reciprocity")
         return
     else:
-        reciprocity = two_sided_edge / total_edges
+        reciprocity = format(two_sided_edge / total_edges, ".3f")
 
     print("Reciprocity: " + str(reciprocity))
     return reciprocity
@@ -355,6 +428,7 @@ def get_network_heterogeneity(gc_df):
         return
     else:
         g_heterogeneity = (1 / (v - 2 * np.sqrt(v - 1))) * sum_hetero
+        g_heterogeneity = format(g_heterogeneity, ".3f")
 
     print("Heterogeneity: " + str(g_heterogeneity))
     return g_heterogeneity
@@ -371,7 +445,7 @@ def get_output_df(output_path_type):
 
 def get_output_path(output_path_type):
     if Consts.inner_cell:
-        output_path = './features output/output_inner_cell_' + output_path_type +'.csv'
+        output_path = './features output/output_inner_cell_' + output_path_type + '.csv'
     else:
         output_path = './features output/output' + output_path_type + '.csv'
 
@@ -391,4 +465,5 @@ def get_pca(output_path_type, n_components, custom_df=None):
 
 def t_test(samp_lst_1, samp_lst_2):
     stat, pval = ttest_ind(samp_lst_1, samp_lst_2)
+    print("p-value: " + str(pval))
     return stat, pval

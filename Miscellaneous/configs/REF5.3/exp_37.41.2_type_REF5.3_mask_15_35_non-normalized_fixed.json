@@ -19,7 +19,10 @@
   "output_path_type": "37_41_2",
   "normalized": false,
   "fixed": true,
-  "pixel_to_whiten": 30,
+  "pixel_to_whiten": 35,
+  "max_distance_pillar_fixed": 11,
+  "CIRCLE_INSIDE_VALIDATE_SEARCH_LENGTH": 2,
+  "circle_validation": true,
   "operations": [
     {
       "show_pillars_mask": {}
