@@ -1,4 +1,4 @@
-from Pillars.pillars_mask import *
+from Pillars.pillars_utils import *
 import random
 from Pillars.consts import *
 
@@ -9,8 +9,8 @@ def get_alive_pillars_in_edges_to_l1_neighbors():
     :return: dictionary mapping the alive pillars to their background neighbors, list of the alive pillars in the edges,
             list of the level one background pillars
     """
-    pillar2mask = get_last_img_mask_for_each_pillar()
-    alive_pillars = get_alive_pillars(pillar2mask)
+    pillar2mask = get_last_img_mask_for_each_pillar(get_all_center_ids())
+    alive_pillars = get_alive_pillars_in_last_frame_v2()
     all_pillars = pillar2mask.keys()
     background_pillars = [pillar for pillar in all_pillars if
                           pillar not in alive_pillars]
@@ -40,8 +40,8 @@ def get_background_level_1_to_level_2():
     """
     _, _, back_pillars_level_1 = get_alive_pillars_in_edges_to_l1_neighbors()
     pillar_to_neighbors = get_pillar_to_neighbors()
-    pillar2mask = get_last_img_mask_for_each_pillar()
-    alive_pillars = get_alive_pillars(pillar2mask)
+    pillar2mask = get_last_img_mask_for_each_pillar(get_all_center_ids())
+    alive_pillars = get_alive_pillars_in_last_frame_v2()
     all_pillars = pillar2mask.keys()
     background_pillars = [pillar for pillar in all_pillars if
                           pillar not in alive_pillars]
@@ -62,7 +62,6 @@ def get_pillar_to_neighbors():
     Mapping each pillar to its neighbors
     :return:
     """
-
     if Consts.USE_CACHE and os.path.isfile(Consts.pillar_to_neighbors_cache_path):
         with open(Consts.pillar_to_neighbors_cache_path, 'rb') as handle:
             pillar_to_neighbors = pickle.load(handle)
@@ -71,12 +70,13 @@ def get_pillar_to_neighbors():
     last_img = get_last_image()
     alive_centers = get_seen_centers_for_mask()
 
-    centers_lst, rule_jump_1, rule_jump_2, generated_location2real_pillar_loc = generate_centers_and_rules_from_alive_centers(alive_centers, len(last_img))
+    actual_centers_lst, rule_jump_1, rule_jump_2, generated_location2real_pillar_loc = \
+        generate_centers_and_rules_from_alive_centers(alive_centers, len(last_img))
     real_pillar_loc2generated_location = dict((v, k) for k, v in generated_location2real_pillar_loc.items())
     pillar_to_neighbors = {}
-    for pillar_actual_location in centers_lst:
-
+    for pillar_actual_location in actual_centers_lst:
         # If pillar_actual_location is the original location (moved), we should treat it as the generated location for the rules
+        # Still, the generated location is the ID for the pillar.
         if pillar_actual_location in real_pillar_loc2generated_location:
             pillar_center_to_activate_rule = real_pillar_loc2generated_location[pillar_actual_location]
         else:
@@ -92,12 +92,13 @@ def get_pillar_to_neighbors():
         n_plus1_plus2 = (n2[0] + rule_jump_2[0], n2[1] + rule_jump_2[1])
 
         potential_neighbors = {n1, n2, n3, n4, n_minus1_plus2, n_minus1_minus2, n_plus1_minus2, n_plus1_plus2}
-        neighbors_lst = list(potential_neighbors.intersection(centers_lst))
+        neighbors_lst = list(potential_neighbors.intersection(actual_centers_lst))
 
         # In case we switched pillar location from rule based to actual live pillar base, we take the actual live pillar location
         neighbors_lst.extend(
             [generated_location2real_pillar_loc[potential_nbr] for potential_nbr in potential_neighbors if potential_nbr in generated_location2real_pillar_loc]
         )
+
 
         pillar_to_neighbors[pillar_actual_location] = list(set(neighbors_lst))
 
@@ -147,9 +148,13 @@ def get_alive_pillars_to_alive_neighbors():
     Mapping each alive pillar to its level 1 alive neighbors
     :return:
     """
+    if Consts.USE_CACHE and os.path.isfile(Consts.alive_pillars_to_alive_neighbors_cache_path):
+        with open(Consts.alive_pillars_to_alive_neighbors_cache_path, 'rb') as handle:
+            alive_pillars_to_alive_neighbors = pickle.load(handle)
+            return alive_pillars_to_alive_neighbors
+
     pillar_to_neighbors = get_pillar_to_neighbors()
-    pillar2mask = get_last_img_mask_for_each_pillar()
-    alive_pillars = get_alive_pillars(pillar2mask)
+    alive_pillars = get_alive_pillars_in_last_frame_v2()
     alive_pillars_to_alive_neighbors = {}
     for p, nbrs in pillar_to_neighbors.items():
         if p in alive_pillars:
@@ -158,6 +163,10 @@ def get_alive_pillars_to_alive_neighbors():
                 if nbr in alive_pillars:
                     alive_nbrs.append(nbr)
             alive_pillars_to_alive_neighbors[p] = alive_nbrs
+
+    if Consts.USE_CACHE:
+        with open(Consts.alive_pillars_to_alive_neighbors_cache_path, 'wb') as handle:
+            pickle.dump(alive_pillars_to_alive_neighbors, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     return alive_pillars_to_alive_neighbors
 

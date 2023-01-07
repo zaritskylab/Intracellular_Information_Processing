@@ -1,3 +1,4 @@
+from Pillars.pillars_utils import *
 from Pillars.pillars_mask import *
 import pickle
 from scipy import stats
@@ -16,12 +17,12 @@ def get_pillar_to_intensities(path):
             pillar2frame_intensity = pickle.load(handle)
             return pillar2frame_intensity
 
-    pillar2last_mask = get_last_img_mask_for_each_pillar()
+    pillar2last_mask = get_last_img_mask_for_each_pillar(get_all_center_ids())
     pillar2frame_intensity = {}
 
     images = get_images(path)
 
-    frame_to_alive_pillars = get_alive_centers_by_frame(images)
+    frame_to_alive_pillars = get_alive_center_ids_by_frame_v2()
 
     for pillar_item in pillar2last_mask.items():
         pillar_id = pillar_item[0]
@@ -59,8 +60,7 @@ def get_alive_pillars_to_intensities():
     else:
         pillar_intensity_dict = get_pillar_to_intensities(get_images_path())
 
-    pillar2mask = get_last_img_mask_for_each_pillar()
-    alive_pillars = get_alive_pillars(pillar2mask)
+    alive_pillars = get_alive_pillars_overall_v2()
 
     alive_pillars_dict = {pillar: pillar_intensity_dict[pillar] for pillar in alive_pillars}
 
@@ -94,8 +94,7 @@ def normalized_intensities_by_mean_background_intensity():
     Normalization of pillars intensities by the mean intensity of the background
     :return:
     """
-    pillar2mask = get_last_img_mask_for_each_pillar()
-    alive_pillars = get_alive_pillars(pillar2mask)
+    alive_pillars = get_alive_pillars_in_last_frame_v2()
     all_pillars = get_pillar_to_intensities(get_images_path())
     background_pillars_intensities = {pillar: all_pillars[pillar] for pillar in all_pillars.keys() if
                                       pillar not in alive_pillars}
@@ -124,3 +123,22 @@ def normalized_intensities_by_zscore():
             all_pillars[pillar_item[0]][j] = all_pillars_zscore_int[i][j]
 
     return all_pillars
+
+
+def get_cell_avg_intensity():
+    p_to_intens = get_alive_pillars_to_intensities()
+    frame_to_alive_pillars = get_alive_center_ids_by_frame_v2()
+    alive_pillars_to_frame = {}
+    for frame, alive_pillars_in_frame in frame_to_alive_pillars.items():
+        for alive_pillar in alive_pillars_in_frame:
+            if alive_pillar not in alive_pillars_to_frame:
+                alive_pillars_to_frame[alive_pillar] = frame
+
+    pillars_avg_intens = []
+    for p, intens in p_to_intens.items():
+        start_living_frame = alive_pillars_to_frame[p]
+        avg_p_intens = np.mean(intens[start_living_frame:])
+        pillars_avg_intens.append(avg_p_intens)
+
+    total_avg_intensity = np.mean(pillars_avg_intens)
+    return total_avg_intensity

@@ -11,14 +11,14 @@ def reposition(exp_path, save_path):
     # subpixel precision
     # Upsample factor 100 = images will be registered to within 1/100th of a pixel.
     # Default is 1 which means no upsampling.
-    # full_img_stack = full_img_stack[:n_frames_to_test, :, :]
-    full_img_stack = full_img_stack[1:n_frames_to_test, :, :]
+    full_img_stack = full_img_stack[:n_frames_to_test, :, :]
+    # full_img_stack = full_img_stack[1:n_frames_to_test, :, :]
     n_frames, im_h, im_w = full_img_stack.shape
     prev_image, curr_image = None, full_img_stack[0]
 
     img_id2diffs = {}
 
-    for img_idx in range(len(full_img_stack) - 1):
+    for img_idx in range(len(full_img_stack)):
         if prev_image is None:
             prev_image = curr_image.copy()
             continue
@@ -28,7 +28,7 @@ def reposition(exp_path, save_path):
         img_id2diffs[img_idx]['original'] = error_before
 
     prev_image, curr_image = None, full_img_stack[0]
-    for img_idx in range(len(full_img_stack) - 1):
+    for img_idx in range(len(full_img_stack)):
         if prev_image is None:
             prev_image = curr_image.copy()
             continue

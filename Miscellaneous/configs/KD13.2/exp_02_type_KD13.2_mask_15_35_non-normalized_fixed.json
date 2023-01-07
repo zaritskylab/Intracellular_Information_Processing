@@ -19,9 +19,19 @@
   "output_path_type": "13_2",
   "normalized": false,
   "fixed": true,
+  "pixel_to_whiten": 15,
   "operations": [
     {
       "show_pillars_mask": {}
+    },
+    {
+      "avg_intensity": {}
+    },
+    {
+      "neighbors_avg_correlation": {}
+    },
+    {
+      "non_neighbors_avg_correlation": {}
     },
     {
       "_correlation_plot": {
@@ -38,6 +48,36 @@
     {
       "correlation_histogram": {
         "alive": true
+      }
+    },
+    {
+      "_show_correlated_pairs_in_video": {
+        "num_of_pairs": 5
+      }
+    },
+    {
+      "_plot_pillar_pairs_correlation_frames_window": {
+        "num_of_pairs": 5
+      }
+    },
+    {
+      "_show_correlated_neighboring_pairs_in_video": {
+        "num_of_pairs": 5
+      }
+    },
+    {
+      "_plot_neighboring_pillar_pairs_correlation_frames_window": {
+        "num_of_pairs": 5
+      }
+    },
+    {
+      "_show_neighboring_correlated_pairs_in_last_image": {
+        "num_of_pairs": 5
+      }
+    },
+    {
+      "_number_of_neighboring_pairs_in_top_correlations": {
+        "top": 10
       }
     },
     {
@@ -68,6 +108,12 @@
     },
     {
       "heterogeneity": {}
+    },
+        {
+      "neighbors_avg_movement_correlation": {}
+    },
+    {
+      "not_neighbors_avg_movement_correlation": {}
     }
   ]
 }

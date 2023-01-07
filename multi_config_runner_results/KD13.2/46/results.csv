@@ -1,2 +1,3 @@
-,passed_stationary,nbrs_avg_correlation,random_avg_correlation,total_gc_edges,inwards_edges,outwards_edges,out/in_factor,gc_edge_prob,avg_random_gc_edge_prob,std,reciprocity,heterogeneity
-KD13.2_46,90.77,0.355,0.047,81,0.284,0.185,0.652,0.244,0.104,0.011,0.321,0.150
+,passed_stationary,nbrs_avg_correlation,non_nbrs_avg_correlation,total_gc_edges,inwards_edges,outwards_edges,out/in_factor,gc_edge_prob,avg_random_gc_edge_prob,std,reciprocity,heterogeneity,num_of_neighboring_pairs_in_top_corrs,neighbors_avg_movement_correlation,not_neighbors_avg_movement_correlation,avg_intensity
+KD13.2_46,91.49,0.3984062030595248,0.029,77,0.273,0.182,0.667,0.326,0.122,0.018,0.39,0.152,,0.0335948925011596,0.0325341609148409,
+KD13.2_46,91.49,0.3984062030595248,0.029,77,0.273,0.182,0.667,0.326,0.122,0.018,0.390,0.152,,0.0335948925011596,0.03253416091484097,5312769.969768539

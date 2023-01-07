@@ -1,6 +1,7 @@
-from Pillars.pillars_utils import *
 from Pillars.consts import *
+import numpy as np
 import cv2
+import pickle
 
 
 def create_mask_of_circles(radius: int, centers: list):
@@ -23,18 +24,16 @@ def create_mask_of_circles(radius: int, centers: list):
     return mask
 
 
-def get_last_img_mask_for_each_pillar():
+def get_last_img_mask_for_each_pillar(centers):
     """
     Mapping each pillar to its fitting mask
     :return:
-    """
-
+    """ # TODO: why mask looks weird - 0/1/255
     if Consts.USE_CACHE and os.path.isfile(Consts.mask_for_each_pillar_cache_path):
         with open(Consts.mask_for_each_pillar_cache_path, 'rb') as handle:
             pillar_to_neighbors = pickle.load(handle)
             return pillar_to_neighbors
 
-    centers = find_all_centers_with_logic()
     pillar_to_mask_dict = {}
     for center in centers:
         mask = get_mask_for_center(center)
@@ -57,14 +56,13 @@ def get_mask_for_center(center):
     return mask
 
 
-def build_pillars_mask():
+def build_pillars_mask(centers):
     """
     Building the mask to the image by substitute 2 masks of circles with different radius to create the full image mask
     :param masks_path:
     :param logic_centers:
     :return:
     """
-    centers = find_all_centers_with_logic()
     small_mask = create_mask_of_circles(Consts.SMALL_MASK_RADIUS, centers)
     large_mask = create_mask_of_circles(Consts.LARGE_MASK_RADIUS, centers)
     pillars_mask = large_mask - small_mask

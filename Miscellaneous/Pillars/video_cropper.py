@@ -24,7 +24,7 @@ def crop_video_rect(
         template[img_idx][
         int((template_height - partial_image_height) / 2): int((template_height + partial_image_height) / 2),
         int((template_width - partial_image_width) / 2): int((template_width + partial_image_width) / 2)] = partial_img
-    imsave("C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Cell2CellComunicationAnalyzer\\Data\\Pillars\\FixedImages\\Fixed_REF5.3\\new_fixed_69.1.tif",
+    imsave("C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Cell2CellComunicationAnalyzer\\Data\\Pillars\\FixedImages\\Fixed_REF5.3\\new_fixed_37.41.1.tif",
            template)
 
 
@@ -63,9 +63,9 @@ def crop_video_circle(
 
 
 crop_video_rect(
-    'C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Cell2CellComunicationAnalyzer\\Data\\Pillars\\FixedImages\\Fixed_REF5.3\\new_fixed_69.1.tif',
-    (115, 50),
-    (380, 420))
+    'C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Cell2CellComunicationAnalyzer\\Data\\Pillars\\FixedImages\\Fixed_REF5.3\\new_fixed_37.41.1.tif',
+    (100, 0),
+    (500, 280))
 
 # crop_video_circle(
 #     'C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Cell2CellComunicationAnalyzer\\Data\\Pillars\\9.4\\New-11-Airyscan Processing-79 MEF9.4.tif',
