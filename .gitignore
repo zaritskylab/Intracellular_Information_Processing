@@ -2,7 +2,6 @@ venv
 .idea/
 PreparedDatasets
 TrainedModels
-Pillars
 Data
 SavedCellDeathData
 SavedCellDeathData/data.csv
@@ -26,3 +25,4 @@ SavedPillarsData_06/alive_pillar_correlation_normalized.pickle
 SavedPillarsData_06/background_gray_scale_pillars.pickle
 SavedPillarsData_06/pillar_to_intensities.pickle
 /SavedPillarsData/
+/multi_config_runner_results/
