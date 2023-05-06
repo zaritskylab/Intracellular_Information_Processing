@@ -2,6 +2,7 @@ from skimage import io
 import numpy as np
 from tifffile import imsave
 import cv2
+import matplotlib.pyplot as plt
 
 
 def crop_video_rect(
@@ -9,6 +10,8 @@ def crop_video_rect(
         top_left: tuple,
         bottom_right: tuple):
     full_img_stack = io.imread(video_path)
+    # plt.imshow(full_img_stack[0])
+    # plt.show()
     template = np.zeros(full_img_stack.shape, np.uint16)
     template_height = len(template[1])
     template_width = len(template[2])
@@ -24,7 +27,7 @@ def crop_video_rect(
         template[img_idx][
         int((template_height - partial_image_height) / 2): int((template_height + partial_image_height) / 2),
         int((template_width - partial_image_width) / 2): int((template_width + partial_image_width) / 2)] = partial_img
-    imsave("C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Cell2CellComunicationAnalyzer\\Data\\Pillars\\FixedImages\\Fixed_REF5.3\\new_fixed_37.41.1.tif",
+    imsave("/Data/Pillars/FixedImages/new_fixed_1-149_bottom_right.tif",
            template)
 
 
@@ -63,9 +66,9 @@ def crop_video_circle(
 
 
 crop_video_rect(
-    'C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Cell2CellComunicationAnalyzer\\Data\\Pillars\\FixedImages\\Fixed_REF5.3\\new_fixed_37.41.1.tif',
-    (100, 0),
-    (500, 280))
+    'C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\OneDrive_2023-05-02\\video-Airyscan Processing-11-Substack1-149-driftC.tif',
+    (1069, 1279),
+    (1441, 1732))
 
 # crop_video_circle(
 #     'C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Cell2CellComunicationAnalyzer\\Data\\Pillars\\9.4\\New-11-Airyscan Processing-79 MEF9.4.tif',

@@ -13,10 +13,10 @@ if __name__ == '__main__':
         # '5.3/exp_27.2_type_5.3_mask_15_35_non-normalized_fixed.json',
         # '5.3/exp_30_type_5.3_mask_15_35_non-normalized_fixed.json',
 
-        '13.2/exp_01_type_13.2_mask_15_35_non-normalized_fixed.json',
-        '13.2/exp_05_type_13.2_mask_15_35_non-normalized_fixed.json',
-        '13.2/exp_06_type_13.2_mask_15_35_non-normalized_fixed.json',
-        '13.2/exp_20_type_13.2_mask_15_35_non-normalized_fixed.json',
+        # '13.2/exp_01_type_13.2_mask_15_35_non-normalized_fixed.json',
+        # '13.2/exp_05_type_13.2_mask_15_35_non-normalized_fixed.json',
+        # '13.2/exp_06_type_13.2_mask_15_35_non-normalized_fixed.json',
+        # '13.2/exp_20_type_13.2_mask_15_35_non-normalized_fixed.json',
 
         # 'KD13.2/exp_49.1_type_KD13.2_mask_15_35_non-normalized_fixed.json',
         # 'KD13.2/exp_46_type_KD13.2_mask_15_35_non-normalized_fixed.json',
