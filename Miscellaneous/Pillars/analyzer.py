@@ -228,7 +228,7 @@ def get_alive_pillars_symmetric_correlation(frame_start=None, frame_end=None):
             alive_pillars_symmetric_correlation = pickle.load(handle)
             return alive_pillars_symmetric_correlation
 
-    frame_to_alive_pillars = get_alive_center_ids_by_frame_v2()  # get_frame_to_alive_pillars_by_same_mask(pillar2mask)
+    frame_to_alive_pillars = get_alive_center_ids_by_frame_v3()  # get_frame_to_alive_pillars_by_same_mask(pillar2mask)
 
     if frame_start is None:
         frame_start = 0
@@ -565,7 +565,7 @@ def t_test(samp_lst_1, samp_lst_2):
 
 def get_pillars_movement_correlation_df(pillars_movements_dict):
     frame_to_df_pillars_movement_corr = get_list_of_frame_df_pillars_movement_correlation(pillars_movements_dict)
-    frame_to_alive_pillars = get_alive_center_ids_by_frame_v2()
+    frame_to_alive_pillars = get_alive_center_ids_by_frame_v3()
     alive_pillars_to_frame = {}
     for frame, alive_pillars_in_frame in frame_to_alive_pillars.items():
         for alive_pillar in alive_pillars_in_frame:
@@ -594,7 +594,7 @@ def get_pillars_movement_correlation_df(pillars_movements_dict):
 
 
 def total_movements_percentage(pillars_movements_dict):
-    frame_to_alive_pillars = get_alive_center_ids_by_frame_v2()
+    frame_to_alive_pillars = get_alive_center_ids_by_frame_v3()
     alive_pillars_to_frame = {}
     for frame, alive_pillars_in_frame in frame_to_alive_pillars.items():
         for alive_pillar in alive_pillars_in_frame:
@@ -625,7 +625,7 @@ def get_pillars_intensity_movement_correlations():
     To each pillar - calculating the correlation between its intensities vector to its movements vector
     :return: dictionary of the correlation between those vectors to each pillar
     """
-    pillars_movements_dict = get_alive_centers_movements()
+    pillars_movements_dict = get_alive_centers_movements_v2()
     p_to_distances_dict = {}
     for p, v_list in pillars_movements_dict.items():
         distances = []
@@ -638,7 +638,7 @@ def get_pillars_intensity_movement_correlations():
     pillar_intens_df = pd.DataFrame({str(k): v for k, v in pillar_to_intens_dict.items()})
     pillar_intens_df = pillar_intens_df[:-1]
 
-    frame_to_alive_pillars = get_alive_center_ids_by_frame_v2()  # get_frame_to_alive_pillars_by_same_mask(pillar2mask)
+    frame_to_alive_pillars = get_alive_center_ids_by_frame_v3()  # get_frame_to_alive_pillars_by_same_mask(pillar2mask)
     alive_pillars_to_frame = {}
     for frame, alive_pillars_in_frame in frame_to_alive_pillars.items():
         for alive_pillar in alive_pillars_in_frame:
@@ -672,7 +672,7 @@ def get_avg_correlation_pillars_intensity_movement():
 
 
 def get_average_intensity_by_distance():
-    pillars_movements_dict = get_alive_centers_movements()
+    pillars_movements_dict = get_alive_centers_movements_v2()
     p_to_distances_dict = {}
     for p, v_list in pillars_movements_dict.items():
         distances = []
@@ -685,7 +685,7 @@ def get_average_intensity_by_distance():
     pillar_intens_df = pd.DataFrame({str(k): v for k, v in pillar_to_intens_dict.items()})
     pillar_intens_df = pillar_intens_df[:-1]
 
-    frame_to_alive_pillars = get_alive_center_ids_by_frame_v2()  # get_frame_to_alive_pillars_by_same_mask(pillar2mask)
+    frame_to_alive_pillars = get_alive_center_ids_by_frame_v3()  # get_frame_to_alive_pillars_by_same_mask(pillar2mask)
     alive_pillars_to_frame = {}
     for frame, alive_pillars_in_frame in frame_to_alive_pillars.items():
         for alive_pillar in alive_pillars_in_frame:
@@ -763,7 +763,7 @@ def correlation_graph():
 
 def get_peripheral_and_center_pillars_by_frame_according_to_nbrs():
     nbrs_dict = get_alive_pillars_to_alive_neighbors()
-    frame_to_alive_pillars = get_alive_center_ids_by_frame_v2()
+    frame_to_alive_pillars = get_alive_center_ids_by_frame_v3()
 
     frame_to_peripheral_center_dict = {}
     for frame, curr_frame_alive_pillars in frame_to_alive_pillars.items():
@@ -809,7 +809,7 @@ def get_pillars_intensity_movement_sync_by_frames(pillar_to_frames_dict):
     To each pillar - calculating the correlation between its intensities vector to its movements vector
     :return: dictionary of the correlation between those vectors to each pillar
     """
-    pillars_movements_dict = get_alive_centers_movements()
+    pillars_movements_dict = get_alive_centers_movements_v2()
     p_to_distances_dict = {}
     for p, v_list in pillars_movements_dict.items():
         distances = []
@@ -879,7 +879,7 @@ def get_peripheral_and_center_pillars_by_frame_according_revealing_pillars_and_n
     :return:
     """
     nbrs_dict = get_alive_pillars_to_alive_neighbors()
-    frame_to_alive_pillars = get_alive_center_ids_by_frame_v2()
+    frame_to_alive_pillars = get_alive_center_ids_by_frame_v3()
     first_frame_pillars = list(frame_to_alive_pillars.values())[0]
     if pillars_frame_zero_are_central:
         central_pillars = list(frame_to_alive_pillars.values())[0]
@@ -944,7 +944,7 @@ def correlation_diff(corr1_df, corr2_df):
 
 def get_cc_pp_cp_correlations():
     nbrs_dict = get_alive_pillars_to_alive_neighbors()
-    frame_to_alive_pillars = get_alive_center_ids_by_frame_v2()
+    frame_to_alive_pillars = get_alive_center_ids_by_frame_v3()
     frame_to_periph_center_dict = get_peripheral_and_center_pillars_by_frame_according_revealing_pillars_and_nbrs(
         pillars_frame_zero_are_central=True)
 

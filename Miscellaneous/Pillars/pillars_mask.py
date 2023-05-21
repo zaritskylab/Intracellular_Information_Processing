@@ -11,7 +11,7 @@ def create_mask_of_circles(radius: int, centers: list):
     :param centers: the centers of each pillar in the image
     :return: mask - ndarray in the size of the input image
     """
-    mask = np.zeros((Consts.IMAGE_SIZE, Consts.IMAGE_SIZE), np.uint8)
+    mask = np.zeros((Consts.IMAGE_SIZE_ROWS, Consts.IMAGE_SIZE_COLS), np.uint8)
     mask += 255
     color = 0
     thickness = -1
@@ -48,9 +48,9 @@ def get_last_img_mask_for_each_pillar(centers):
 
 def get_mask_for_center(center):
     thickness = -1
-    small_mask_template = np.zeros((Consts.IMAGE_SIZE, Consts.IMAGE_SIZE), np.uint8)
+    small_mask_template = np.zeros((Consts.IMAGE_SIZE_ROWS, Consts.IMAGE_SIZE_COLS), np.uint8)
     cv2.circle(small_mask_template, (center[1], center[0]), Consts.SMALL_MASK_RADIUS, 255, thickness)
-    large_mask_template = np.zeros((Consts.IMAGE_SIZE, Consts.IMAGE_SIZE), np.uint8)
+    large_mask_template = np.zeros((Consts.IMAGE_SIZE_ROWS, Consts.IMAGE_SIZE_COLS), np.uint8)
     cv2.circle(large_mask_template, (center[1], center[0]), Consts.LARGE_MASK_RADIUS, 255, thickness)
     mask = large_mask_template - small_mask_template
     return mask

@@ -65,7 +65,7 @@ def indirect_alive_neighbors_correlation_plot(pillar_location, only_alive=True):
     """
 
     my_G = nx.Graph()
-    nodes_loc = get_all_center_ids()
+    nodes_loc = get_all_center_generated_ids()
     node_loc2index = {}
     for i in range(len(nodes_loc)):
         node_loc2index[nodes_loc[i]] = i
@@ -97,7 +97,7 @@ def indirect_alive_neighbors_correlation_plot(pillar_location, only_alive=True):
     cmap = plt.cm.seismic
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=-1, vmax=1))
     # pillar2mask = get_last_img_mask_for_each_pillar()
-    frame2pillars = get_alive_center_ids_by_frame_v2()  # get_frame_to_alive_pillars_by_same_mask(pillar2mask)
+    frame2pillars = get_alive_center_ids_by_frame_v3()  # get_frame_to_alive_pillars_by_same_mask(pillar2mask)
 
     nodes_loc_y_inverse = [(loc[1], loc[0]) for loc in nodes_loc]
     nx.draw(my_G, nodes_loc_y_inverse, with_labels=True, node_color='gray', edgelist=edges, edge_color=weights,
@@ -125,7 +125,7 @@ def correlation_plot(only_alive=True,
     my_G = nx.Graph()
     last_img = get_last_image()
     alive_centers = get_seen_centers_for_mask()
-    nodes_loc = generate_centers_from_alive_centers(alive_centers, len(last_img))
+    nodes_loc = generate_centers_from_alive_centers(alive_centers, Consts.IMAGE_SIZE_ROWS, Consts.IMAGE_SIZE_COLS)
     if neighbors_str == 'alive2back':
         neighbors = get_alive_pillars_in_edges_to_l1_neighbors()[0]
     elif neighbors_str == 'back2back':
@@ -165,7 +165,7 @@ def correlation_plot(only_alive=True,
     cmap = plt.cm.seismic
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=-1, vmax=1))
     # pillar2mask = get_last_img_mask_for_each_pillar()
-    frame2pillars = get_alive_center_ids_by_frame_v2()  # get_frame_to_alive_pillars_by_same_mask(pillar2mask)
+    frame2pillars = get_alive_center_ids_by_frame_v3()  # get_frame_to_alive_pillars_by_same_mask(pillar2mask)
     nodes_loc_y_inverse = [(loc[1], loc[0]) for loc in nodes_loc]
     if frame_to_show:
         img_to_show = get_images(get_images_path())[frame_to_show]
@@ -198,7 +198,7 @@ def build_gc_directed_graph(gc_df, non_stationary_pillars=None, inwards=None, ou
     #         return pillar_to_neighbors
 
     my_G = nx.Graph().to_directed()
-    nodes_loc = get_all_center_ids()
+    nodes_loc = get_all_center_generated_ids()
     # neighbors1, neighbors2 = get_pillar_to_neighbors()
     node_loc2index = {}
     for i in range(len(nodes_loc)):
@@ -304,7 +304,7 @@ def build_gc_directed_graph_test(gc_df, non_stationary_pillars=None, inwards=Non
     :return:
     """
     my_G = nx.Graph().to_directed()
-    nodes_loc = get_all_center_ids()
+    nodes_loc = get_all_center_generated_ids()
     # neighbors1, neighbors2 = get_pillar_to_neighbors()
     node_loc2index = {}
     for frame in range(len(nodes_loc)):
@@ -335,7 +335,7 @@ def build_gc_directed_graph_test(gc_df, non_stationary_pillars=None, inwards=Non
         # plt.colorbar(sm)
 
         # pillar2mask = get_last_img_mask_for_each_pillar()
-        frame2alive_pillars = get_alive_center_ids_by_frame_v2()  # get_frame_to_alive_pillars_by_same_mask(pillar2mask)
+        frame2alive_pillars = get_alive_center_ids_by_frame_v3()  # get_frame_to_alive_pillars_by_same_mask(pillar2mask)
         nodes_loc_y_inverse = [(loc[1], loc[0]) for loc in nodes_loc]
 
         edges, weights = zip(*nx.get_edge_attributes(my_G, 'weight').items())
@@ -409,7 +409,7 @@ def correlation_histogram(correlations_df):
     return mean_corr
 
 
-def neighbors_correlation_histogram(correlations_lst, neighbors_dict):
+def neighbors_correlation_histogram(correlations_lst):
     """
     Display histogram plot of the correlations between the neighbors
     :param correlations_df:
@@ -417,7 +417,7 @@ def neighbors_correlation_histogram(correlations_lst, neighbors_dict):
     :param symmetric_corr:
     :return:
     """
-    sns.distplot(a=correlations_lst, kde=True)
+    sns.histplot(data=correlations_lst, kde=True)
     plt.xlim(-1, 1)
     plt.title("Correlation of Neighbors Pillars")
     plt.xlabel("Correlation")
@@ -429,8 +429,8 @@ def neighbors_correlation_histogram(correlations_lst, neighbors_dict):
         plt.show()
 
 
-def non_neighbors_correlation_histogram(correlations_lst, neighbors_dict):
-    sns.distplot(a=correlations_lst, kde=True)
+def non_neighbors_correlation_histogram(correlations_lst):
+    sns.histplot(data=correlations_lst, kde=True)
     plt.xlim(-1, 1)
     plt.title("Correlation of Non-Neighbors Pillars")
     plt.xlabel("Correlation")
@@ -756,7 +756,7 @@ def plot_average_correlation_neighbors_vs_non_neighbors(lst1, lst2, labels=None,
         marker = 'bo'
         if special_marker:
             marker = "*" if special_marker[i] == 'special' else '.'
-        plt.plot(float(lst2[i]), float(lst1[i]), marker, label=labels[i], c=c)
+        plt.plot(float(lst1[i]), float(lst2[i]), marker, label=labels[i], c=c)
 
     # plt.axis('square')
     plt.setp(ax, xlim=(-1, 1), ylim=(-1, 1))
@@ -882,7 +882,7 @@ def show_correlated_pairs_in_last_image(n=5, neighbor_pairs=True):
 
 
 def plot_pillar_intensity_with_movement():
-    centers_movements = get_alive_centers_movements()
+    centers_movements = get_alive_centers_movements_v2()
     pillars_intens = get_alive_pillars_to_intensities()
     for pillar, moves in centers_movements.items():
         pillar_id = min(pillars_intens.keys(), key=lambda point: math.hypot(point[1] - pillar[1], point[0] - pillar[0]))

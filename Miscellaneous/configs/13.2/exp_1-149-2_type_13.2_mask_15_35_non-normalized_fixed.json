@@ -2,7 +2,9 @@
   "use_cache": true,
   "metadata": {
     "micron": 0.1565932,
-    "micron_radius": 1
+    "micron_radius": 1,
+    "is_spreading": false,
+    "description": "bottom right cell"
   },
   "mask_radius": {
     "small_radius": 15,
@@ -10,12 +12,13 @@
   },
   "percentage_from_perfect_circle_mask": 1,
   "experiment": {
-    "id": "1-149",
-    "tif_path": "\\video-Airyscan Processing-11-Substack1-149-driftC"
+    "id": "1-149-2",
+    "tif_path": "\\video-Airyscan Processing-11-Substack1-149-2_driftC_bottom_right.tif"
   },
   "perturbation": {
     "type": "13.2"
   },
+  "pixel_to_whiten": 45,
   "output_path_type": "13_2",
   "normalized": false,
   "fixed": true,
@@ -40,12 +43,15 @@
       }
     },
     {
-      "_neighbors_correlation_histogram": {
+      "neighbors_correlation_histogram": {
         "neighbors": "real_neighbors"
       }
     },
     {
-      "_correlation_histogram": {
+      "non_neighbors_correlation_histogram": {}
+    },
+    {
+      "correlation_histogram": {
         "alive": true
       }
     },
@@ -85,7 +91,7 @@
       }
     },
     {
-      "gc_graph": {}
+      "_gc_graph": {}
     },
     {
       "_edges_distribution_plots": {}
@@ -94,10 +100,10 @@
       "_in_out_gc_edges": {}
     },
     {
-      "gc_edge_prob": {}
+      "_gc_edge_prob": {}
     },
     {
-      "gc_edge_prob_original_vs_random": {}
+      "_gc_edge_prob_original_vs_random": {}
     },
     {
       "_in_out_degree": {}
@@ -109,10 +115,10 @@
       "heterogeneity": {}
     },
     {
-      "neighbors_avg_movement_correlation": {}
+      "_neighbors_avg_movement_correlation": {}
     },
     {
-      "not_neighbors_avg_movement_correlation": {}
+      "_not_neighbors_avg_movement_correlation": {}
     }
   ]
 }

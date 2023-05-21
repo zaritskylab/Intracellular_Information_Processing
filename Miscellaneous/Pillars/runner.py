@@ -2,6 +2,7 @@ import time
 
 import numpy
 from matplotlib.pyplot import axline
+from pathlib import Path
 
 from Pillars.visualization import *
 from Pillars.granger_causality import *
@@ -23,6 +24,13 @@ def update_const_by_config(config_data):
     perturbation_type = perturbation['type']
     Consts.ignore_first_image = config_data.get('ignore_first_image', False)
     Consts.ignore_last_image = config_data.get('ignore_last_image', False)
+    Consts.tagged_centers = config_data.get('tagged_centers')
+    if Consts.tagged_centers is not None:
+        Consts.tagged_centers = [eval(tup) for tup in Consts.tagged_centers]
+    if 'metadata' in config_data and 'is_spreading' in config_data["metadata"]:
+        Consts.is_spreading = config_data["metadata"]["is_spreading"]
+    else:
+        Consts.is_spreading = True
 
     Consts.USE_CACHE = config_data.get('use_cache', True)
 
@@ -39,12 +47,15 @@ def update_const_by_config(config_data):
         with open(Consts.last_image_path, 'wb') as f:
             np.save(f, images[-1])
 
-    Consts.IMAGE_SIZE = len(images[-1])
+    Consts.IMAGE_SIZE_ROWS = len(images[-1])
+    Consts.IMAGE_SIZE_COLS = len(images[-1][0])
+
     Consts.normalized = config_data.get('normalized', False)
     Consts.fixed = config_data.get('fixed', True)
     Consts.use_otsu = config_data.get('use_otsu', True)
     Consts.pixel_to_whiten = config_data.get('pixel_to_whiten', 10)
     Consts.MAX_DISTANCE_PILLAR_FIXED = config_data.get('max_distance_pillar_fixed', 11)
+    Consts.INTENSITIES_RATIO_OUTER_INNER = config_data.get('outer_inner_intensity_ratio', 1.9)
 
     # Update mask radius
     mask_radius = config_data.get('mask_radius', {
@@ -59,6 +70,9 @@ def update_const_by_config(config_data):
 
     radius = get_circle_radius(config_data)
     Consts.CIRCLE_RADIUS = round(radius)
+    # Consts.FIND_BETTER_CENTER_IN_RANGE = math.ceil(Consts.CIRCLE_RADIUS / 3)
+    Consts.FIND_BETTER_CENTER_IN_RANGE = Consts.CIRCLE_RADIUS
+
 
     Consts.SMALL_MASK_RADIUS = math.floor(radius * small_mask_radius_ratio)
     Consts.LARGE_MASK_RADIUS = math.floor(radius * large_mask_radius_ratio)
@@ -124,7 +138,7 @@ def run_config(config_name):
     not_neighbors_avg_movement_correlation = None
     avg_intensity = None
 
-    f = open("configs/" + config_name)
+    f = open("../configs/" + config_name)
     config_data = json.load(f)
     update_const_by_config(config_data)
     random.seed(10)
@@ -144,16 +158,20 @@ def run_config(config_name):
     # get_alive_centers_movements()
     # plot_average_intensity_by_distance()
     # plot_pillars_average_intensity_by_movement()
-    _, nbrs_corrs_list = get_neighbors_avg_correlation(get_alive_pillars_symmetric_correlation(),
-                                                       get_alive_pillars_to_alive_neighbors())
-    _, non_nbrs_correlation_list = get_non_neighbors_mean_correlation(get_alive_pillars_symmetric_correlation(),
-                                                                      get_alive_pillars_to_alive_neighbors())
+
+
+    # nbrs_avg_corr, nbrs_corrs_list = get_neighbors_avg_correlation(get_alive_pillars_symmetric_correlation(),
+    #                                                    get_alive_pillars_to_alive_neighbors())
+    # non_nbrs_avg_corr, non_nbrs_correlation_list = get_non_neighbors_mean_correlation(get_alive_pillars_symmetric_correlation(),
+    #                                                                   get_alive_pillars_to_alive_neighbors())
+    #
+    # x = 1
     #
 
     # print(get_avg_correlation_pillars_intensity_movement_peripheral_vs_central())
 
     # show_peripheral_pillars_in_video(get_peripheral_and_center_pillars_by_frame_according_revealing_pillars_and_nbrs(pillars_frame_zero_are_central=True))
-    get_avg_correlation_pillars_intensity_movement_peripheral_vs_central(get_peripheral_and_center_pillars_by_frame_according_revealing_pillars_and_nbrs(pillars_frame_zero_are_central=True))
+    # get_avg_correlation_pillars_intensity_movement_peripheral_vs_central(get_peripheral_and_center_pillars_by_frame_according_revealing_pillars_and_nbrs(pillars_frame_zero_are_central=True))
     # frame_to_peripheral_center_dict = get_peripheral_and_center_pillars_by_frame()
     # last_frame = list(frame_to_peripheral_center_dict.keys())[-1]
     # periph_pillars = frame_to_peripheral_center_dict[last_frame]["peripherals"]
@@ -179,8 +197,10 @@ def run_config(config_name):
     # correlation_plot(alive_correlation_type='custom', pillars_corr_df=second_half_corrs)
     # correlation_plot(alive_correlation_type='custom', pillars_corr_df=overall_corrs)
     # return mean_corr_1st, mean_corr_2nd
-    return nbrs_corrs_list, non_nbrs_correlation_list
+    # return nbrs_avg_corr, non_nbrs_avg_corr
     # return get_cc_pp_cp_correlations()
+    # get_cell_avg_intensity()
+    # return
 
     for op in operations:
         op_key = list(op.keys())[0]
@@ -220,11 +240,15 @@ def run_config(config_name):
             if original:
                 mean_corr, corrs_list = get_neighbors_avg_correlation(get_alive_pillars_symmetric_correlation(),
                                                                       neighbors_dict)
-                neighbors_correlation_histogram(corrs_list, neighbors_dict)
+                neighbors_correlation_histogram(corrs_list)
             else:
                 mean_corr, corrs_list = get_neighbors_avg_correlation(get_alive_pillars_symmetric_correlation(),
                                                                       neighbors_dict)
-                neighbors_correlation_histogram(corrs_list, neighbors_dict)
+                neighbors_correlation_histogram(corrs_list)
+        elif op_key == "non_neighbors_correlation_histogram":
+                mean_corr, corrs_list = get_non_neighbors_mean_correlation(get_alive_pillars_symmetric_correlation(),
+                                                                             get_alive_pillars_to_alive_neighbors())
+                non_neighbors_correlation_histogram(corrs_list)
         elif op_key == "number_of_neighboring_pairs_in_top_correlations":
             top = op_values.get("top", 10)
             num_of_neighboring_pairs_in_top_corrs = get_number_of_neighboring_pillars_in_top_correlations(top=top)
@@ -232,7 +256,7 @@ def run_config(config_name):
             random_amount = op_values.get("random_amount", 5)
             compare_neighbors_corr_histogram_random_vs_real(random_amount)
         elif op_key == "show_pillars_mask":
-            show_last_image_masked(pillars_mask=build_pillars_mask(get_all_center_ids()))
+            show_last_image_masked(pillars_mask=build_pillars_mask(get_all_center_generated_ids()))
         elif op_key == "edges_distribution_plots":
             if gc_df is None:
                 gc_df = get_gc_df()
@@ -290,11 +314,11 @@ def run_config(config_name):
             num_of_pairs = op_values.get("num_of_pairs", 5)
             show_correlated_pairs_in_last_image(n=num_of_pairs, neighbor_pairs=True)
         elif op_key == "neighbors_avg_movement_correlation":
-            pillars_movements_dict = get_alive_centers_movements()
+            pillars_movements_dict = get_alive_centers_movements_v2()
             movement_correlations_df = get_pillars_movement_correlation_df(pillars_movements_dict)
             neighbors_avg_movement_correlation = get_avg_movement_correlation(movement_correlations_df, neighbors=True)
         elif op_key == "not_neighbors_avg_movement_correlation":
-            pillars_movements_dict = get_alive_centers_movements()
+            pillars_movements_dict = get_alive_centers_movements_v2()
             movement_correlations_df = get_pillars_movement_correlation_df(pillars_movements_dict)
             not_neighbors_avg_movement_correlation = get_avg_movement_correlation(movement_correlations_df,
                                                                                   neighbors=False)
@@ -338,8 +362,8 @@ def run_config(config_name):
 
 
 if __name__ == '__main__':
-    perturbation_type = "5.3"
-    exp_number = "30"
+    perturbation_type = "13.2"
+    exp_number = "1-149_bottom_right"
     config_name = perturbation_type + "/exp_" + exp_number + "_type_" + perturbation_type + "_mask_15_35_non-normalized_fixed.json"
     run_config(config_name)
 

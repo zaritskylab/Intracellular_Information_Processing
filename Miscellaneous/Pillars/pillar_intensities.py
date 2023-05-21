@@ -17,26 +17,26 @@ def get_pillar_to_intensities(path):
             pillar2frame_intensity = pickle.load(handle)
             return pillar2frame_intensity
 
-    pillar2last_mask = get_last_img_mask_for_each_pillar(get_all_center_ids())
+    pillar2last_mask = get_last_img_mask_for_each_pillar(get_all_center_generated_ids())
     pillar2frame_intensity = {}
 
     images = get_images(path)
 
-    frame_to_alive_pillars = get_alive_center_ids_by_frame_v2()
+    frame_to_alive_pillars_real_locations = get_alive_centers_real_location_by_frame_v2()
 
     for pillar_item in pillar2last_mask.items():
         pillar_id = pillar_item[0]
         mask = pillar_item[1]
         curr_pillar_intensity = []
         for frame_index, frame in enumerate(images):
-            alive_pillars_centers_in_curr_frame = frame_to_alive_pillars[frame_index]
-            if len(alive_pillars_centers_in_curr_frame) > 0:
-                alive_closest = min(alive_pillars_centers_in_curr_frame,
-                                               key=lambda point: math.hypot(pillar_item[0][1] - point[1],
+            alive_pillars_real_locations_in_curr_frame = frame_to_alive_pillars_real_locations[frame_index]
+            if len(alive_pillars_real_locations_in_curr_frame) > 0:
+                alive_closest_real_location = min(alive_pillars_real_locations_in_curr_frame,
+                                                  key=lambda point: math.hypot(pillar_item[0][1] - point[1],
                                                                             pillar_item[0][0] - point[0]))
-                if np.linalg.norm(np.array(alive_closest) - np.array(pillar_item[0])) < Consts.MAX_DISTANCE_TO_CLOSEST:
-                    # Use mask on the new center
-                    mask = get_mask_for_center(alive_closest)
+                if np.linalg.norm(np.array(alive_closest_real_location) - np.array(pillar_item[0])) < Consts.MAX_DISTANCE_TO_CLOSEST:
+                    # Use mask on the new, real actual center location
+                    mask = get_mask_for_center(alive_closest_real_location)
 
             frame_masked = np.where(mask, frame, 0)
 
@@ -60,9 +60,9 @@ def get_alive_pillars_to_intensities():
     else:
         pillar_intensity_dict = get_pillar_to_intensities(get_images_path())
 
-    alive_pillars = get_alive_pillars_overall_v2()
+    alive_pillar_ids = get_alive_pillar_ids_overall_v3()
 
-    alive_pillars_dict = {pillar: pillar_intensity_dict[pillar] for pillar in alive_pillars}
+    alive_pillars_dict = {pillar: pillar_intensity_dict[pillar] for pillar in alive_pillar_ids}
 
     return alive_pillars_dict
 
@@ -94,7 +94,7 @@ def normalized_intensities_by_mean_background_intensity():
     Normalization of pillars intensities by the mean intensity of the background
     :return:
     """
-    alive_pillars = get_alive_pillars_in_last_frame_v2()
+    alive_pillars = get_alive_pillar_ids_in_last_frame_v3()
     all_pillars = get_pillar_to_intensities(get_images_path())
     background_pillars_intensities = {pillar: all_pillars[pillar] for pillar in all_pillars.keys() if
                                       pillar not in alive_pillars}
@@ -127,7 +127,7 @@ def normalized_intensities_by_zscore():
 
 def get_cell_avg_intensity():
     p_to_intens = get_alive_pillars_to_intensities()
-    frame_to_alive_pillars = get_alive_center_ids_by_frame_v2()
+    frame_to_alive_pillars = get_alive_center_ids_by_frame_v3()
     alive_pillars_to_frame = {}
     for frame, alive_pillars_in_frame in frame_to_alive_pillars.items():
         for alive_pillar in alive_pillars_in_frame:

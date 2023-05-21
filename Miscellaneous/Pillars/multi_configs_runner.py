@@ -6,17 +6,31 @@ if __name__ == '__main__':
 
     config_paths = [
 
-        # '5.3/exp_08_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_09_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_12_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_27.1_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_27.2_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_30_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_08_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_09_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_12_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_27.1_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_27.2_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_30_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_07-1_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_07-2_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_07-3_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_07-4_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_07-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_07-6_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_07-7_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_07-8_type_5.3_mask_15_35_non-normalized_fixed.json',
 
         # '13.2/exp_01_type_13.2_mask_15_35_non-normalized_fixed.json',
         # '13.2/exp_05_type_13.2_mask_15_35_non-normalized_fixed.json',
         # '13.2/exp_06_type_13.2_mask_15_35_non-normalized_fixed.json',
         # '13.2/exp_20_type_13.2_mask_15_35_non-normalized_fixed.json',
+        # '13.2/exp_1-149-1_type_13.2_mask_15_35_non-normalized_fixed.json',
+        # '13.2/exp_1-149-2_type_13.2_mask_15_35_non-normalized_fixed.json',
+        # '13.2/exp_1-149-3_type_13.2_mask_15_35_non-normalized_fixed.json',
+        # '13.2/exp_1-149-4_type_13.2_mask_15_35_non-normalized_fixed.json',
+        # '13.2/exp_1-149-5_type_13.2_mask_15_35_non-normalized_fixed.json',
+        # '13.2/exp_1-149-6_type_13.2_mask_15_35_non-normalized_fixed.json',
 
         # 'KD13.2/exp_49.1_type_KD13.2_mask_15_35_non-normalized_fixed.json',
         # 'KD13.2/exp_46_type_KD13.2_mask_15_35_non-normalized_fixed.json',
@@ -53,15 +67,15 @@ if __name__ == '__main__':
     # # TODO: delete
     nbrs_corrs = []
     non_nbrs_corrs = []
-
-    # corrs = []
-    #####
+    #
+    # # corrs = []
+    # #####
     exps = []
-    list_dicts = []
-    first_corrs = []
-    second_corrs = []
-    center_corrs = []
-    periph_corrs = []
+    # list_dicts = []
+    # first_corrs = []
+    # second_corrs = []
+    # center_corrs = []
+    # periph_corrs = []
     # all_exps_features = []
     #####
 
@@ -75,21 +89,21 @@ if __name__ == '__main__':
 
         # # TODO: delete
         ######
-        f = open(Consts.RESULT_FOLDER_PATH + "/avg_corr_peripheral_vs_central.json")
-        corrs_dict = json.load(f)
-        exps.append(exp_name)
-        center_corrs.append(corrs_dict["centrals"])
-        periph_corrs.append(corrs_dict["peripherals"])
+        # f = open(Consts.RESULT_FOLDER_PATH + "/avg_corr_peripheral_vs_central.json")
+        # corrs_dict = json.load(f)
+        # exps.append(exp_name)
+        # center_corrs.append(corrs_dict["centrals"])
+        # periph_corrs.append(corrs_dict["peripherals"])
         ######
-        # exp = str(exp_type) + " - " + str(exp_name)
-        # exps.append(exp)
+        exp = str(exp_type) + " - " + str(exp_name)
+        exps.append(exp)
         # f = open(Consts.RESULT_FOLDER_PATH + "/intens_movement_sync.txt", "r")
         # data = f.read()
         # corr = data.split(' ')[-1]
         # corrs.append(corr)
-        gc_edge_prob, avg_random_gc_edge_prob = get_experiment_results_data(Consts.RESULT_FOLDER_PATH + '/results.csv',
-                                                                         ['gc_edge_prob',
-                                                                          'avg_random_gc_edge_prob'])
+        # gc_edge_prob, avg_random_gc_edge_prob = get_experiment_results_data(Consts.RESULT_FOLDER_PATH + '/results.csv',
+        #                                                                  ['gc_edge_prob',
+        #                                                                   'avg_random_gc_edge_prob'])
         # avg_intens_corr, avg_movement_corr = get_experiment_results_data(Consts.RESULT_FOLDER_PATH + '/results.csv',
         #                                                                  ['nbrs_avg_correlation',
         #                                                                   'neighbors_avg_movement_correlation'])
@@ -99,8 +113,10 @@ if __name__ == '__main__':
         # nbrs_corrs_lst, non_nbrs_corrs_lst = run_config(config_path)
         # nbrs_corrs.extend(nbrs_corrs_lst)
         # non_nbrs_corrs.extend(non_nbrs_corrs_lst)
-        # nbrs_avg_correlation, non_nbrs_avg_correlation = get_experiment_results_data(Consts.RESULT_FOLDER_PATH + '/results.csv',
-        #                                    ['nbrs_avg_correlation', 'non_nbrs_avg_correlation'])
+        nbrs_avg_correlation, non_nbrs_avg_correlation = get_experiment_results_data(Consts.RESULT_FOLDER_PATH + '/results.csv',
+                                           ['nbrs_avg_correlation', 'non_nbrs_avg_correlation'])
+        nbrs_corrs.append(nbrs_avg_correlation)
+        non_nbrs_corrs.append(non_nbrs_avg_correlation)
         # features = [float(v) for v in features]
         # features.append(corrs_dict["peripherals"])
         # features.append(corrs_dict["centrals"])
@@ -109,8 +125,8 @@ if __name__ == '__main__':
         # cc_cp_corrs_dict = run_config(config_path)
         # cc_corr = cc_cp_corrs_dict['cc_corr']
         # cp_corr = cc_cp_corrs_dict['cp_corr']
-        first_corrs.append(gc_edge_prob)
-        second_corrs.append(avg_random_gc_edge_prob)
+        # first_corrs.append(gc_edge_prob)
+        # second_corrs.append(avg_random_gc_edge_prob)
 
         ##################################### RUN  ############################################
         # run_config(config_path)
@@ -129,11 +145,10 @@ if __name__ == '__main__':
     # plot_correlation_by_distance_from_center_cell(list_dicts, exps)
     # special_legend = ['special', 'non special', 'non special', 'non special', 'special', 'special',
     #                   'special', 'special', 'special', 'special']
-    title = "Probability for a GC Edge 13.2"
-    xlabel = "Random Neighbors"
-    ylabel = "Original Neighbors"
-    plot_average_correlation_neighbors_vs_non_neighbors(first_corrs, second_corrs, labels=exps, title=title, xlabel=xlabel,
-                                                        ylabel=ylabel, special_marker=None)
+    # title = "Probability for a GC Edge 13.2"
+    # xlabel = "Random Neighbors"
+    # ylabel = "Original Neighbors"
+    plot_average_correlation_neighbors_vs_non_neighbors(non_nbrs_corrs, nbrs_corrs, labels=exps)
     # features_lst = ['nbrs_avg_signal_corr', 'non_nbrs_avg_signal_corr', 'neighbors_avg_move_corr',
     #                 'not_neighbors_avg_move_corr', 'out/in_factor', 'gc_edge_prob', 'avg_random_gc_edge_prob',
     #                 'reciprocity', 'heterogeneity', 'periph_avg_move_signal_corr', 'central_avg_move_signal_corr']
