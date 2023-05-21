@@ -6,20 +6,20 @@ if __name__ == '__main__':
 
     config_paths = [
 
-        '5.3/exp_08_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_09_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_12_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_27.1_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_27.2_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_30_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_07-1_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_07-2_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_07-3_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_07-4_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_07-5_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_07-6_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_07-7_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_07-8_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_08_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_09_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_12_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_27.1_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_27.2_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_30_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_07-1_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_07-2_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_07-3_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_07-4_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_07-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_07-6_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_07-7_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_07-8_type_5.3_mask_15_35_non-normalized_fixed.json',
 
         # '13.2/exp_01_type_13.2_mask_15_35_non-normalized_fixed.json',
         # '13.2/exp_05_type_13.2_mask_15_35_non-normalized_fixed.json',
@@ -61,7 +61,7 @@ if __name__ == '__main__':
         # 'REF5.3/exp_69.3_type_REF5.3_mask_15_35_non-normalized_fixed.json',
     ]
 
-    Consts.SHOW_GRAPH = True
+    Consts.SHOW_GRAPH = False
     Consts.WRITE_OUTPUT = True
 
     # # TODO: delete
@@ -95,8 +95,8 @@ if __name__ == '__main__':
         # center_corrs.append(corrs_dict["centrals"])
         # periph_corrs.append(corrs_dict["peripherals"])
         ######
-        exp = str(exp_type) + " - " + str(exp_name)
-        exps.append(exp)
+        # exp = str(exp_type) + " - " + str(exp_name)
+        # exps.append(exp)
         # f = open(Consts.RESULT_FOLDER_PATH + "/intens_movement_sync.txt", "r")
         # data = f.read()
         # corr = data.split(' ')[-1]
@@ -113,10 +113,10 @@ if __name__ == '__main__':
         # nbrs_corrs_lst, non_nbrs_corrs_lst = run_config(config_path)
         # nbrs_corrs.extend(nbrs_corrs_lst)
         # non_nbrs_corrs.extend(non_nbrs_corrs_lst)
-        nbrs_avg_correlation, non_nbrs_avg_correlation = get_experiment_results_data(Consts.RESULT_FOLDER_PATH + '/results.csv',
-                                           ['nbrs_avg_correlation', 'non_nbrs_avg_correlation'])
-        nbrs_corrs.append(nbrs_avg_correlation)
-        non_nbrs_corrs.append(non_nbrs_avg_correlation)
+        # nbrs_avg_correlation, non_nbrs_avg_correlation = get_experiment_results_data(Consts.RESULT_FOLDER_PATH + '/results.csv',
+        #                                    ['nbrs_avg_correlation', 'non_nbrs_avg_correlation'])
+        # nbrs_corrs.append(nbrs_avg_correlation)
+        # non_nbrs_corrs.append(non_nbrs_avg_correlation)
         # features = [float(v) for v in features]
         # features.append(corrs_dict["peripherals"])
         # features.append(corrs_dict["centrals"])
@@ -129,7 +129,7 @@ if __name__ == '__main__':
         # second_corrs.append(avg_random_gc_edge_prob)
 
         ##################################### RUN  ############################################
-        # run_config(config_path)
+        run_config(config_path)
 
         # try:
         #     run_config(config_path)
@@ -148,7 +148,7 @@ if __name__ == '__main__':
     # title = "Probability for a GC Edge 13.2"
     # xlabel = "Random Neighbors"
     # ylabel = "Original Neighbors"
-    plot_average_correlation_neighbors_vs_non_neighbors(non_nbrs_corrs, nbrs_corrs, labels=exps)
+    # plot_average_correlation_neighbors_vs_non_neighbors(non_nbrs_corrs, nbrs_corrs, labels=exps)
     # features_lst = ['nbrs_avg_signal_corr', 'non_nbrs_avg_signal_corr', 'neighbors_avg_move_corr',
     #                 'not_neighbors_avg_move_corr', 'out/in_factor', 'gc_edge_prob', 'avg_random_gc_edge_prob',
     #                 'reciprocity', 'heterogeneity', 'periph_avg_move_signal_corr', 'central_avg_move_signal_corr']
