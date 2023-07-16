@@ -1,0 +1,129 @@
+{
+  "use_cache": true,
+  "metadata": {
+    "micron": 0.1565932,
+    "micron_radius": 1,
+    "is_spreading": true
+  },
+  "mask_radius": {
+    "small_radius": 15,
+    "large_radius": 35
+  },
+  "outer_inner_intensity_ratio": 1.2,
+  "percentage_from_perfect_circle_mask": 1,
+  "experiment": {
+    "id": "20230323-07-8",
+    "tif_path": "\\exp-20230323-video-07-cell-8-Airyscan Processing-01-driftC.tif"
+  },
+  "tagged_centers": ["(75, 320)","(80, 302)","(95, 317)","(90, 276)","(101, 296)","(117, 314)","(144, 310)","(126, 291)","(111, 271)","(96, 253)","(82, 234)","(87, 209)","(75, 191)","(95, 186)","(103, 229)","(119, 248)","(132, 266)","(151, 286)","(169, 306)","(161, 331)","(191, 303)","(177, 285)","(159, 263)","(145, 244)","(127, 227)","(110, 205)","(105, 161)","(115, 138)","(139, 133)","(164, 129)","(187, 123)","(252, 203)","(243, 226)","(234, 248)","(183, 328)","(175, 348)","(200, 277)","(186, 259)","(218, 231)","(202, 210)","(186, 192)","(171, 173)","(154, 152)","(180, 148)","(199, 145)","(129, 156)","(209, 253)","(194, 238)","(171, 237)","(160, 223)","(177, 215)","(119, 181)","(144, 177)","(137, 202)","(159, 196)","(227, 208)","(216, 192)","(196, 170)","(215, 165)","(237, 184)","(246, 158)","(235, 118)","(207, 117)","(222, 140)","(242, 134)"],
+  "all_tagged_always_alive": true,
+  "perturbation": {
+    "type": "5.3"
+  },
+  "pixel_to_whiten": 80,
+  "output_path_type": "5_3",
+  "normalized": false,
+  "fixed": true,
+  "operations": [
+    {
+      "show_pillars_mask": {}
+    },
+    {
+      "avg_intensity": {}
+    },
+    {
+      "neighbors_avg_correlation": {}
+    },
+    {
+      "non_neighbors_avg_correlation": {}
+    },
+    {
+      "_correlation_plot": {
+        "only_alive": true,
+        "neighbors": "all",
+        "alive_correlation_type": "symmetric"
+      }
+    },
+    {
+      "neighbors_correlation_histogram": {
+        "neighbors": "real_neighbors"
+      }
+    },
+    {
+      "non_neighbors_correlation_histogram": {}
+    },
+    {
+      "correlation_histogram": {
+        "alive": true
+      }
+    },
+    {
+      "_show_correlated_pairs_in_video": {
+        "num_of_pairs": 5
+      }
+    },
+    {
+      "_plot_pillar_pairs_correlation_frames_window": {
+        "num_of_pairs": 5
+      }
+    },
+    {
+      "_show_correlated_neighboring_pairs_in_video": {
+        "num_of_pairs": 5
+      }
+    },
+    {
+      "_plot_neighboring_pillar_pairs_correlation_frames_window": {
+        "num_of_pairs": 5
+      }
+    },
+    {
+      "_show_neighboring_correlated_pairs_in_last_image": {
+        "num_of_pairs": 5
+      }
+    },
+    {
+      "_number_of_neighboring_pairs_in_top_correlations": {
+        "top": 10
+      }
+    },
+    {
+      "_compare_neighbors_corr_histogram_random_vs_real": {
+        "random_amount": 5
+      }
+    },
+    {
+      "_gc_graph": {}
+    },
+    {
+      "_edges_distribution_plots": {}
+    },
+    {
+      "_in_out_gc_edges": {}
+    },
+    {
+      "_gc_edge_prob": {}
+    },
+    {
+      "_gc_edge_prob_original_vs_random": {}
+    },
+    {
+      "_in_out_degree": {}
+    },
+    {
+      "_reciprocity": {}
+    },
+    {
+      "_heterogeneity": {}
+    },
+    {
+      "_neighbors_avg_movement_correlation": {}
+    },
+    {
+      "_not_neighbors_avg_movement_correlation": {}
+    },
+    {
+      "change_mask_radius": {}
+    }
+  ]
+}
