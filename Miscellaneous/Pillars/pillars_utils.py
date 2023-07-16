@@ -477,10 +477,22 @@ def get_seen_centers_for_mask(img=None, all_center_ids=None):
                     if white_pixels_in_outer_circle / total_pixels_in_outer_circle >= 0.5:
                         alive_centers.add(repositioned_alive_center)
 
-    if Consts.tagged_centers is not None:
+    if Consts.tagged_centers is not None and all_center_ids is None:
         alive_centers_fixed = alive_centers
     else:
         alive_centers_fixed = get_centers_fixed_by_circle_mask_reposition(alive_centers, img)
+
+    # If boolean is true, need to add all tagged centers to alive_centers_fixed (only if not in list)
+    if Consts.ALL_TAGGED_ALWAYS_ALIVE:
+        tagged_centers_fixed = get_centers_fixed_by_circle_mask_reposition(Consts.tagged_centers, img)
+        for fixed_tagged_center in tagged_centers_fixed:
+            closest_center_to_tagged = closest_to_point(alive_centers_fixed, fixed_tagged_center)
+            # If there is no seen center to tagged -> add the tagged to the list.
+            if closest_center_to_tagged is None or \
+                    not np.linalg.norm(np.array(fixed_tagged_center) - np.array(closest_center_to_tagged)) < \
+                        Consts.MAX_DISTANCE_PILLAR_FIXED:
+                alive_centers_fixed.append(fixed_tagged_center)
+
 
     if original_image is None and all_center_ids is None and Consts.USE_CACHE:
 
@@ -771,10 +783,16 @@ def get_rules_by_all_centers(alive_centers):
 
     sorted_rules = sorted(rule_groups, key=lambda x: len(x), reverse=True)
     max_rules = sorted_rules[0]
-    rule1 = max(max_rules, key=max_rules.count)
+    # rule1 = max(max_rules, key=max_rules.count) # TODO
+
+    rule1 = np.average(max_rules, axis=0)
+    rule1 = (int(rule1[0]), int(rule1[1]))
 
     for rule2 in sorted_rules[1:]:
-        rule2 = max(rule2, key=rule2.count)
+        # rule2 = max(rule2, key=rule2.count)  # TODO
+
+        rule2 = np.average(rule2, axis=0)
+        rule2 = (int(rule2[0]), int(rule2[1]))
 
         if rule2[0] != 0 and rule2[1] != 0 and (rule1[1] / rule2[1]) != 0:
             # Check if rules are multiplication of one another (meaning - same rule)
@@ -1359,4 +1377,6 @@ def get_alive_pillar_to_frame_v3():
 
 
 def closest_to_point(points, target):
+    if len(points) == 0:
+        return None
     return min(points, key=lambda point: math.hypot(target[1] - point[1], target[0] - point[0]))

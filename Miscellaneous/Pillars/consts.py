@@ -60,6 +60,7 @@ class Consts:
     alive_pillars_overall = None
     alive_center_ids_by_frame_cache_path = None
     alive_center_real_locations_by_frame_cache_path = None
+    pillars_alive_location_by_frame_to_gif_cache_path = None
 
 
     IMAGE_SIZE_ROWS = 1000
@@ -72,10 +73,12 @@ class Consts:
     RESULT_FOLDER_PATH = None
     SHOW_GRAPH = True
     WRITE_OUTPUT = False
+    ALL_TAGGED_ALWAYS_ALIVE = False
 
 
     # BFS data
     CIRCLE_RADIUS = 20
+    CIRCLE_RADIUS_FOR_MASK_CALCULATION = 20
     MAX_CIRCLE_AREA = None
     CHECK_VALID_CENTER = 5
     CIRCLE_INSIDE_VALIDATE_SEARCH_LENGTH = CIRCLE_RADIUS - CHECK_VALID_CENTER

@@ -35,8 +35,7 @@ def reposition(exp_path, save_path):
         # Get curr and prev images
         prev_image, curr_image = curr_image.copy(), full_img_stack[img_idx].copy()
         assert not np.array_equal(prev_image, curr_image)
-        shifted, error_before, diffphase = phase_cross_correlation(prev_image, curr_image, upsample_factor=100,
-                                                                   normalization=None)
+        shifted, error_before, diffphase = phase_cross_correlation(prev_image, curr_image, upsample_factor=100, normalization=None)
         img_id2diffs[img_idx]['before_fix'] = error_before
 
         # noise = 0.1
@@ -59,6 +58,8 @@ def reposition(exp_path, save_path):
     imsave(save_path, full_img_stack)
     return full_img_stack
 
+# reposition("C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\13.2\\20230712-exp01-video-05-Airyscan Processing.tif",
+#            "C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\13.2\\20230712-exp01-video-05-Airyscan Processing-shift.tif")
 # fig = plt.figure(figsize=(10, 10))
 # ax1 = fig.add_subplot(2,2,1)
 # ax1.imshow(prev_image, cmap='gray')

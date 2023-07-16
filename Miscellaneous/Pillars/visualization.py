@@ -15,12 +15,13 @@ from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 from matplotlib import animation
 from matplotlib.pyplot import cm
+import matplotlib.colors as mcolors
 from matplotlib.animation import PillowWriter
 
 from Pillars.pillar_neighbors import *
 
 
-def show_last_image_masked(mask_path=None, pillars_mask=None):
+def show_last_image_masked(mask_path=None, pillars_mask=None, save_mask=True):
     """
     show the mask on the video's last image
     :param mask_path:
@@ -42,7 +43,7 @@ def show_last_image_masked(mask_path=None, pillars_mask=None):
     pillars_mask = 255 - pillars_mask
     mx = ma.masked_array(last_img, pillars_mask)
     plt.imshow(mx, cmap=plt.cm.gray)
-    if Consts.RESULT_FOLDER_PATH is not None:
+    if save_mask and Consts.RESULT_FOLDER_PATH is not None:
         plt.savefig(Consts.RESULT_FOLDER_PATH + "/mask.png")
         plt.close()  # close the figure window
         print("saved new mask.png")
@@ -72,7 +73,7 @@ def indirect_alive_neighbors_correlation_plot(pillar_location, only_alive=True):
         my_G.add_node(i)
 
     if only_alive:
-        pillars = get_alive_pillars_to_intensities()
+        pillars = get_overall_alive_pillars_to_intensities()
     else:
         # pillars = get_pillar_to_intensities(get_images_path())
         pillars = normalized_intensities_by_mean_background_intensity()
@@ -748,18 +749,61 @@ def k_means(principalComponents, output_path_type, n_clusters=2, custom_df=None)
 
 
 def plot_average_correlation_neighbors_vs_non_neighbors(lst1, lst2, labels=None, title=None, xlabel=None,
-                                                        ylabel=None, special_marker=None):
+                                                        ylabel=None, special_marker=None, cells_lst=None):
     f, ax = plt.subplots(figsize=(6, 6))
     color = iter(cm.rainbow(np.linspace(0, 1, len(labels))))
-    for i in range(len(lst1)):
-        c = next(color)
-        marker = 'bo'
-        if special_marker:
-            marker = "*" if special_marker[i] == 'special' else '.'
-        plt.plot(float(lst1[i]), float(lst2[i]), marker, label=labels[i], c=c)
+
+    # cmap = None
+    # if cells_lst:
+    #     cmap = {}
+    #     cell_color = mcolors.TABLEAU_COLORS.values()
+    #     cell_color = list(cell_color)
+    #     cell_color.extend(cell_color)
+    #
+    # for i in range(len(lst1)):
+    #     c = next(color)
+    #
+    #     if cells_lst:
+    #         k = cells_lst[i]
+    #         if k in cmap.keys():
+    #             c = cmap[k]
+    #         else:
+    #             c = list(cell_color)[int(float(k))-1]
+    #             cmap[k] = c
+    #
+    #     marker = 'bo'
+    #     if special_marker:
+    #         marker = "*" if special_marker[i] == 'special' else '.'
+    #
+    #     if cmap:
+    #         c = cmap[k]
+    #
+    #     plt.plot(float(lst1[i]), float(lst2[i]), marker, label=labels[i], c=c, alpha=0.3)
+    #     # plt.plot(float(lst1[i]), float(lst2[i]), marker, label=k, c=c)
+
+    colors = list(mcolors.TABLEAU_COLORS.values())[2:4]
+    label1 = labels[0]
+    label2 = labels[-1]
+    lst_x_1 = []
+    lst_y_1 = []
+    lst_x_2 = []
+    lst_y_2 = []
+
+    for label_index in range(len(labels)):
+        if labels[label_index] == label1:
+            lst_x_1.append(float(lst1[label_index]))
+            lst_y_1.append(float(lst2[label_index]))
+        else:
+            lst_x_2.append(float(lst1[label_index]))
+            lst_y_2.append(float(lst2[label_index]))
+
+    plt.plot(lst_x_1, lst_y_1, 'bo', label=label1, c=colors[0], alpha=0.2)
+    plt.plot(lst_x_2, lst_y_2, 'bo', label=label2, c=colors[1], alpha=0.2)
+    plt.axvline(x=0, color="gainsboro", linestyle="--")
+    plt.axhline(y=0, color="gainsboro", linestyle="--")
 
     # plt.axis('square')
-    plt.setp(ax, xlim=(-1, 1), ylim=(-1, 1))
+    plt.setp(ax, xlim=(-0.5, 1), ylim=(-0.5, 1))
     axline([ax.get_xlim()[0], ax.get_ylim()[0]], [ax.get_xlim()[1], ax.get_ylim()[1]], ls='--')
     if title:
         plt.title(title)
@@ -774,7 +818,11 @@ def plot_average_correlation_neighbors_vs_non_neighbors(lst1, lst2, labels=None,
     else:
         plt.ylabel('Neighbor pair correlation')
     if labels is not None:
-        plt.legend(labels)
+        # plt.legend(labels)
+        # cells_int_lst = [int(c) for c in set(cells_lst)]
+        # cells_int_lst.sort()
+        # plt.legend(cells_int_lst)
+        plt.legend()
     if Consts.SHOW_GRAPH:
         plt.show()
 
@@ -883,7 +931,7 @@ def show_correlated_pairs_in_last_image(n=5, neighbor_pairs=True):
 
 def plot_pillar_intensity_with_movement():
     centers_movements = get_alive_centers_movements_v2()
-    pillars_intens = get_alive_pillars_to_intensities()
+    pillars_intens = get_overall_alive_pillars_to_intensities()
     for pillar, moves in centers_movements.items():
         pillar_id = min(pillars_intens.keys(), key=lambda point: math.hypot(point[1] - pillar[1], point[0] - pillar[0]))
         pillar_movment = []
@@ -1113,7 +1161,6 @@ def plot_nbrs_correlations_heatmap(correlations_df, neighbors_dict):
         for n in nbrs:
             labels.loc[str(p), str(n)] = round(correlations_df.loc[str(p), str(n)], 2)
 
-
     sns.heatmap(correlations_df,
                 annot=labels,
                 mask=correlations_df.isnull(),
@@ -1171,7 +1218,8 @@ def plot_correlation_by_distance_from_center_cell(list_of_dist_to_corr_dict, lab
     for i in range(len(labels)):
         c = next(color)
         dist_to_corr = list_of_dist_to_corr_dict[i]
-        plt.plot(list(dist_to_corr.keys()), list(dist_to_corr.values()), label=labels[i], color=c, linestyle='--', marker='o')
+        plt.plot(list(dist_to_corr.keys()), list(dist_to_corr.values()), label=labels[i], color=c, linestyle='--',
+                 marker='o')
 
     plt.title('Local Correlation by Distance Level From the Cell Center', fontsize=14)
     plt.ylabel('Correlation', fontsize=12)
@@ -1182,3 +1230,22 @@ def plot_correlation_by_distance_from_center_cell(list_of_dist_to_corr_dict, lab
         plt.show()
 
 
+def print_tagged_centers():
+    plt.imshow(get_images(get_images_path())[0], cmap=plt.cm.gray)
+    y = [center[0] for center in Consts.tagged_centers]
+    x = [center[1] for center in Consts.tagged_centers]
+    scatter_size = [3 for center in Consts.tagged_centers]
+
+    plt.scatter(x, y, s=scatter_size)
+    plt.show()
+
+
+def plot_node_strengths_distribution(node_strengths):
+    # Plot the node strength distribution
+    plt.hist(list(node_strengths.values()), bins=10, edgecolor='black')
+    plt.xlabel('Node Strength')
+    plt.ylabel('Frequency')
+    plt.title('Node Strength Distribution')
+
+    # Show the plot
+    plt.show()

@@ -72,7 +72,7 @@ def get_gc_df():
             gc_df = pickle.load(handle)
             return gc_df
 
-    p2i = get_alive_pillars_to_intensities()
+    p2i = get_overall_alive_pillars_to_intensities()
     p2i_df = pd.DataFrame({str(k): v for k, v in p2i.items()})
     p2i_df_diff = p2i_df.diff().dropna()
     df_size = len(p2i_df_diff.columns)
@@ -115,7 +115,7 @@ def get_gc_df_test():
     #         gc_df = pickle.load(handle)
     #         return gc_df
 
-    p2i = get_alive_pillars_to_intensities()
+    p2i = get_overall_alive_pillars_to_intensities()
     p2i_df = pd.DataFrame({str(k): v for k, v in p2i.items()})
     p2i_df_diff = p2i_df.diff().dropna()
     df_size = len(p2i_df_diff.columns)
@@ -180,7 +180,7 @@ def grangers_causation_matrix_test(data, variables, test='ssr_chi2test'):
                 opt_lag = np.max([np.max(lags), 4])
                 if np.max(lags) == 0:
                     print(f"both lags are 0; 4 will be taken")
-            print(f'opt lag for {r} follow {p} = {opt_lag}')
+            print(f'opt lag for {r} follow {c} = {opt_lag}')
             test_result = grangercausalitytests(data[[r, c]], maxlag=opt_lag)
             p_value = test_result[opt_lag][0][test][1]
             df.loc[r, c] = p_value
@@ -190,7 +190,7 @@ def grangers_causation_matrix_test(data, variables, test='ssr_chi2test'):
 
 
 def get_non_stationary_pillars_lst():
-    p2i = get_alive_pillars_to_intensities()
+    p2i = get_overall_alive_pillars_to_intensities()
     p2i_df = pd.DataFrame({str(k): v for k, v in p2i.items()})
     p2i_df_diff = p2i_df.diff().dropna()
 

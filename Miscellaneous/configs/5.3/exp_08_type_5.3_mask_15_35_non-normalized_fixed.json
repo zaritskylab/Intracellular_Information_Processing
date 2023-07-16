@@ -25,7 +25,7 @@
       "show_pillars_mask": {}
     },
     {
-      "avg_intensity": {}
+      "_avg_intensity": {}
     },
     {
       "neighbors_avg_correlation": {}
@@ -86,7 +86,7 @@
       }
     },
     {
-      "gc_graph": {}
+      "_gc_graph": {}
     },
     {
       "_edges_distribution_plots": {}
@@ -95,25 +95,28 @@
       "_in_out_gc_edges": {}
     },
     {
-      "gc_edge_prob": {}
+      "_gc_edge_prob": {}
     },
     {
-      "gc_edge_prob_original_vs_random": {}
+      "_gc_edge_prob_original_vs_random": {}
     },
     {
       "_in_out_degree": {}
     },
     {
-      "reciprocity": {}
+      "_reciprocity": {}
     },
     {
-      "heterogeneity": {}
+      "_heterogeneity": {}
     },
     {
-      "neighbors_avg_movement_correlation": {}
+      "_neighbors_avg_movement_correlation": {}
     },
     {
-      "not_neighbors_avg_movement_correlation": {}
+      "_not_neighbors_avg_movement_correlation": {}
+    },
+    {
+      "change_mask_radius": {}
     }
   ]
 }

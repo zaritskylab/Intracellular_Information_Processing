@@ -3,9 +3,9 @@ import numpy as np
 from tifffile import imsave
 import cv2
 import matplotlib.pyplot as plt
-from Pillars.pillars_utils import *
+from pillars_utils import *
 import random
-from Pillars.consts import *
+from consts import *
 import time
 
 import numpy
@@ -35,9 +35,11 @@ class Labeler:
         f = open("../configs/" + config_name)
         config_data = json.load(f)
         update_const_by_config(config_data)
+        # self.alive_centers = []
         self.alive_centers = get_seen_centers_for_mask()
+
         # self.img = get_last_image()
-        self.img = get_images(get_images_path())[0]
+        self.img = get_images(get_images_path())[18]
         self.print_alive_centers()
 
     def print_alive_centers(self):
@@ -106,6 +108,6 @@ class Labeler:
 # When image closed - save list
 # Enable revert
 
-# json_path = '5.3/exp_07-7_type_5.3_mask_15_35_non-normalized_fixed.json'
-json_path = '5.3/exp_07-5_type_5.3_mask_15_35_non-normalized_fixed.json'
+json_path = '5.3/exp_20230320-05-6_type_5.3_mask_15_35_non-normalized_fixed.json'
+# json_path = '13.2/exp_20230327-01-4_type_13.2_mask_15_35_non-normalized_fixed.json'
 Labeler().label_video(json_path)

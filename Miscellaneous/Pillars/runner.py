@@ -53,9 +53,13 @@ def update_const_by_config(config_data):
     Consts.normalized = config_data.get('normalized', False)
     Consts.fixed = config_data.get('fixed', True)
     Consts.use_otsu = config_data.get('use_otsu', True)
+    Consts.ALL_TAGGED_ALWAYS_ALIVE = config_data.get('all_tagged_always_alive', False)
     Consts.pixel_to_whiten = config_data.get('pixel_to_whiten', 10)
     Consts.MAX_DISTANCE_PILLAR_FIXED = config_data.get('max_distance_pillar_fixed', 11)
     Consts.INTENSITIES_RATIO_OUTER_INNER = config_data.get('outer_inner_intensity_ratio', 1.9)
+    radius = get_circle_radius(config_data)
+    Consts.CIRCLE_RADIUS_FOR_MASK_CALCULATION = radius
+    Consts.CIRCLE_RADIUS = round(radius)
 
     # Update mask radius
     mask_radius = config_data.get('mask_radius', {
@@ -63,23 +67,17 @@ def update_const_by_config(config_data):
         "large_radius": 35
     })
 
-    small_mask_radius_ratio = mask_radius['small_radius'] / 20
-    large_mask_radius_ratio = mask_radius['large_radius'] / 20
+    mask_radiuses_after_ratio = get_mask_radiuses(mask_radius)
 
-    Consts.percentage_from_perfect_circle_mask = config_data.get('percentage_from_perfect_circle_mask', 1)
-
-    radius = get_circle_radius(config_data)
-    Consts.CIRCLE_RADIUS = round(radius)
-    # Consts.FIND_BETTER_CENTER_IN_RANGE = math.ceil(Consts.CIRCLE_RADIUS / 3)
-    Consts.FIND_BETTER_CENTER_IN_RANGE = Consts.CIRCLE_RADIUS
-
-
-    Consts.SMALL_MASK_RADIUS = math.floor(radius * small_mask_radius_ratio)
-    Consts.LARGE_MASK_RADIUS = math.floor(radius * large_mask_radius_ratio)
+    Consts.SMALL_MASK_RADIUS = mask_radiuses_after_ratio['small']
+    Consts.LARGE_MASK_RADIUS = mask_radiuses_after_ratio['large']
 
     # circle_validation = config_data.get('circle_validation', False)
     # if circle_validation:
 
+    # Consts.FIND_BETTER_CENTER_IN_RANGE = math.ceil(Consts.CIRCLE_RADIUS / 3)
+    Consts.FIND_BETTER_CENTER_IN_RANGE = Consts.CIRCLE_RADIUS
+    Consts.percentage_from_perfect_circle_mask = config_data.get('percentage_from_perfect_circle_mask', 1)
     Consts.MAX_CIRCLE_AREA = (math.pi * Consts.CIRCLE_RADIUS ** 2) * 2
     micron = config_data["metadata"]["micron"]
     validation_ratio = int(micron / Consts.RELATIVE_TO)
@@ -98,26 +96,35 @@ def update_const_by_config(config_data):
     # Update caches path.
     Consts.pillar_to_intensities_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'pillar_to_intensities_cached.pickle'
     Consts.correlation_alive_normalized_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'alive_pillar_correlation_normalized_cached.pickle'
-    Consts.correlation_alive_not_normalized_cache_path = '..SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'alive_pillar_correlation_cached.pickle'
-
+    Consts.correlation_alive_not_normalized_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'alive_pillar_correlation_cached.pickle'
     Consts.all_pillars_correlation_normalized_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'all_pillar_correlation_normalized_cached.pickle'
     Consts.all_pillars_correlation_not_normalized_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'all_pillar_correlation_cached.pickle'
-    Consts.frame2pillar_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'frames2pillars_cached.pickle'
-    Consts.frame2alive_pillars_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'frames2alive_pillars_cached.pickle'
     Consts.gc_df_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'gc_df_cached.pickle'
     Consts.alive_pillars_sym_corr_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'alive_pillars_corr_cached.pickle'
-    Consts.centers_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'centers_cached.pickle'
-    Consts.pillar_to_neighbors_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'pillar_to_neighbors_cached.pickle'
     Consts.mask_for_each_pillar_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'mask_for_each_pillar_cached.pickle'
     Consts.gc_graph_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'gc_cached.pickle'
-    Consts.last_img_alive_centers_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'last_img_seen_centers_cache.pickle'
-    Consts.alive_pillars_by_frame_reposition_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'alive_pillars_by_frame_reposition_cache.pickle'
     Consts.alive_pillars_correlations_frame_windows_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'alive_pillars_correlations_frame_windows_cache.pickle'
     Consts.alive_pillars_correlations_with_running_frame_windows_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'alive_pillars_correlations_with_running_frame_windows_cache.pickle'
+
+    Consts.pillars_alive_location_by_frame_to_gif_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'pillars_alive_location_by_frame_to_gif_cache.pickle'
+    Consts.alive_pillars_by_frame_reposition_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'alive_pillars_by_frame_reposition_cache.pickle'
+    Consts.frame2alive_pillars_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'frames2alive_pillars_cached.pickle'
+    Consts.last_img_alive_centers_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'last_img_seen_centers_cache.pickle'
+    Consts.frame2pillar_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'frames2pillars_cached.pickle'
+    Consts.pillar_to_neighbors_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'pillar_to_neighbors_cached.pickle'
+    Consts.centers_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'centers_cached.pickle'
     Consts.alive_pillars_to_alive_neighbors_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'alive_pillars_to_alive_neighbors_cache.pickle'
     Consts.alive_pillars_overall = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'alive_pillars_overall_cache.pickle'
     Consts.alive_center_ids_by_frame_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'alive_center_ids_by_frame_cache.pickle'
     Consts.alive_center_real_locations_by_frame_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'alive_center_real_locations_by_frame_cache.pickle'
+
+
+def get_mask_radiuses(mask_radius):
+    small_mask_radius_ratio = mask_radius['small_radius'] / 20
+    large_mask_radius_ratio = mask_radius['large_radius'] / 20
+    small = math.floor(Consts.CIRCLE_RADIUS_FOR_MASK_CALCULATION * small_mask_radius_ratio)
+    large = math.floor(Consts.CIRCLE_RADIUS_FOR_MASK_CALCULATION * large_mask_radius_ratio)
+    return {'small': small, 'large': large}
 
 
 def run_config(config_name):
@@ -144,11 +151,16 @@ def run_config(config_name):
     random.seed(10)
     gc_df = None
     operations = config_data.get("operations", [])
-
+    return
 
     # show_peripheral_pillars_in_video()
     # x = 1
 
+    # G = build_pillars_graph(draw=False)
+    # ns, strong_nodes, _ = nodes_strengths(G, draw=False)
+    # avgs = strengths_nodes_distance_from_center(G, alive_centers=get_seen_centers_for_mask(), node_strengths=strong_nodes)
+    # # plot_node_strengths_distribution(ns)
+    # return avgs
     # pillars_movements_dict = get_alive_centers_movements()
     # movement_corr_df = get_pillars_movement_correlation_df(pillars_movements_dict)
     # intensity_corr_df = get_alive_pillars_symmetric_correlation()
@@ -158,7 +170,6 @@ def run_config(config_name):
     # get_alive_centers_movements()
     # plot_average_intensity_by_distance()
     # plot_pillars_average_intensity_by_movement()
-
 
     # nbrs_avg_corr, nbrs_corrs_list = get_neighbors_avg_correlation(get_alive_pillars_symmetric_correlation(),
     #                                                    get_alive_pillars_to_alive_neighbors())
@@ -202,6 +213,12 @@ def run_config(config_name):
     # get_cell_avg_intensity()
     # return
 
+    # with open(Consts.pillars_alive_location_by_frame_to_gif_cache_path, 'rb') as handle:
+    #     pillars_alive_location_by_frame = pickle.load(handle)
+    #     show_pillars_location_by_frame(pillars_alive_location_by_frame)
+    # # # #
+    # print_tagged_centers()
+
     for op in operations:
         op_key = list(op.keys())[0]
         op_values = op[op_key]
@@ -210,7 +227,7 @@ def run_config(config_name):
                                                                     get_alive_pillars_to_alive_neighbors())
         if op_key == 'non_neighbors_avg_correlation':
             non_nbrs_avg_correlation, _ = get_non_neighbors_mean_correlation(get_alive_pillars_symmetric_correlation(),
-                                               get_alive_pillars_to_alive_neighbors())
+                                                                             get_alive_pillars_to_alive_neighbors())
         if op_key == 'correlation_plot':
             correlation_plot(
                 op_values.get("only_alive", True),
@@ -246,9 +263,9 @@ def run_config(config_name):
                                                                       neighbors_dict)
                 neighbors_correlation_histogram(corrs_list)
         elif op_key == "non_neighbors_correlation_histogram":
-                mean_corr, corrs_list = get_non_neighbors_mean_correlation(get_alive_pillars_symmetric_correlation(),
-                                                                             get_alive_pillars_to_alive_neighbors())
-                non_neighbors_correlation_histogram(corrs_list)
+            mean_corr, corrs_list = get_non_neighbors_mean_correlation(get_alive_pillars_symmetric_correlation(),
+                                                                       get_alive_pillars_to_alive_neighbors())
+            non_neighbors_correlation_histogram(corrs_list)
         elif op_key == "number_of_neighboring_pairs_in_top_correlations":
             top = op_values.get("top", 10)
             num_of_neighboring_pairs_in_top_corrs = get_number_of_neighboring_pillars_in_top_correlations(top=top)
@@ -324,6 +341,44 @@ def run_config(config_name):
                                                                                   neighbors=False)
         elif op_key == "avg_intensity":
             avg_intensity = get_cell_avg_intensity()
+        elif op_key == "change_mask_radius":
+            temp_small_mask_radius = Consts.SMALL_MASK_RADIUS
+            temp_large_mask_radius = Consts.LARGE_MASK_RADIUS
+
+            mask_radiuses_tuples = [(0, 10), (0, 15), (10, 30), (20, 40), (15, 40), (10, 40)]
+            map_radius_to_corr = {}
+            # original_corr, _ = get_neighbors_avg_correlation(get_alive_pillars_symmetric_correlation(), get_alive_pillars_to_alive_neighbors())
+            # print('original_corr', original_corr)
+
+            for mask_radius in mask_radiuses_tuples:
+                ratio_radiuses = get_mask_radiuses({'small_radius': mask_radius[0], 'large_radius': mask_radius[1]})
+                Consts.SMALL_MASK_RADIUS = ratio_radiuses['small']
+                Consts.LARGE_MASK_RADIUS = ratio_radiuses['large']
+
+                # p_to_intens = get_pillar_to_intensities(get_images_path(), use_cache=False)
+
+                # print("shows new mask", mask_radius)
+                # show_last_image_masked(pillars_mask=get_mask_for_center(get_all_center_generated_ids()[172]), save_mask=False)
+                # show_last_image_masked(pillars_mask=build_pillars_mask(get_all_center_generated_ids()),
+                #                        save_mask=False)
+
+                change_mask_radius_nbrs_avg_correlation, _ = get_neighbors_avg_correlation(
+                    get_alive_pillars_symmetric_correlation(use_cache=False), get_alive_pillars_to_alive_neighbors())
+
+                change_mask_radius_non_nbrs_avg_correlation, _ = get_non_neighbors_mean_correlation(
+                    get_alive_pillars_symmetric_correlation(use_cache=False),
+                    get_alive_pillars_to_alive_neighbors())
+
+                map_radius_to_corr[mask_radius] = {}
+
+                map_radius_to_corr[mask_radius]['nbrs_corrs'] = change_mask_radius_nbrs_avg_correlation
+                map_radius_to_corr[mask_radius]['non_nbrs_corrs'] = change_mask_radius_non_nbrs_avg_correlation
+
+                # print("change_mask_radius_nbrs_avg_correlation", mask_radius, change_mask_radius_nbrs_avg_correlation)
+                # print("change_mask_radius_non_nbrs_avg_correlation", mask_radius, change_mask_radius_non_nbrs_avg_correlation)
+
+            Consts.SMALL_MASK_RADIUS = temp_small_mask_radius
+            Consts.LARGE_MASK_RADIUS = temp_large_mask_radius
 
     if Consts.WRITE_OUTPUT:
         features_dict = {'passed_stationary': passed_stationary,
@@ -341,7 +396,8 @@ def run_config(config_name):
                          'num_of_neighboring_pairs_in_top_corrs': num_of_neighboring_pairs_in_top_corrs,
                          'neighbors_avg_movement_correlation': neighbors_avg_movement_correlation,
                          'not_neighbors_avg_movement_correlation': not_neighbors_avg_movement_correlation,
-                         'avg_intensity': avg_intensity
+                         'avg_intensity': avg_intensity,
+                         'change_mask_radius': str(map_radius_to_corr)
                          }
         experiment_id = config_data.get("experiment")['id']
         perturbation = config_data.get("perturbation")['type']

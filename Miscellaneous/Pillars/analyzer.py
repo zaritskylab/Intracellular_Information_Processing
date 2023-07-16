@@ -10,6 +10,7 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 import networkx as nx
+import community
 
 
 def get_correlations_between_neighboring_pillars(pillar_to_pillars_dict):
@@ -40,7 +41,7 @@ def get_alive_pillars_correlation():
             correlation = pickle.load(handle)
             return correlation
 
-    relevant_pillars_dict = get_alive_pillars_to_intensities()
+    relevant_pillars_dict = get_overall_alive_pillars_to_intensities()
 
     pillar_intensity_df = pd.DataFrame({str(k): v for k, v in relevant_pillars_dict.items()})
     alive_pillars_corr = pillar_intensity_df.corr()
@@ -57,7 +58,7 @@ def get_alive_pillars_correlations_with_running_frame_windows():
             alive_pillars_correlations_with_running_frame_windows = pickle.load(handle)
             return alive_pillars_correlations_with_running_frame_windows
 
-    pillar_intensity_dict = get_alive_pillars_to_intensities()
+    pillar_intensity_dict = get_overall_alive_pillars_to_intensities()
 
     all_pillar_intensity_df = pd.DataFrame({str(k): v for k, v in pillar_intensity_dict.items()})
 
@@ -79,7 +80,7 @@ def get_alive_pillars_correlations_frame_windows(frame_window=Consts.FRAME_WINDO
             pillars_corrs_frame_window = pickle.load(handle)
             return pillars_corrs_frame_window
 
-    pillar_intensity_dict = get_alive_pillars_to_intensities()
+    pillar_intensity_dict = get_overall_alive_pillars_to_intensities()
 
     all_pillar_intensity_df = pd.DataFrame({str(k): v for k, v in pillar_intensity_dict.items()})
 
@@ -214,7 +215,7 @@ def get_all_pillars_corr_path():
     return path
 
 
-def get_alive_pillars_symmetric_correlation(frame_start=None, frame_end=None):
+def get_alive_pillars_symmetric_correlation(frame_start=None, frame_end=None, use_cache=True):
     """
     Create dataframe of alive pillars correlation as the correlation according to
     maximum_frame(pillar a start to live, pillar b start to live) -> correlation(a, b) == correlation(b, a)
@@ -222,7 +223,7 @@ def get_alive_pillars_symmetric_correlation(frame_start=None, frame_end=None):
     """
     origin_frame_start = frame_start
     origin_frame_end = frame_end
-    if origin_frame_start is None and origin_frame_end is None and Consts.USE_CACHE and os.path.isfile(
+    if use_cache and origin_frame_start is None and origin_frame_end is None and Consts.USE_CACHE and os.path.isfile(
             Consts.alive_pillars_sym_corr_cache_path):
         with open(Consts.alive_pillars_sym_corr_cache_path, 'rb') as handle:
             alive_pillars_symmetric_correlation = pickle.load(handle)
@@ -235,23 +236,23 @@ def get_alive_pillars_symmetric_correlation(frame_start=None, frame_end=None):
     if frame_end is None:
         frame_end = len(frame_to_alive_pillars)
 
-    alive_pillars_to_frame = {}
+    alive_pillars_to_start_living_frame = {}
     for curr_frame, alive_pillars_in_frame in frame_to_alive_pillars.items():
         if frame_start <= curr_frame <= frame_end:
             for alive_pillar in alive_pillars_in_frame:
-                if alive_pillar not in alive_pillars_to_frame:
-                    alive_pillars_to_frame[alive_pillar] = curr_frame
+                if alive_pillar not in alive_pillars_to_start_living_frame:
+                    alive_pillars_to_start_living_frame[alive_pillar] = curr_frame
 
-    alive_pillars_intens = get_alive_pillars_to_intensities()
+    alive_pillars_intens = get_overall_alive_pillars_to_intensities(use_cache)
     alive_pillars = list(alive_pillars_intens.keys())
     alive_pillars_str = [str(p) for p in alive_pillars]
     pillars_corr = pd.DataFrame(0.0, index=alive_pillars_str, columns=alive_pillars_str)
 
     # Symmetric correlation - calc correlation of 2 pillars start from the frame they are both alive: maxFrame(A, B)
-    for p1 in alive_pillars_to_frame:
-        p1_living_frame = alive_pillars_to_frame[p1]
-        for p2 in alive_pillars_to_frame:
-            p2_living_frame = alive_pillars_to_frame[p2]
+    for p1 in alive_pillars_to_start_living_frame:
+        p1_living_frame = alive_pillars_to_start_living_frame[p1]
+        for p2 in alive_pillars_to_start_living_frame:
+            p2_living_frame = alive_pillars_to_start_living_frame[p2]
             both_alive_frame = max(p1_living_frame, p2_living_frame)
             p1_relevant_intens = alive_pillars_intens[p1][both_alive_frame:frame_end]
             p2_relevant_intens = alive_pillars_intens[p2][both_alive_frame:frame_end]
@@ -263,12 +264,41 @@ def get_alive_pillars_symmetric_correlation(frame_start=None, frame_end=None):
                 if Consts.CORRELATION == "kendall":
                     pillars_corr.loc[str(p2), str(p1)] = kendalltau(p1_relevant_intens, p2_relevant_intens)[0]
 
-    if origin_frame_start is None and origin_frame_end is None and Consts.USE_CACHE:
+    if use_cache and origin_frame_start is None and origin_frame_end is None and Consts.USE_CACHE:
         with open(Consts.alive_pillars_sym_corr_cache_path, 'wb') as handle:
             pickle.dump(pillars_corr, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     return pillars_corr
 
+def get_all_pillars_symmetric_correlation():
+    """
+    Create dataframe of alive pillars correlation as the correlation according to
+    maximum_frame(pillar a start to live, pillar b start to live) -> correlation(a, b) == correlation(b, a)
+    :return:
+    """
+
+    centers = get_all_center_generated_ids()
+
+    frame_end = len(get_alive_center_ids_by_frame_v3())
+
+    pillars_intens = get_pillar_to_intensities(get_images_path(), use_cache=False)
+    pillars_str = [str(p) for p in list(pillars_intens.keys())]
+    pillars_corr = pd.DataFrame(0.0, index=pillars_str, columns=pillars_str)
+
+    # Symmetric correlation - calc correlation of 2 pillars start from the frame they are both alive: maxFrame(A, B)
+    for p1 in centers:
+        for p2 in centers:
+            p1_relevant_intens = pillars_intens[p1]
+            p2_relevant_intens = pillars_intens[p2]
+            # b/c of this, even if pillar is alive for only 2 frames, we will calculate the correlation,
+            # if we will increase 1 to X it means it needs to live for at least X frames to calc correlation for
+            if len(p1_relevant_intens) > 1 and len(p2_relevant_intens) > 1:
+                if Consts.CORRELATION == "pearson":
+                    pillars_corr.loc[str(p2), str(p1)] = pearsonr(p1_relevant_intens, p2_relevant_intens)[0]
+                if Consts.CORRELATION == "kendall":
+                    pillars_corr.loc[str(p2), str(p1)] = kendalltau(p1_relevant_intens, p2_relevant_intens)[0]
+
+    return pillars_corr
 
 def get_indirect_neighbors_correlation(pillar_location, only_alive=True):
     """
@@ -634,7 +664,7 @@ def get_pillars_intensity_movement_correlations():
         p_to_distances_dict[p] = distances
     pillars_dist_movements_df = pd.DataFrame({str(k): v for k, v in p_to_distances_dict.items()})
 
-    pillar_to_intens_dict = get_alive_pillars_to_intensities()
+    pillar_to_intens_dict = get_overall_alive_pillars_to_intensities()
     pillar_intens_df = pd.DataFrame({str(k): v for k, v in pillar_to_intens_dict.items()})
     pillar_intens_df = pillar_intens_df[:-1]
 
@@ -681,7 +711,7 @@ def get_average_intensity_by_distance():
         p_to_distances_dict[p] = distances
     pillars_dist_movements_df = pd.DataFrame({str(k): v for k, v in p_to_distances_dict.items()})
 
-    pillar_to_intens_dict = get_alive_pillars_to_intensities()
+    pillar_to_intens_dict = get_overall_alive_pillars_to_intensities()
     pillar_intens_df = pd.DataFrame({str(k): v for k, v in pillar_to_intens_dict.items()})
     pillar_intens_df = pillar_intens_df[:-1]
 
@@ -818,7 +848,7 @@ def get_pillars_intensity_movement_sync_by_frames(pillar_to_frames_dict):
         p_to_distances_dict[p] = distances
     pillars_dist_movements_df = pd.DataFrame({str(k): v for k, v in p_to_distances_dict.items()})
 
-    pillar_to_intens_dict = get_alive_pillars_to_intensities()
+    pillar_to_intens_dict = get_overall_alive_pillars_to_intensities()
     pillar_intens_df = pd.DataFrame({str(k): v for k, v in pillar_to_intens_dict.items()})
     pillar_intens_df = pillar_intens_df[:-1]
 
@@ -976,7 +1006,7 @@ def get_cc_pp_cp_correlations():
 
         results[(p1, p2)] = {'cc': cc_list, 'cp': cp_list}
 
-    alive_pillars_to_intensities = get_alive_pillars_to_intensities()
+    alive_pillars_to_intensities = get_overall_alive_pillars_to_intensities()
 
     cc_corr_list = []
     cp_corr_list = []
@@ -1123,8 +1153,161 @@ def find_vertex_distance_from_center(p1, p2, pillar2middle_img_steps):
     return max([pillar2middle_img_steps[p1], pillar2middle_img_steps[p2]])
 
 
+def build_pillars_graph(draw=True):
+    my_G = nx.Graph()
+    # nodes_loc_old = get_all_center_generated_ids()
+    nodes_loc = get_alive_pillar_ids_overall_v3()
+    nodes_loc = list(nodes_loc)
+    nodes_loc_y_inverse = [(loc[1], loc[0]) for loc in nodes_loc]
+    node_loc2index = {}
+    for i in range(len(nodes_loc)):
+        node_loc2index[str(nodes_loc[i])] = i
+        my_G.add_node(i, pos=nodes_loc_y_inverse[i])
+
+    neighbors = get_alive_pillars_to_alive_neighbors()
+
+    if Consts.only_alive:
+        correlation = get_alive_pillars_symmetric_correlation()
+    else:
+        correlation = get_all_pillars_correlations()
+
+    pillars_pair_to_corr = {}
+    for pillar, nbrs in neighbors.items():
+        for nbr in nbrs:
+            if (pillar, nbr) not in pillars_pair_to_corr and (nbr, pillar) not in pillars_pair_to_corr:
+                if str(nbr) in correlation and str(pillar) in correlation:
+                    pillars_pair_to_corr[(pillar, nbr)] = (correlation[str(pillar)][str(nbr)])
+
+    def normalize_values(values_dict):
+        min_value = min(values_dict.values())
+        max_value = max(values_dict.values())
+        for k, v in values_dict.items():
+            norm_value = (v - min_value) / (max_value - min_value)
+            values_dict[k] = norm_value
+
+        return values_dict
+
+    pillars_pair_to_corr = normalize_values(pillars_pair_to_corr)
+
+    for pair, corr in pillars_pair_to_corr.items():
+        my_G.add_edge(node_loc2index[str(pair[0])], node_loc2index[str(pair[1])])
+        my_G[node_loc2index[str(pair[0])]][node_loc2index[str(pair[1])]]['weight'] = corr
+
+    if draw:
+        if nx.get_edge_attributes(my_G, 'weight') == {}:
+            return
+
+        edges, weights = zip(*nx.get_edge_attributes(my_G, 'weight').items())
+
+        img = get_last_image_whiten(build_image=Consts.build_image)
+        fig, ax = plt.subplots()
+        ax.imshow(img, cmap='gray')
+
+        node_idx2loc = {v: k for k, v in node_loc2index.items()}
+
+        nx.draw(my_G, nodes_loc_y_inverse, edgelist=edges, edge_color=weights,
+                width=3.0, node_size=50)
+
+        # nx.draw_networkx_labels(my_G, nodes_loc_y_inverse, font_color="whitesmoke", font_size=8)
+
+        sm = plt.cm.ScalarMappable()
+        sm.set_array(weights)
+        plt.colorbar(sm)
+
+        # plt.scatter(get_image_size()[0]/2, get_image_size()[1]/2, s=250, c="red")
+
+        # ax.plot()
+        # if Consts.RESULT_FOLDER_PATH is not None:
+        #     plt.savefig(Consts.RESULT_FOLDER_PATH + "/gc.png")
+        #     plt.close()  # close the figure window
+        #     print("saved gc.png")
+        if Consts.SHOW_GRAPH:
+            plt.show()
+
+    return my_G
 
 
+def nodes_strengths(G, draw=False):
+    # Calculate node strengths
+    node_strengths = {}
+    for node in G.nodes:
+        incident_edges = G.edges(node, data='weight')
+        strength = sum(weight for _, _, weight in incident_edges) / len(incident_edges) if incident_edges else 0
+        node_strengths[node] = round(strength, 2)
+
+    # # Find the median strength
+    # median_strength = sorted(node_strengths.values())[len(node_strengths) // 2]
+
+    # Find the strong threshold based on a higher percentile
+    strong_threshold = np.percentile(list(node_strengths.values()), 80)
+
+    # Separate nodes based on their strength compared to the median
+    strong_nodes = [node for node, strength in node_strengths.items() if strength > strong_threshold]
+    weak_nodes = [node for node, strength in node_strengths.items() if strength <= strong_threshold]
+
+    if draw:
+        img = get_last_image_whiten(build_image=Consts.build_image)
+        fig, ax = plt.subplots()
+        ax.imshow(img, cmap='gray')
+
+        pos = nx.get_node_attributes(G, 'pos')
+
+        # Draw strong nodes in one color and weak nodes in another color
+        nx.draw_networkx_nodes(G, pos, nodelist=strong_nodes, node_color='r')
+        nx.draw_networkx_nodes(G, pos, nodelist=weak_nodes, node_color='b')
+
+        # Draw the edges
+        nx.draw_networkx_edges(G, pos)
+
+        # Display the node strengths as labels
+        nx.draw_networkx_labels(G, pos, labels=node_strengths, font_size=8)
+
+        # Show the graph
+        plt.axis('off')
+        plt.show()
+
+    return node_strengths, strong_nodes, weak_nodes
+
+
+def strengths_nodes_distance_from_center(G, alive_centers, node_strengths):
+    central_point = (np.mean([x[0] for x in alive_centers]), np.mean([x[1] for x in alive_centers]))
+
+    # Calculate distances and average distance
+    distances = []  
+    for node_idx in node_strengths:
+        x, y = G.nodes[node_idx]['pos']
+        distance = math.sqrt((x - central_point[0]) ** 2 + (y - central_point[1]) ** 2)
+        distances.append(distance)
+
+    average_distance = sum(distances) / len(distances)
+
+    if Consts.SHOW_GRAPH:
+        # Plot the distribution of distances
+        plt.hist(distances, bins=10, edgecolor='black')
+        plt.xlabel('Distance')
+        plt.ylabel('Frequency')
+        plt.title('Distribution of Distances')
+
+        # Show the plot
+        plt.show()
+
+    return average_distance
+
+
+def graph_communities(G):
+    # Detect communities using the Louvain method
+    partition = community.best_partition(G)
+
+    # Retrieve the communities
+    communities = {}
+    for node, community_id in partition.items():
+        if community_id not in communities:
+            communities[community_id] = []
+        communities[community_id].append(node)
+
+    # Print the communities
+    for community_id, nodes in communities.items():
+        print(f"Community {community_id}: {nodes}")
 
 
 # def get_peripheral_and_center_pillars_by_frame_according_revealing_pillars():
