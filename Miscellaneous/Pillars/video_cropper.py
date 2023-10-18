@@ -8,7 +8,8 @@ import matplotlib.pyplot as plt
 def crop_video_rect(
         video_path: str,
         top_left: tuple,
-        bottom_right: tuple):
+        bottom_right: tuple,
+        save_path: str = None):
     full_img_stack = io.imread(video_path)
 
     # plt.imshow(full_img_stack[len(full_img_stack)-1], cmap=plt.cm.gray)
@@ -23,22 +24,23 @@ def crop_video_rect(
         partial_img = img[top_left[0]:bottom_right[0], top_left[1]:bottom_right[1]]
 
         template[img_idx] = partial_img
-    imsave(
-        "C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\13.2\\exp-20230712_02-video-05-cell-3-Airyscan Processing.tif",
-        template)
-
+    imsave(save_path, template)
+    # imsave(
+    #     "C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\5.3\\exp-20230809-video-00-cell-1-Airyscan Processing.tif",
+    #     template)
 
 
 # crop_video_rect(
-# 'C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\13.2\\20230712-exp02-video-05-Airyscan Processing.tif',
-#     # (180,85), (790,470)
-#     # (80,1466), (320,1730)
-#      (90,1942), (378,2210)
-#     # (412,1917), (622,2229)
-#     # (632,1062), (840,1510)
-#     # (1940,1811), (2252,2202)
+#     'C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\5.3\\20230809-video-00-Airyscan Processing.tif',
+#     (91, 172), (132, 214),
+#     # (101, 282), (144, 327)
+#     # (214, 321), (255, 353)
+#     # (322, 57), (357, 99)
+#     # (230, 50), (298, 126)
+# )
 
-# 'C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\13.2\\20230712-exp02-video-04-Airyscan Processing.tif',
+
+# 'C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\5.3\\exp-2023071301-video-01-cell-6-Airyscan Processing.tif',
 # (30,270),	(205,460)
 # (530, 105),	(755,366)
 # (815,170),	(1088,480)
@@ -82,7 +84,7 @@ def crop_video_circle(
         template[img_idx] = masked_img
 
     imsave(
-        "C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\13.2\\video-02-Airyscan Processing-07-2_driftC.tif",
+        "C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\5.3\\exp-2023081501-video-01-cell-7-Airyscan Processing3.tif",
         template)
 
 
@@ -93,11 +95,11 @@ def crop_video_triangle(
         p3):
     full_img_stack = io.imread(video_path)
     # template = np.zeros(full_img_stack.shape, np.uint16)
-
+    # (200, 200) is in
     mask = np.ones((full_img_stack.shape[1], full_img_stack.shape[2]), np.uint8)
 
     for row in range(full_img_stack.shape[1] + 1):
-        for col in range(full_img_stack.shape[1] + 1):
+        for col in range(full_img_stack.shape[2] + 1):
             if isInside(p1[0], p1[1], p2[0], p2[1], p3[0], p3[1], row, col):
                 mask[row][col] = 0
 
@@ -108,7 +110,7 @@ def crop_video_triangle(
         full_img_stack[img_idx] = masked_img
 
     imsave(
-        "C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\13.2\\exp-20230712_02-video-05-cell-5-Airyscan Processing55.tif",
+        "C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\5.3\\exp-20230809-video-03-cell-5-Airyscan Processing2.tif",
         full_img_stack)
 
 
@@ -162,18 +164,28 @@ def skip_frame(
     filtered_image_stack = np.array(filtered_images)
 
     # Optional: Save the filtered image stack
-    io.imsave("C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\13.2\\exp-20230712_02-video-05-cell-6-Airyscan Processing.tif",
-              filtered_image_stack)
+    io.imsave(
+        "C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\5.3\\20230818-video-03-Airyscan Processing_skiped_noise.tif",
+        filtered_image_stack)
 
-
-# skip_frame(video_path="C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\13.2\\exp-20230712_02-video-05-cell-6-Airyscan Processing.tif",
-#            frames_to_discard=[18])
+# skip_frame(video_path="C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\5.3\\20230818-video-03-Airyscan Processing.tif",
+#            frames_to_discard=[35])
 
 # crop_video_triangle(
-#     "C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\13.2\\exp-20230712_02-video-05-cell-5-Airyscan Processing.tif",
-#)
+#     "C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\5.3\\exp-20230809-video-03-cell-5-Airyscan Processing.tif",
+# (160,0),
+# (324,130),
+# (324,0)
+# )
+# (140, 242),
+# (225, 242),
+# (225, 116)
+# (-0.5, -0.5),
+# (-0.5, 180),
+# (128, -0.5)
+# )
 
 # crop_video_circle(
-#     'C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\5.3\\video-02-Airyscan Processing-07-driftC.tif',
-#     (555, 1025),
-#     125)
+#     'C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\5.3\\exp-20230809-video-04-cell-3-Airyscan Processing2.tif',
+#     (280, 206),
+#     30)

@@ -1,0 +1,136 @@
+{
+  "use_cache": true,
+  "metadata": {
+    "micron": 0.1565932,
+    "micron_radius": 1,
+    "is_spreading": true
+  },
+  "mask_radius": {
+    "small_radius": 15,
+    "large_radius": 35
+  },
+  "percentage_from_perfect_circle_mask": 1,
+  "experiment": {
+    "id": "2023081501-03-4",
+    "tif_path": "\\exp-2023081501-video-03-cell-4-Airyscan Processing.tif"
+  },
+  "tagged_centers": ["(127, 102)","(127, 75)","(105, 137)","(62, 166)","(87, 183)","(86, 208)","(34, 226)","(215, 74)","(214, 48)","(235, 85)","(257, 97)","(217, 100)","(278, 110)","(281, 87)","(324, 111)","(303, 122)","(279, 137)","(305, 177)","(304, 201)","(326, 190)","(326, 215)","(326, 271)","(328, 294)","(348, 282)","(351, 305)","(307, 307)","(309, 331)","(288, 319)","(290, 342)","(268, 354)","(240, 368)","(195, 348)","(198, 373)","(198, 396)","(198, 424)","(131, 384)","(111, 373)","(111, 396)","(133, 410)","(154, 370)","(177, 384)","(220, 352)"
+  ,"(110, 195)","(110, 220)","(110, 246)","(112, 272)","(91, 258)","(90, 234)","(114, 299)","(133, 308)","(155, 321)","(178, 333)","(134, 333)","(157, 345)","(175, 354)","(136, 355)","(133, 282)","(133, 257)","(132, 232)","(131, 206)","(130, 181)","(132, 133)","(153, 122)","(152, 143)","(152, 167)","(153, 193)","(154, 219)","(155, 245)","(155, 270)","(155, 295)","(177, 309)","(199, 321)","(221, 307)","(200, 295)","(177, 282)","(177, 257)","(198, 270)","(221, 282)","(244, 295)","(243, 319)","(265, 281)","(242, 269)","(221, 256)","(198, 244)","(176, 232)","(176, 207)","(174, 181)","(174, 155)","(173, 130)","(131, 156)","(117, 167)","(195, 142)","(197, 168)","(197, 193)","(198, 219)","(221, 230)","(220, 204)","(219, 180)","(217, 155)","(243, 164)","(241, 192)","(243, 219)","(242, 243)","(265, 256)","(264, 230)","(265, 205)","(262, 180)","(261, 155)","(239, 141)","(218, 128)","(196, 119)","(238, 120)","(260, 130)","(282, 168)","(283, 193)","(287, 219)","(286, 243)","(305, 232)","(305, 253)","(305, 280)","(286, 266)","(286, 294)","(264, 305)","(244, 340)","(221, 331)","(261, 326)"],
+  "all_tagged_always_alive": true,
+  "perturbation": {
+    "type": "5.3",
+    "type2": "blebbing"
+  },
+  "pixel_to_whiten": 40,
+  "output_path_type": "5_3",
+  "normalized": false,
+  "fixed": true,
+  "operations": [
+    {
+      "show_pillars_mask": {}
+    },
+    {
+      "_avg_intensity": {}
+    },
+    {
+      "neighbors_avg_correlation": {}
+    },
+    {
+      "non_neighbors_avg_correlation": {}
+    },
+    {
+      "_correlation_plot": {
+        "only_alive": true,
+        "neighbors": "all",
+        "alive_correlation_type": "symmetric"
+      }
+    },
+    {
+      "neighbors_correlation_histogram": {
+        "neighbors": "real_neighbors"
+      }
+    },
+    {
+      "non_neighbors_correlation_histogram": {}
+    },
+    {
+      "correlation_histogram": {
+        "alive": true
+      }
+    },
+    {
+      "_show_correlated_pairs_in_video": {
+        "num_of_pairs": 5
+      }
+    },
+    {
+      "_plot_pillar_pairs_correlation_frames_window": {
+        "num_of_pairs": 5
+      }
+    },
+    {
+      "_show_correlated_neighboring_pairs_in_video": {
+        "num_of_pairs": 5
+      }
+    },
+    {
+      "_plot_neighboring_pillar_pairs_correlation_frames_window": {
+        "num_of_pairs": 5
+      }
+    },
+    {
+      "_show_neighboring_correlated_pairs_in_last_image": {
+        "num_of_pairs": 5
+      }
+    },
+    {
+      "_number_of_neighboring_pairs_in_top_correlations": {
+        "top": 10
+      }
+    },
+    {
+      "_compare_neighbors_corr_histogram_random_vs_real": {
+        "random_amount": 5
+      }
+    },
+    {
+      "_gc_graph": {}
+    },
+    {
+      "_edges_distribution_plots": {}
+    },
+    {
+      "_in_out_gc_edges": {}
+    },
+    {
+      "_gc_edge_prob": {}
+    },
+    {
+      "_gc_edge_prob_original_vs_random": {}
+    },
+    {
+      "_in_out_degree": {}
+    },
+    {
+      "_reciprocity": {}
+    },
+    {
+      "_heterogeneity": {}
+    },
+    {
+      "_neighbors_avg_movement_correlation": {}
+    },
+    {
+      "_not_neighbors_avg_movement_correlation": {}
+    },
+    {
+      "change_mask_radius": {}
+    },
+    {
+      "correlations_norm_by_noise_(0,10)": {}
+    },
+    {
+      "correlations_norm_by_noise_(0,15)": {}
+    }
+  ]
+}

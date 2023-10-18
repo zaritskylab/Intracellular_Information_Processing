@@ -11,6 +11,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 import networkx as nx
 import community
+from sklearn.cluster import DBSCAN
 
 
 def get_correlations_between_neighboring_pillars(pillar_to_pillars_dict):
@@ -215,7 +216,8 @@ def get_all_pillars_corr_path():
     return path
 
 
-def get_alive_pillars_symmetric_correlation(frame_start=None, frame_end=None, use_cache=True):
+def get_alive_pillars_symmetric_correlation(frame_start=None, frame_end=None, use_cache=True,
+                                            pillar_to_intensities_dict=None):
     """
     Create dataframe of alive pillars correlation as the correlation according to
     maximum_frame(pillar a start to live, pillar b start to live) -> correlation(a, b) == correlation(b, a)
@@ -243,8 +245,11 @@ def get_alive_pillars_symmetric_correlation(frame_start=None, frame_end=None, us
                 if alive_pillar not in alive_pillars_to_start_living_frame:
                     alive_pillars_to_start_living_frame[alive_pillar] = curr_frame
 
-    alive_pillars_intens = get_overall_alive_pillars_to_intensities(use_cache)
-    alive_pillars = list(alive_pillars_intens.keys())
+    if pillar_to_intensities_dict:
+        pillars_intens = pillar_to_intensities_dict
+    else:
+        pillars_intens = get_overall_alive_pillars_to_intensities(use_cache)
+    alive_pillars = list(pillars_intens.keys())
     alive_pillars_str = [str(p) for p in alive_pillars]
     pillars_corr = pd.DataFrame(0.0, index=alive_pillars_str, columns=alive_pillars_str)
 
@@ -254,8 +259,8 @@ def get_alive_pillars_symmetric_correlation(frame_start=None, frame_end=None, us
         for p2 in alive_pillars_to_start_living_frame:
             p2_living_frame = alive_pillars_to_start_living_frame[p2]
             both_alive_frame = max(p1_living_frame, p2_living_frame)
-            p1_relevant_intens = alive_pillars_intens[p1][both_alive_frame:frame_end]
-            p2_relevant_intens = alive_pillars_intens[p2][both_alive_frame:frame_end]
+            p1_relevant_intens = pillars_intens[p1][both_alive_frame:frame_end]
+            p2_relevant_intens = pillars_intens[p2][both_alive_frame:frame_end]
             # b/c of this, even if pillar is alive for only 2 frames, we will calculate the correlation,
             # if we will increase 1 to X it means it needs to live for at least X frames to calc correlation for
             if len(p1_relevant_intens) > 1 and len(p2_relevant_intens) > 1:
@@ -269,6 +274,7 @@ def get_alive_pillars_symmetric_correlation(frame_start=None, frame_end=None, us
             pickle.dump(pillars_corr, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     return pillars_corr
+
 
 def get_all_pillars_symmetric_correlation():
     """
@@ -299,6 +305,7 @@ def get_all_pillars_symmetric_correlation():
                     pillars_corr.loc[str(p2), str(p1)] = kendalltau(p1_relevant_intens, p2_relevant_intens)[0]
 
     return pillars_corr
+
 
 def get_indirect_neighbors_correlation(pillar_location, only_alive=True):
     """
@@ -1149,11 +1156,135 @@ def BFS_for_distance_from_middle(nbrs_dict, source_pillar, dest_pillar, alive_pi
     return False
 
 
+def get_mask_radiuses(mask_radius):
+    small_mask_radius_ratio = mask_radius['small_radius'] / 20
+    large_mask_radius_ratio = mask_radius['large_radius'] / 20
+    small = math.floor(Consts.CIRCLE_RADIUS_FOR_MASK_CALCULATION * small_mask_radius_ratio)
+    large = math.floor(Consts.CIRCLE_RADIUS_FOR_MASK_CALCULATION * large_mask_radius_ratio)
+    return {'small': small, 'large': large}
+
+
+def get_correlations_norm_by_noise(mask_radius, radius_tuples):
+    origin_small_mask_radius = Consts.SMALL_MASK_RADIUS
+    origin_large_mask_radius = Consts.LARGE_MASK_RADIUS
+
+    ratio_radiuses = get_mask_radiuses({'small_radius': mask_radius[0], 'large_radius': mask_radius[1]})
+    Consts.SMALL_MASK_RADIUS = ratio_radiuses['small']
+    Consts.LARGE_MASK_RADIUS = ratio_radiuses['large']
+
+    alive_pillars_intens = get_overall_alive_pillars_to_intensities(use_cache=False)
+    alive_pillars = list(alive_pillars_intens.keys())
+    alive_pillars_str = [str(p) for p in alive_pillars]
+
+    inner_pillars_intensity_df = pd.DataFrame.from_dict(alive_pillars_intens, orient='index')
+    inner_pillars_intensity_df = inner_pillars_intensity_df.transpose()
+    inner_pillars_intensity_df.columns = alive_pillars_str
+
+    # # corrs before normalization
+    # inner_corrs_before_norm, _ = get_neighbors_avg_correlation(
+    #     get_alive_pillars_symmetric_correlation(use_cache=False),
+    #     get_alive_pillars_to_alive_neighbors())
+
+    # normalized intensity by the avg intensity per frame
+    mean_series = inner_pillars_intensity_df.mean(axis=1)
+    #
+    # inner_df_subtracted = inner_pillars_intensity_df.subtract(mean_series, axis=0)
+    # inner_pillars_to_norm_intens = {tuple(map(int, col[1:-1].split(', '))): values.tolist() for col, values in
+    #                                 inner_df_subtracted.items()}
+    #
+    # corrs after normalization
+    # inner_corrs_after_norm, _ = get_neighbors_avg_correlation(
+    #     get_alive_pillars_symmetric_correlation(use_cache=False,
+    #                                             pillar_to_intensities_dict=inner_pillars_to_norm_intens),
+    #     get_alive_pillars_to_alive_neighbors())
+
+    map_radius_to_norm_corr = {}
+    for radiuses in radius_tuples:
+        ratio_radiuses = get_mask_radiuses({'small_radius': radiuses[0], 'large_radius': radiuses[1]})
+        Consts.SMALL_MASK_RADIUS = ratio_radiuses['small']
+        Consts.LARGE_MASK_RADIUS = ratio_radiuses['large']
+
+        ring_alive_pillars_to_intensity = get_overall_alive_pillars_to_intensities(use_cache=False)
+        alive_pillars = list(ring_alive_pillars_to_intensity.keys())
+        alive_pillars_str = [str(p) for p in alive_pillars]
+
+        ring_pillars_intensity_df = pd.DataFrame.from_dict(ring_alive_pillars_to_intensity, orient='index')
+        ring_pillars_intensity_df = ring_pillars_intensity_df.transpose()
+        ring_pillars_intensity_df.columns = alive_pillars_str
+
+        ring_corrs_before_norm, _ = get_neighbors_avg_correlation(
+            get_alive_pillars_symmetric_correlation(use_cache=False),
+            get_alive_pillars_to_alive_neighbors())
+
+        ring_df_subtracted = ring_pillars_intensity_df.subtract(mean_series, axis=0)
+        ring_pillars_to_norm_intens = {tuple(map(int, col[1:-1].split(', '))): values.tolist() for col, values in
+                                       ring_df_subtracted.items()}
+
+        # corrs after normalization
+        ring_nbrs_corrs_after_norm, _ = get_neighbors_avg_correlation(
+            get_alive_pillars_symmetric_correlation(use_cache=False,
+                                                    pillar_to_intensities_dict=ring_pillars_to_norm_intens),
+            get_alive_pillars_to_alive_neighbors())
+
+        ring_non_nbrs_corrs_after_norm, _ = get_non_neighbors_mean_correlation(
+            get_alive_pillars_symmetric_correlation(use_cache=False,
+                                                    pillar_to_intensities_dict=ring_pillars_to_norm_intens),
+            get_alive_pillars_to_alive_neighbors())
+
+        map_radius_to_norm_corr[radiuses] = {}
+        map_radius_to_norm_corr[radiuses]['nbrs_corrs'] = ring_nbrs_corrs_after_norm
+        map_radius_to_norm_corr[radiuses]['non_nbrs_corrs'] = ring_non_nbrs_corrs_after_norm
+
+        print("norm by radius:", mask_radius, "curr radius:", radiuses, "before norm:", ring_corrs_before_norm,
+              "after norm:", ring_nbrs_corrs_after_norm)
+
+    # Return to default values
+    Consts.SMALL_MASK_RADIUS = origin_small_mask_radius
+    Consts.LARGE_MASK_RADIUS = origin_large_mask_radius
+
+    return map_radius_to_norm_corr
+
+
 def find_vertex_distance_from_center(p1, p2, pillar2middle_img_steps):
     return max([pillar2middle_img_steps[p1], pillar2middle_img_steps[p2]])
 
 
-def build_pillars_graph(draw=True):
+# simple_swap = replace only intensisies, keep times of living
+# Not simple_swap = replace intensisies + live of living
+def get_correlations_df_for_mixed_ts(simple_swap=True):
+    # Get intensities (in timeseries)
+    pillar_intens = get_overall_alive_pillars_to_intensities()
+    # Shuffle timeseries (between pillars)
+
+    # if simple_swap:
+    # Get a list of the dictionary values
+    values = list(pillar_intens.values())
+
+    # Shuffle the list of values in place
+    random.shuffle(values)
+
+    # Create a new dictionary with the shuffled values
+    shuffled_pillar_intens = {key: value for key, value in zip(pillar_intens.keys(), values)}
+
+    # else:
+    #
+    #     # Get the items from the original dictionary as a list of key-value pairs
+    #     items = list(pillar_intens.items())
+    #
+    #     # Shuffle the list of items in place
+    #     random.shuffle(items)
+    #
+    #     # Create a new dictionary with the shuffled order of items
+    #     shuffled_dict = dict(items)
+
+    # Calculate neighours-correlation
+    corrs_df = get_alive_pillars_symmetric_correlation(use_cache=False,
+                                                       pillar_to_intensities_dict=shuffled_pillar_intens)
+
+    return corrs_df
+
+
+def build_pillars_graph(random_neighbors=False, shuffle_ts=False, draw=True):
     my_G = nx.Graph()
     # nodes_loc_old = get_all_center_generated_ids()
     nodes_loc = get_alive_pillar_ids_overall_v3()
@@ -1162,20 +1293,33 @@ def build_pillars_graph(draw=True):
     node_loc2index = {}
     for i in range(len(nodes_loc)):
         node_loc2index[str(nodes_loc[i])] = i
-        my_G.add_node(i, pos=nodes_loc_y_inverse[i])
+        my_G.add_node(i, pos=nodes_loc[i])
 
-    neighbors = get_alive_pillars_to_alive_neighbors()
+    if random_neighbors:
+        neighbors = get_random_neighbors()
+    else:
+        neighbors = get_alive_pillars_to_alive_neighbors()
 
     if Consts.only_alive:
         correlation = get_alive_pillars_symmetric_correlation()
     else:
         correlation = get_all_pillars_correlations()
 
+    if shuffle_ts:
+        correlation = get_correlations_df_for_mixed_ts()
+
+    # removed_nodes = []
     pillars_pair_to_corr = {}
     for pillar, nbrs in neighbors.items():
+        # if len(nbrs) == 0:
+        #     node = node_loc2index[str(pillar)]
+        #     removed_nodes.append((node, my_G.nodes[node]))
+        #     my_G.remove_node(node)
+        #     continue
         for nbr in nbrs:
             if (pillar, nbr) not in pillars_pair_to_corr and (nbr, pillar) not in pillars_pair_to_corr:
-                if str(nbr) in correlation and str(pillar) in correlation:
+                if str(nbr) in correlation and str(pillar) in correlation and not np.isnan(
+                        correlation[str(pillar)][str(nbr)]):
                     pillars_pair_to_corr[(pillar, nbr)] = (correlation[str(pillar)][str(nbr)])
 
     def normalize_values(values_dict):
@@ -1205,10 +1349,15 @@ def build_pillars_graph(draw=True):
 
         node_idx2loc = {v: k for k, v in node_loc2index.items()}
 
+        # center = nx.center(my_G)
+        # node_colors = ['red' if node in center else 'blue' for node in my_G.nodes()]
+
         nx.draw(my_G, nodes_loc_y_inverse, edgelist=edges, edge_color=weights,
                 width=3.0, node_size=50)
 
         # nx.draw_networkx_labels(my_G, nodes_loc_y_inverse, font_color="whitesmoke", font_size=8)
+        # plt.scatter([163.68], [113.55], c='black', s=100, marker='o')
+        # plt.scatter([156], [107], c='black', s=100, marker='o')
 
         sm = plt.cm.ScalarMappable()
         sm.set_array(weights)
@@ -1216,18 +1365,13 @@ def build_pillars_graph(draw=True):
 
         # plt.scatter(get_image_size()[0]/2, get_image_size()[1]/2, s=250, c="red")
 
-        # ax.plot()
-        # if Consts.RESULT_FOLDER_PATH is not None:
-        #     plt.savefig(Consts.RESULT_FOLDER_PATH + "/gc.png")
-        #     plt.close()  # close the figure window
-        #     print("saved gc.png")
         if Consts.SHOW_GRAPH:
             plt.show()
 
     return my_G
 
 
-def nodes_strengths(G, draw=False):
+def nodes_strengths(G, draw=False, color_map_nodes=False):
     # Calculate node strengths
     node_strengths = {}
     for node in G.nodes:
@@ -1251,16 +1395,27 @@ def nodes_strengths(G, draw=False):
         ax.imshow(img, cmap='gray')
 
         pos = nx.get_node_attributes(G, 'pos')
+        nodes_loc_y_inverse = {k: (v[1], v[0]) for k, v in pos.items()}
 
-        # Draw strong nodes in one color and weak nodes in another color
-        nx.draw_networkx_nodes(G, pos, nodelist=strong_nodes, node_color='r')
-        nx.draw_networkx_nodes(G, pos, nodelist=weak_nodes, node_color='b')
+        if color_map_nodes:
+            cmap = cm.get_cmap('coolwarm')
+            # norm = plt.Normalize(min(node_strengths.values()), max(node_strengths.values()))
+            norm = plt.Normalize(0.1, 1)
+            node_colors = [cmap(norm(node_strengths[node])) for node in G.nodes]
+            nx.draw(G, nodes_loc_y_inverse, node_color=node_colors, cmap=cmap)
+            sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+            sm.set_array([])
+            plt.colorbar(sm, label='Strength')
+        else:
+            # Draw strong nodes in one color and weak nodes in another color
+            nx.draw_networkx_nodes(G, nodes_loc_y_inverse, nodelist=strong_nodes, node_color='r')
+            nx.draw_networkx_nodes(G, nodes_loc_y_inverse, nodelist=weak_nodes, node_color='b')
 
         # Draw the edges
-        nx.draw_networkx_edges(G, pos)
+        nx.draw_networkx_edges(G, nodes_loc_y_inverse)
 
         # Display the node strengths as labels
-        nx.draw_networkx_labels(G, pos, labels=node_strengths, font_size=8)
+        nx.draw_networkx_labels(G, nodes_loc_y_inverse, labels=node_strengths, font_size=8)
 
         # Show the graph
         plt.axis('off')
@@ -1269,19 +1424,69 @@ def nodes_strengths(G, draw=False):
     return node_strengths, strong_nodes, weak_nodes
 
 
-def strengths_nodes_distance_from_center(G, alive_centers, node_strengths):
+def nodes_similarity_by_strength(G, nodes_strength):
+    neighbors = get_alive_pillars_to_alive_neighbors()
+
+    pillar_strength = {}
+    for node_idx in nodes_strength:
+        coor = G.nodes[node_idx]['pos']
+        pillar_strength[coor] = nodes_strength[node_idx]
+
+    similarity_dict = {}
+    for pillar, nbrs in neighbors.items():
+        for nbr in nbrs:
+            if (pillar, nbr) not in similarity_dict and (nbr, pillar) not in similarity_dict:
+                diff = abs(pillar_strength[pillar] - pillar_strength[nbr])
+                sim = 1 - diff
+                similarity_dict[(pillar, nbr)] = (round(diff, 3), round(sim, 3))
+
+    return similarity_dict
+
+
+def test_avg_similarity_significance(num_permutations=1000, alpha=0.05):
+    G = build_pillars_graph(random_neighbors=False, shuffle_ts=False, draw=False)
+    ns, strong_nodes, _ = nodes_strengths(G, draw=False)
+    sim_dict = nodes_similarity_by_strength(G, ns)
+    vals = sim_dict.values()
+    sim = [v[1] for v in vals]
+    avg_sim = np.mean(sim)
+
+    # Initialize an array to store permuted test statistics
+    permuted_test_statistics = np.zeros(num_permutations)
+    for i in range(num_permutations):
+        random_G = build_pillars_graph(random_neighbors=False, shuffle_ts=True, draw=False)
+        random_ns, random_strong_nodes, _ = nodes_strengths(random_G, draw=False)
+        random_sim_dict = nodes_similarity_by_strength(random_G, random_ns)
+        random_vals = random_sim_dict.values()
+        random_sim = [v[1] for v in random_vals]
+        random_avg_sim = np.mean(random_sim)
+        permuted_test_statistics[i] = random_avg_sim
+
+    # Calculate the p-value
+    p_value = np.sum(permuted_test_statistics >= avg_sim) / num_permutations
+    if p_value < alpha:
+        print("Reject the null hypothesis. The original values are statistically significant.")
+    else:
+        print("Fail to reject the null hypothesis.")
+
+    return avg_sim, permuted_test_statistics, p_value
+
+
+def strong_nodes_avg_distance_from_center(G, alive_centers, strong_nodes, all_nodes_strength=None, removed_nodes=None, draw=False):
     central_point = (np.mean([x[0] for x in alive_centers]), np.mean([x[1] for x in alive_centers]))
 
     # Calculate distances and average distance
-    distances = []  
-    for node_idx in node_strengths:
+    distances = []
+    for node_idx in all_nodes_strength:
         x, y = G.nodes[node_idx]['pos']
         distance = math.sqrt((x - central_point[0]) ** 2 + (y - central_point[1]) ** 2)
         distances.append(distance)
 
-    average_distance = sum(distances) / len(distances)
+    normalized_distances = np.array(distances) / max(distances)
+    strong_nodes_distances = [normalized_distances[i] for i in strong_nodes]
+    average_distance = sum(strong_nodes_distances) / len(strong_nodes_distances)
 
-    if Consts.SHOW_GRAPH:
+    if draw:
         # Plot the distribution of distances
         plt.hist(distances, bins=10, edgecolor='black')
         plt.xlabel('Distance')
@@ -1292,6 +1497,353 @@ def strengths_nodes_distance_from_center(G, alive_centers, node_strengths):
         plt.show()
 
     return average_distance
+
+
+def strong_nodes_avg_distance_from_center_by_hops(G, alive_centers, strong_nodes, removed_nodes=None):
+    central_point = (np.mean([x[0] for x in alive_centers]), np.mean([x[1] for x in alive_centers]))
+    centers = nx.center(G)
+
+    full_G = G.copy()
+    for i in removed_nodes:
+        full_G.add_node(i[0], pos=i[1]['pos'])
+
+    # Calculate the distance from each center node to the central position
+    distances_to_central_position = {}
+    for center_node in centers:
+        center_node_position = full_G.nodes[center_node]['pos']
+        distance = ((center_node_position[0] - central_point[0]) ** 2 +
+                    (center_node_position[1] - central_point[1]) ** 2) ** 0.5
+        distances_to_central_position[center_node] = distance
+
+    # Find the center node with the shortest distance to the central position
+    closest_center_node = min(distances_to_central_position, key=distances_to_central_position.get)
+
+    # full_G.add_nodes_from(removed_nodes)
+    total_dists = []
+    for node in full_G.nodes():
+        if node in removed_nodes:
+            total_dists.append(0)
+            continue
+        distance = nx.shortest_path_length(full_G, source=closest_center_node, target=node)
+        total_dists.append(distance)
+
+    normalized_distances = np.array(total_dists) / max(total_dists)
+    strong_nodes_distances = [normalized_distances[i] for i in strong_nodes]
+    average_distance = sum(strong_nodes_distances) / len(strong_nodes_distances)
+
+    return average_distance
+
+
+def strong_nodes_avg_distance_from_center_in_different_distance_categories(G, alive_centers, strong_nodes, draw=False,
+                                                                           removed_nodes=None):
+    central_point = (np.mean([x[0] for x in alive_centers]), np.mean([x[1] for x in alive_centers]))
+    centers = nx.center(G)
+
+    # full_G = G.copy()
+    # for i in removed_nodes:
+    #     full_G.add_node(i[0], pos=i[1]['pos'])
+
+    # Calculate the distance from each center node to the central position
+    distances_to_central_position = {}
+    for center_node in centers:
+        center_node_position = G.nodes[center_node]['pos']
+        distance = ((center_node_position[0] - central_point[0]) ** 2 +
+                    (center_node_position[1] - central_point[1]) ** 2) ** 0.5
+        distances_to_central_position[center_node] = distance
+
+    # Find the center node with the shortest distance to the central position
+    closest_center_node = min(distances_to_central_position, key=distances_to_central_position.get)
+
+    strong_node_distances = {}
+
+    # Calculate distances for each strong node from the center
+    for strong_node in strong_nodes:
+        distance = nx.shortest_path_length(G, source=closest_center_node, target=strong_node)
+        strong_node_distances[strong_node] = distance
+
+    # Initialize a dictionary to store average distances for each distance category
+    distances_to_nodes = {}
+    # Group nodes by distance from the center
+    for node in G.nodes():
+        distance = nx.shortest_path_length(G, source=closest_center_node, target=node)
+
+        if distance in distances_to_nodes:
+            distances_to_nodes[distance].append(node)
+        else:
+            distances_to_nodes[distance] = [node]
+
+    # Calculate the average distance for strong nodes in each distance category
+    dist_category_to_avg_strong_nodes_dist = {}
+    for distance, nodes in distances_to_nodes.items():
+        total_nodes_at_distance = len(nodes)
+        sum_strong_node_distances = sum(strong_node_distances[node] for node in nodes if node in strong_nodes)
+
+        if total_nodes_at_distance > 0:
+            avg_distance = sum_strong_node_distances / total_nodes_at_distance
+        else:
+            avg_distance = 0
+
+        dist_category_to_avg_strong_nodes_dist[distance] = avg_distance
+
+    min_distance = min(dist_category_to_avg_strong_nodes_dist.values())
+    max_distance = max(dist_category_to_avg_strong_nodes_dist.values())
+    strong_nodes_avg_dist_by_hop = sum(dist_category_to_avg_strong_nodes_dist.values()) / len(
+        dist_category_to_avg_strong_nodes_dist)
+
+    normalized_average_distance = (strong_nodes_avg_dist_by_hop - min_distance) / (max_distance - min_distance)
+
+    if draw:
+        # Extract distances and average distances for plotting
+        distances = list(dist_category_to_avg_strong_nodes_dist.keys())
+        average_distances = list(dist_category_to_avg_strong_nodes_dist.values())
+
+        # Create a scatter plot to visualize the relationship
+        plt.bar(distances, average_distances)
+        plt.xlabel("Distance from Center")
+        plt.ylabel("Average Distance of Strong Nodes")
+        plt.title("Average Distance of Strong Nodes vs. Distance from Center")
+        plt.show()
+
+    return normalized_average_distance
+
+
+def clustering_strong_nodes_by_Louvain(G, node_strengths, strong_nodes, draw=False):
+    # Create a subgraph containing only the strong nodes and their neighbors
+    strong_subgraph = G.subgraph(strong_nodes)
+
+    # Detect communities using Louvain Modularity on the strong subgraph
+    strong_partition = community.best_partition(strong_subgraph)
+
+    # Convert the partition dictionary into a list of clusters
+    strong_clusters = {}
+    for node, cluster_id in strong_partition.items():
+        strong_clusters.setdefault(cluster_id, []).append(node)
+
+    if draw:
+        img = get_last_image_whiten(build_image=Consts.build_image)
+        fig, ax = plt.subplots()
+        ax.imshow(img, cmap='gray')
+
+        pos = nx.get_node_attributes(G, 'pos')
+        nodes_loc_y_inverse = {k: (v[1], v[0]) for k, v in pos.items()}
+
+        # Draw the strong nodes with different colors for each cluster
+        for cluster_id, nodes in strong_clusters.items():
+            nx.draw(strong_subgraph.subgraph(nodes), nodes_loc_y_inverse, node_color=f"C{cluster_id % 10}",
+                    label=f"Cluster {cluster_id}")
+
+        # nx.draw_networkx_labels(my_G, nodes_loc_y_inverse, font_color="whitesmoke", font_size=8)
+
+        # Draw the edges
+        nx.draw_networkx_edges(G, nodes_loc_y_inverse)
+
+        # Display the node strengths as labels
+        nx.draw_networkx_labels(G, nodes_loc_y_inverse, labels=node_strengths, font_size=8)
+
+        # Show the graph
+        plt.axis('off')
+        plt.show()
+
+    return strong_clusters
+
+
+def strong_nodes_connected_components(G, node_strengths, strong_nodes, draw=False):
+    # Create a subgraph containing only the strong nodes and their neighbors
+    strong_subgraph = G.subgraph(strong_nodes)
+
+    strong_nodes_cc_sorted = sorted(nx.connected_components(strong_subgraph), key=len, reverse=True)
+    largest_cc = max(nx.connected_components(strong_subgraph), key=len)
+
+    if draw:
+        img = get_last_image_whiten(build_image=Consts.build_image)
+        fig, ax = plt.subplots()
+        ax.imshow(img, cmap='gray')
+
+        pos = nx.get_node_attributes(G, 'pos')
+        nodes_loc_y_inverse = {k: (v[1], v[0]) for k, v in pos.items()}
+
+        # Draw the strong nodes with different colors for each cluster
+        for cluster_id, nodes in enumerate(strong_nodes_cc_sorted):
+            nx.draw(strong_subgraph.subgraph(nodes), nodes_loc_y_inverse, node_color=f"C{cluster_id % 10}",
+                    label=f"Cluster {cluster_id}")
+
+        # Draw the edges
+        nx.draw_networkx_edges(G, nodes_loc_y_inverse)
+        nx.draw_networkx_labels(G, nodes_loc_y_inverse, labels=node_strengths, font_size=8)
+        plt.axis('off')
+        plt.show()
+
+    return strong_nodes_cc_sorted, largest_cc
+
+
+def test_strong_nodes_distance_significance(num_permutations=1000, alpha=0.05):
+    G = build_pillars_graph(random_neighbors=False, shuffle_ts=False, draw=False)
+    ns, strong_nodes, _ = nodes_strengths(G, draw=False)
+    original_strong_nodes_avg_distance = strong_nodes_avg_distance_from_center(G,
+                                                                               alive_centers=get_seen_centers_for_mask(),
+                                                                               strong_nodes=strong_nodes,
+                                                                               all_nodes_strength=ns, draw=False)
+
+    # Initialize an array to store permuted test statistics
+    permuted_test_statistics = np.zeros(num_permutations)
+    for i in range(num_permutations):
+        random_G = build_pillars_graph(random_neighbors=False, shuffle_ts=True, draw=False)
+        random_ns, random_strong_nodes, _ = nodes_strengths(random_G, draw=False)
+        random_strong_nodes_avg_distance = strong_nodes_avg_distance_from_center(random_G,
+                                                                                 alive_centers=get_seen_centers_for_mask(),
+                                                                                 strong_nodes=random_strong_nodes,
+                                                                                 all_nodes_strength=random_ns,
+                                                                                 draw=False)
+        permuted_test_statistics[i] = random_strong_nodes_avg_distance
+
+    # Calculate the p-value
+    p_value = np.sum(permuted_test_statistics >= original_strong_nodes_avg_distance) / num_permutations
+    if p_value < alpha:
+        print("Reject the null hypothesis. The original values are statistically significant.")
+    else:
+        print("Fail to reject the null hypothesis.")
+
+    return original_strong_nodes_avg_distance, permuted_test_statistics, p_value
+
+
+def test_strong_nodes_distance_hops_significance(num_permutations=1000, alpha=0.05):
+    G, removed_nodes = build_pillars_graph(random_neighbors=False, draw=False)
+    ns, strong_nodes, _ = nodes_strengths(G, draw=False)
+    original_strong_nodes_avg_hops = strong_nodes_avg_distance_from_center_by_hops(G,
+                                                                                   alive_centers=get_seen_centers_for_mask(),
+                                                                                   strong_nodes=strong_nodes,
+                                                                                   removed_nodes=removed_nodes)
+
+    # Initialize an array to store permuted test statistics
+    permuted_test_statistics = np.zeros(num_permutations)
+    for i in range(num_permutations):
+        try:
+            random_G, removed_nodes_random = build_pillars_graph(random_neighbors=True, draw=False)
+            random_ns, random_strong_nodes, _ = nodes_strengths(random_G, draw=False)
+            random_strong_nodes_avg_distance = strong_nodes_avg_distance_from_center_by_hops(random_G,
+                                                                                             alive_centers=get_seen_centers_for_mask(),
+                                                                                             strong_nodes=random_strong_nodes,
+                                                                                             removed_nodes=removed_nodes_random)
+            permuted_test_statistics[i] = random_strong_nodes_avg_distance
+        except:
+            continue
+
+    # Calculate the p-value
+    p_value = np.sum(permuted_test_statistics >= original_strong_nodes_avg_hops) / num_permutations
+    if p_value < alpha:
+        print("Reject the null hypothesis. The original values are statistically significant.")
+    else:
+        print("Fail to reject the null hypothesis.")
+
+    return original_strong_nodes_avg_hops, permuted_test_statistics, p_value
+
+
+def test_strong_nodes_number_of_cc_significance(num_permutations=1000, alpha=0.05):
+    G = build_pillars_graph(random_neighbors=False, shuffle_ts=False, draw=False)
+    ns, strong_nodes, _ = nodes_strengths(G, draw=False)
+    strong_nodes_cc_sorted, _ = strong_nodes_connected_components(G, ns, strong_nodes, draw=False)
+    num_of_cc = len(strong_nodes_cc_sorted)
+
+    # Initialize an array to store permuted test statistics
+    permuted_test_statistics = np.zeros(num_permutations)
+    for i in range(num_permutations):
+        random_G = build_pillars_graph(random_neighbors=False, shuffle_ts=True, draw=False)
+        random_ns, random_strong_nodes, _ = nodes_strengths(random_G, draw=False)
+        random_cc_dict, _ = strong_nodes_connected_components(random_G, random_ns, random_strong_nodes, draw=False)
+        random_num_cc = len(random_cc_dict)
+        permuted_test_statistics[i] = random_num_cc
+
+    # Calculate the p-value
+    p_value = np.sum(permuted_test_statistics <= num_of_cc) / num_permutations
+    if p_value < alpha:
+        print("Reject the null hypothesis. The original values are statistically significant.")
+    else:
+        print("Fail to reject the null hypothesis.")
+
+    return num_of_cc, permuted_test_statistics, p_value
+
+
+def test_strong_nodes_largest_cc_significance(num_permutations=1000, alpha=0.05):
+    G = build_pillars_graph(random_neighbors=False, shuffle_ts=False, draw=False)
+    ns, strong_nodes, _ = nodes_strengths(G, draw=False)
+    _, largest_cc = strong_nodes_connected_components(G, ns, strong_nodes, draw=False)
+    largest_cc_size = len(largest_cc)
+
+    # Initialize an array to store permuted test statistics
+    permuted_test_statistics = np.zeros(num_permutations)
+    for i in range(num_permutations):
+        random_G = build_pillars_graph(random_neighbors=False, shuffle_ts=True, draw=False)
+        random_ns, random_strong_nodes, _ = nodes_strengths(random_G, draw=False)
+        _, random_largest_cc = strong_nodes_connected_components(random_G, random_ns, random_strong_nodes, draw=False)
+        random_largest_cc_size = len(random_largest_cc)
+        permuted_test_statistics[i] = random_largest_cc_size
+
+    # Calculate the p-value
+    p_value = np.sum(permuted_test_statistics >= largest_cc_size) / num_permutations
+    if p_value < alpha:
+        print("Reject the null hypothesis. The original values are statistically significant.")
+    else:
+        print("Fail to reject the null hypothesis.")
+
+    return largest_cc_size, permuted_test_statistics, p_value
+
+
+def test_strong_nodes_clusters_louvain_significance(num_permutations=1000, alpha=0.05):
+    G = build_pillars_graph(random_neighbors=False, draw=False)
+    ns, strong_nodes, _ = nodes_strengths(G, draw=False)
+    clusters_dict = clustering_strong_nodes_by_Louvain(G, ns, strong_nodes, draw=False)
+    num_of_clusters = len(clusters_dict.keys())
+
+    # Initialize an array to store permuted test statistics
+    permuted_test_statistics = np.zeros(num_permutations)
+    for i in range(num_permutations):
+        random_G = build_pillars_graph(random_neighbors=True, draw=False)
+        random_ns, random_strong_nodes, _ = nodes_strengths(random_G, draw=False)
+        random_clusters_dict = clustering_strong_nodes_by_Louvain(random_G, random_ns, random_strong_nodes, draw=False)
+        random_num_clusters = len(random_clusters_dict.keys())
+        permuted_test_statistics[i] = random_num_clusters
+
+    # Calculate the p-value
+    p_value = np.sum(permuted_test_statistics <= num_of_clusters) / num_permutations
+    if p_value < alpha:
+        print("Reject the null hypothesis. The original values are statistically significant.")
+    else:
+        print("Fail to reject the null hypothesis.")
+
+    return num_of_clusters, permuted_test_statistics, p_value
+
+
+def centrality_measure_strong_nodes(G, node_strengths, strong_nodes, draw=False):
+    # Create a subgraph containing only the strong nodes and their neighbors
+    # strong_subgraph = G.subgraph(strong_nodes)
+
+    # Compute centrality measures for the strong nodes subgraph
+    strong_betweenness_centrality = nx.betweenness_centrality(G, weight='weight')
+    strong_eigenvector_centrality = nx.eigenvector_centrality(G)
+
+    if draw:
+        img = get_last_image_whiten(build_image=Consts.build_image)
+        fig, ax = plt.subplots()
+        ax.imshow(img, cmap='gray')
+
+        pos = nx.get_node_attributes(G, 'pos')
+
+        nx.draw(G, pos, node_color=[strong_betweenness_centrality[node] for node in G.nodes()], cmap=plt.cm.Reds,
+                node_size=100, font_size=8, font_color='black', alpha=0.7)
+
+        # plt.colorbar(label="Betweenness Centrality")
+
+        # nx.draw_networkx_labels(my_G, nodes_loc_y_inverse, font_color="whitesmoke", font_size=8)
+
+        # Draw the edges
+        nx.draw_networkx_edges(G, pos)
+
+        # Display the node strengths as labels
+        nx.draw_networkx_labels(G, pos, labels=node_strengths, font_size=12)
+
+        # Show the graph
+        plt.axis('off')
+        plt.show()
 
 
 def graph_communities(G):
@@ -1308,7 +1860,6 @@ def graph_communities(G):
     # Print the communities
     for community_id, nodes in communities.items():
         print(f"Community {community_id}: {nodes}")
-
 
 # def get_peripheral_and_center_pillars_by_frame_according_revealing_pillars():
 #     frame_to_alive_pillars = get_alive_center_ids_by_frame_v2()

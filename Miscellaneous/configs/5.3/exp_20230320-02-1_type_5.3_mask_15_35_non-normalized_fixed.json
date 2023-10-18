@@ -121,6 +121,9 @@
     },
     {
       "_not_neighbors_avg_movement_correlation": {}
+    },
+    {
+      "change_mask_radius": {}
     }
   ]
 }

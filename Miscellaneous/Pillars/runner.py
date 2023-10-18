@@ -27,6 +27,9 @@ def update_const_by_config(config_data):
     Consts.tagged_centers = config_data.get('tagged_centers')
     if Consts.tagged_centers is not None:
         Consts.tagged_centers = [eval(tup) for tup in Consts.tagged_centers]
+        Consts.ignore_centers = config_data.get('ignore_centers')
+    if Consts.ignore_centers is not None:
+        Consts.ignore_centers = [eval(tup) for tup in Consts.ignore_centers]
     if 'metadata' in config_data and 'is_spreading' in config_data["metadata"]:
         Consts.is_spreading = config_data["metadata"]["is_spreading"]
     else:
@@ -119,14 +122,6 @@ def update_const_by_config(config_data):
     Consts.alive_center_real_locations_by_frame_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'alive_center_real_locations_by_frame_cache.pickle'
 
 
-def get_mask_radiuses(mask_radius):
-    small_mask_radius_ratio = mask_radius['small_radius'] / 20
-    large_mask_radius_ratio = mask_radius['large_radius'] / 20
-    small = math.floor(Consts.CIRCLE_RADIUS_FOR_MASK_CALCULATION * small_mask_radius_ratio)
-    large = math.floor(Consts.CIRCLE_RADIUS_FOR_MASK_CALCULATION * large_mask_radius_ratio)
-    return {'small': small, 'large': large}
-
-
 def run_config(config_name):
     nbrs_avg_correlation = None
     non_nbrs_avg_correlation = None
@@ -144,6 +139,9 @@ def run_config(config_name):
     neighbors_avg_movement_correlation = None
     not_neighbors_avg_movement_correlation = None
     avg_intensity = None
+    map_radius_to_corr = None
+    map_radius_to_norm_corr_by_0_10 = None
+    map_radius_to_norm_corr_by_0_15 = None
 
     f = open("../configs/" + config_name)
     config_data = json.load(f)
@@ -151,16 +149,49 @@ def run_config(config_name):
     random.seed(10)
     gc_df = None
     operations = config_data.get("operations", [])
-    return
+
+    # TODO: delete
+    # if os.path.exists(Consts.alive_pillars_to_alive_neighbors_cache_path):
+    #     os.remove(Consts.alive_pillars_to_alive_neighbors_cache_path)
+
+    # Update caches path.
 
     # show_peripheral_pillars_in_video()
     # x = 1
+    # return get_neighbors_avg_correlation(get_alive_pillars_symmetric_correlation(),
+    #                                                             get_alive_pillars_to_alive_neighbors())
+    # G_rand_nbrs = build_pillars_graph(random_neighbors=True, draw=False)
+    # ns_rand, strong_nodes_rand, _ = nodes_strengths(G_rand_nbrs, draw=False)
+    # strong_nodes_avg_distance_rand = strong_nodes_avg_distance_from_center(G_rand_nbrs, alive_centers=get_seen_centers_for_mask(),
+    #                                                                   strong_nodes=strong_nodes_rand, all_nodes_strength=ns_rand,
+    #                                                                   draw=False)
+    # G = build_pillars_graph(random_neighbors=False, shuffle_ts=False, draw=False)
+    # ns, strong_nodes, _ = nodes_strengths(G, draw=False, color_map_nodes=False)
+    # clustering_strong_nodes_by_Louvain(G, ns, strong_nodes, draw=False)
+    # centrality_measure_strong_nodes(G, ns, strong_nodes, draw=True)
+    # strong_nodes_avg_distance = strong_nodes_avg_distance_from_center(G, alive_centers=get_seen_centers_for_mask(), strong_nodes=strong_nodes, all_nodes_strength=ns, draw=False)
+    # strong_nodes_avg_distance = strong_nodes_avg_distance_from_center_in_different_distance_categories(G, alive_centers=get_seen_centers_for_mask(), strong_nodes=strong_nodes, draw=False)
+    # plot_node_strengths_distribution(ns)
+    # strong_nodes_avg_distance = strong_nodes_avg_distance_from_center_by_hops(G, alive_centers=get_seen_centers_for_mask(), strong_nodes=strong_nodes, removed_nodes=removed_nodes)
+    # return strong_nodes_avg_distance, strong_nodes_avg_distance_rand
+    # cc, largest_cc = strong_nodes_connected_components(G, ns, strong_nodes, draw=False)
+    # return len(largest_cc)
+    # return cc, largest_cc
+    # return strong_nodes_avg_distance, ns, strong_nodes
+    # return ns
+    # sim_dict = nodes_similarity_by_strength(G, ns)
+    # vals = sim_dict.values()
+    # sim = [v[1] for v in vals]
+    # avg_sim = np.mean(sim)
+    # avg_strength = np.mean(list(ns.values()))
+    # return avg_strength, avg_sim
+    # return test_strong_nodes_distance_significance(num_permutations=100, alpha=0.05)
+    # return test_strong_nodes_clusters_louvain_significance(num_permutations=1000, alpha=0.05)
+    # return test_strong_nodes_distance_hops_significance(num_permutations=1000, alpha=0.05)
+    # return test_strong_nodes_number_of_cc_significance(num_permutations=100, alpha=0.05)
+    # return test_strong_nodes_largest_cc_significance(num_permutations=100, alpha=0.05)
+    return test_avg_similarity_significance(num_permutations=500, alpha=0.05)
 
-    # G = build_pillars_graph(draw=False)
-    # ns, strong_nodes, _ = nodes_strengths(G, draw=False)
-    # avgs = strengths_nodes_distance_from_center(G, alive_centers=get_seen_centers_for_mask(), node_strengths=strong_nodes)
-    # # plot_node_strengths_distribution(ns)
-    # return avgs
     # pillars_movements_dict = get_alive_centers_movements()
     # movement_corr_df = get_pillars_movement_correlation_df(pillars_movements_dict)
     # intensity_corr_df = get_alive_pillars_symmetric_correlation()
@@ -180,7 +211,6 @@ def run_config(config_name):
     #
 
     # print(get_avg_correlation_pillars_intensity_movement_peripheral_vs_central())
-
     # show_peripheral_pillars_in_video(get_peripheral_and_center_pillars_by_frame_according_revealing_pillars_and_nbrs(pillars_frame_zero_are_central=True))
     # get_avg_correlation_pillars_intensity_movement_peripheral_vs_central(get_peripheral_and_center_pillars_by_frame_according_revealing_pillars_and_nbrs(pillars_frame_zero_are_central=True))
     # frame_to_peripheral_center_dict = get_peripheral_and_center_pillars_by_frame()
@@ -210,14 +240,15 @@ def run_config(config_name):
     # return mean_corr_1st, mean_corr_2nd
     # return nbrs_avg_corr, non_nbrs_avg_corr
     # return get_cc_pp_cp_correlations()
-    # get_cell_avg_intensity()
-    # return
+    # get_cell_avg_intensity
+    # return get_alive_pillars_symmetric_correlation()
 
+    # print_tagged_centers()
     # with open(Consts.pillars_alive_location_by_frame_to_gif_cache_path, 'rb') as handle:
     #     pillars_alive_location_by_frame = pickle.load(handle)
     #     show_pillars_location_by_frame(pillars_alive_location_by_frame)
-    # # # #
-    # print_tagged_centers()
+    #
+    # return
 
     for op in operations:
         op_key = list(op.keys())[0]
@@ -341,7 +372,8 @@ def run_config(config_name):
                                                                                   neighbors=False)
         elif op_key == "avg_intensity":
             avg_intensity = get_cell_avg_intensity()
-        elif op_key == "change_mask_radius":
+        elif Consts.MULTI_COMPONENT and op_key == "change_mask_radius":
+            print("change_mask_radius")
             temp_small_mask_radius = Consts.SMALL_MASK_RADIUS
             temp_large_mask_radius = Consts.LARGE_MASK_RADIUS
 
@@ -379,8 +411,18 @@ def run_config(config_name):
 
             Consts.SMALL_MASK_RADIUS = temp_small_mask_radius
             Consts.LARGE_MASK_RADIUS = temp_large_mask_radius
+        elif op_key == "correlations_norm_by_noise_(0,10)":
+            mask_radius = (0, 10)
+            radiuses = [(15, 35), (0, 10), (10, 30), (20, 40), (15, 40), (10, 40)]
 
-    if Consts.WRITE_OUTPUT:
+            map_radius_to_norm_corr_by_0_10 = get_correlations_norm_by_noise(mask_radius, radiuses)
+        elif op_key == "correlations_norm_by_noise_(0,15)":
+            mask_radius = (0, 15)
+            radiuses = [(15, 35), (0, 15), (10, 30), (20, 40), (15, 40), (10, 40)]
+
+            map_radius_to_norm_corr_by_0_15 = get_correlations_norm_by_noise(mask_radius, radiuses)
+
+    if Consts.MULTI_COMPONENT and Consts.WRITE_OUTPUT:
         features_dict = {'passed_stationary': passed_stationary,
                          'nbrs_avg_correlation': nbrs_avg_correlation,
                          'non_nbrs_avg_correlation': non_nbrs_avg_correlation,
@@ -397,7 +439,9 @@ def run_config(config_name):
                          'neighbors_avg_movement_correlation': neighbors_avg_movement_correlation,
                          'not_neighbors_avg_movement_correlation': not_neighbors_avg_movement_correlation,
                          'avg_intensity': avg_intensity,
-                         'change_mask_radius': str(map_radius_to_corr)
+                         'change_mask_radius': str(map_radius_to_corr),
+                         'correlations_norm_by_noise_(0,10)': str(map_radius_to_norm_corr_by_0_10),
+                         'correlations_norm_by_noise_(0,15)': str(map_radius_to_norm_corr_by_0_15)
                          }
         experiment_id = config_data.get("experiment")['id']
         perturbation = config_data.get("perturbation")['type']

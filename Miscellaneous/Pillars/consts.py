@@ -18,6 +18,7 @@ class Consts:
     INTENSITIES_RATIO_OUTER_INNER = 1.9
 
     tagged_centers = None
+    ignore_centers = []
 
     # Visualization consts
     only_alive = True
@@ -32,6 +33,7 @@ class Consts:
     NUM_NEIGHBORS_TO_CONSIDER_PERIPHERAL = 4
     FIND_BETTER_CENTER_IN_RANGE = None # TODO: change to be based on radius if needed later
     NUMBER_OF_NBRS_TO_CONSIDER_CENTRAL = 6
+    MULTI_COMPONENT = False
 
     last_image_path = None
     fixed_images_path = None

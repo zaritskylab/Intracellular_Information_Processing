@@ -528,15 +528,16 @@ def generate_centers_and_rules_from_alive_centers(alive_centers, matrix_row_size
                                                           matrix_row_size,
                                                           rule1,
                                                           rule2)
-    should_use_cluster = False
-    if should_use_cluster:
-        generated_centers_better_loc_by_alive_centers = generate_centers_by_closest_alive_centers(alive_centers,
-                                                                                                  matrix_col_size,
-                                                                                                  matrix_row_size,
-                                                                                                  rule1,
-                                                                                                  rule2)
 
-        alive_centers = generated_centers_better_loc_by_alive_centers
+    # should_use_cluster = False
+    # if should_use_cluster:
+    #     generated_centers_better_loc_by_alive_centers = generate_centers_by_closest_alive_centers(alive_centers,
+    #                                                                                               matrix_col_size,
+    #                                                                                               matrix_row_size,
+    #                                                                                               rule1,
+    #                                                                                               rule2)
+    #
+    #     alive_centers = generated_centers_better_loc_by_alive_centers
 
     # Replaced center IDs with better found locations
     generated_location2real_pillar_loc = {}
@@ -1380,3 +1381,5 @@ def closest_to_point(points, target):
     if len(points) == 0:
         return None
     return min(points, key=lambda point: math.hypot(target[1] - point[1], target[0] - point[0]))
+
+

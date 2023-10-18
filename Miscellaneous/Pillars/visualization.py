@@ -753,57 +753,62 @@ def plot_average_correlation_neighbors_vs_non_neighbors(lst1, lst2, labels=None,
     f, ax = plt.subplots(figsize=(6, 6))
     color = iter(cm.rainbow(np.linspace(0, 1, len(labels))))
 
-    # cmap = None
-    # if cells_lst:
-    #     cmap = {}
-    #     cell_color = mcolors.TABLEAU_COLORS.values()
-    #     cell_color = list(cell_color)
-    #     cell_color.extend(cell_color)
-    #
-    # for i in range(len(lst1)):
-    #     c = next(color)
-    #
-    #     if cells_lst:
-    #         k = cells_lst[i]
-    #         if k in cmap.keys():
-    #             c = cmap[k]
-    #         else:
-    #             c = list(cell_color)[int(float(k))-1]
-    #             cmap[k] = c
-    #
-    #     marker = 'bo'
-    #     if special_marker:
-    #         marker = "*" if special_marker[i] == 'special' else '.'
-    #
-    #     if cmap:
-    #         c = cmap[k]
-    #
-    #     plt.plot(float(lst1[i]), float(lst2[i]), marker, label=labels[i], c=c, alpha=0.3)
-    #     # plt.plot(float(lst1[i]), float(lst2[i]), marker, label=k, c=c)
+    cmap = None
+    if cells_lst:
+        cmap = {}
+        cell_color = mcolors.TABLEAU_COLORS.values()
+        cell_color = list(cell_color)
+        cell_color.extend(cell_color)
 
-    colors = list(mcolors.TABLEAU_COLORS.values())[2:4]
-    label1 = labels[0]
-    label2 = labels[-1]
-    lst_x_1 = []
-    lst_y_1 = []
-    lst_x_2 = []
-    lst_y_2 = []
+    for i in range(len(lst1)):
+        c = next(color)
 
-    for label_index in range(len(labels)):
-        if labels[label_index] == label1:
-            lst_x_1.append(float(lst1[label_index]))
-            lst_y_1.append(float(lst2[label_index]))
-        else:
-            lst_x_2.append(float(lst1[label_index]))
-            lst_y_2.append(float(lst2[label_index]))
+        if cells_lst:
+            k = cells_lst[i]
+            if k in cmap.keys():
+                c = cmap[k]
+            else:
+                c = list(cell_color)[int(float(k))-1]
+                cmap[k] = c
 
-    plt.plot(lst_x_1, lst_y_1, 'bo', label=label1, c=colors[0], alpha=0.2)
-    plt.plot(lst_x_2, lst_y_2, 'bo', label=label2, c=colors[1], alpha=0.2)
+        marker = 'bo'
+        if special_marker:
+            marker = "*" if special_marker[i] == 'special' else '.'
+
+        if cmap:
+            c = cmap[k]
+
+        plt.plot(float(lst1[i]), float(lst2[i]), marker, label=labels[i], c=c, alpha=0.5)
+        # plt.plot(float(lst1[i]), float(lst2[i]), marker, label=k, c=c)
+
+    ## TODO: this code is for the comparison of 5.3 vs 13.2
+    # colors = list(mcolors.TABLEAU_COLORS.values())[2:4]
+    # # label1 = labels[0]
+    # # label2 = labels[-1]
+    # label1 = 'before blebb'
+    # label2 = 'after blebb'
+    # lst_x_1 = []
+    # lst_y_1 = []
+    # lst_x_2 = []
+    # lst_y_2 = []
+    #
+    # for label_index in range(len(labels)):
+    #     if labels[label_index] == label1:
+    #         lst_x_1.append(float(lst1[label_index]))
+    #         lst_y_1.append(float(lst2[label_index]))
+    #     else:
+    #         lst_x_2.append(float(lst1[label_index]))
+    #         lst_y_2.append(float(lst2[label_index]))
+    #
+    # plt.plot(lst_x_1, lst_y_1, 'bo', label=label1, c=colors[0], alpha=0.3)
+    # plt.plot(lst_x_2, lst_y_2, 'bo', label=label2, c=colors[1], alpha=0.3)
+
     plt.axvline(x=0, color="gainsboro", linestyle="--")
     plt.axhline(y=0, color="gainsboro", linestyle="--")
 
     # plt.axis('square')
-    plt.setp(ax, xlim=(-0.5, 1), ylim=(-0.5, 1))
+    plt.setp(ax, xlim=(0, 1), ylim=(0, 1))
+    # plt.setp(ax, xlim=(-0.5, 1), ylim=(-0.5, 1))
     axline([ax.get_xlim()[0], ax.get_ylim()[0]], [ax.get_xlim()[1], ax.get_ylim()[1]], ls='--')
     if title:
         plt.title(title)
@@ -818,7 +823,7 @@ def plot_average_correlation_neighbors_vs_non_neighbors(lst1, lst2, labels=None,
     else:
         plt.ylabel('Neighbor pair correlation')
     if labels is not None:
-        # plt.legend(labels)
+        # plt.legend(labels, bbox_to_anchor=(1, 1))
         # cells_int_lst = [int(c) for c in set(cells_lst)]
         # cells_int_lst.sort()
         # plt.legend(cells_int_lst)
@@ -1231,7 +1236,7 @@ def plot_correlation_by_distance_from_center_cell(list_of_dist_to_corr_dict, lab
 
 
 def print_tagged_centers():
-    plt.imshow(get_images(get_images_path())[0], cmap=plt.cm.gray)
+    plt.imshow(get_images(get_images_path())[-1], cmap=plt.cm.gray)
     y = [center[0] for center in Consts.tagged_centers]
     x = [center[1] for center in Consts.tagged_centers]
     scatter_size = [3 for center in Consts.tagged_centers]

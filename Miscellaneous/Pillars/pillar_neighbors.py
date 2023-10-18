@@ -1,7 +1,7 @@
 from Pillars.pillars_utils import *
 import random
 from Pillars.consts import *
-
+import copy
 
 def get_alive_pillars_in_edges_to_l1_neighbors():
     """
@@ -107,6 +107,31 @@ def get_pillar_to_neighbors():
     return pillar_to_neighbors
 
 
+def dfs(graph, node, visited, component):
+    # Mark the current node as visited
+    visited[node] = True
+    # Add it to the current connected component
+    component.append(node)
+    # Recur for all the adjacent nodes
+    for neighbor in graph[node]:
+        if not visited.get(neighbor, False):
+            dfs(graph, neighbor, visited, component)
+
+
+def find_connected_components(graph):
+    visited = {}  # Dictionary to keep track of visited nodes
+    components = []  # List to store connected components
+
+    for node in graph:
+        if not visited.get(node, False):
+            component = []  # Initialize an empty connected component
+            dfs(graph, node, visited, component)
+            components.append(component)
+
+    return components
+
+
+
 def get_pillar_indirect_neighbors_dict(pillar_location):
     """
     Mapping pillar to its indirect neighbors (start from level 2 neighbors)
@@ -151,6 +176,8 @@ def get_alive_pillars_to_alive_neighbors():
             alive_pillars_to_alive_neighbors = pickle.load(handle)
             return alive_pillars_to_alive_neighbors
 
+    Consts.MULTI_COMPONENT = False
+
     pillar_to_neighbors = get_pillar_to_neighbors()
     alive_pillars = get_alive_pillar_ids_in_last_frame_v3()
     alive_pillars_to_alive_neighbors = {}
@@ -161,6 +188,19 @@ def get_alive_pillars_to_alive_neighbors():
                 if nbr in alive_pillars:
                     alive_nbrs.append(nbr)
             alive_pillars_to_alive_neighbors[p] = alive_nbrs
+
+    # Remove pillars neighours that are not connected to main graph
+    components = find_connected_components(alive_pillars_to_alive_neighbors)
+    print("number of components:", len(components))
+    if len(components) > 1:
+        Consts.MULTI_COMPONENT = True
+    # Remove biggest component
+    longest_list = max(components, key=len)
+    components.remove(longest_list)
+
+    for component in components:
+        for pillar in component:
+            alive_pillars_to_alive_neighbors[pillar] = []
 
     if Consts.USE_CACHE:
         with open(Consts.alive_pillars_to_alive_neighbors_cache_path, 'wb') as handle:

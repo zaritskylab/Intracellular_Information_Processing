@@ -38,8 +38,8 @@ class Labeler:
         # self.alive_centers = []
         self.alive_centers = get_seen_centers_for_mask()
 
-        # self.img = get_last_image()
-        self.img = get_images(get_images_path())[18]
+        self.img = get_last_image()
+        # self.img = get_images(get_images_path())[0]
         self.print_alive_centers()
 
     def print_alive_centers(self):
@@ -108,6 +108,7 @@ class Labeler:
 # When image closed - save list
 # Enable revert
 
-json_path = '5.3/exp_20230320-05-6_type_5.3_mask_15_35_non-normalized_fixed.json'
-# json_path = '13.2/exp_20230327-01-4_type_13.2_mask_15_35_non-normalized_fixed.json'
+json_path = '5.3/exp_20230320-04-6_type_5.3_mask_15_35_non-normalized_fixed.json'
+# json_path = '5.3/exp_20230818-03-3_type_5.3_bleb_mask_15_35_non-normalized_fixed.json'
+# json_path = '13.2/exp_2023071201-04-5_type_13.2_bleb_mask_15_35_non-normalized_fixed.json'
 Labeler().label_video(json_path)

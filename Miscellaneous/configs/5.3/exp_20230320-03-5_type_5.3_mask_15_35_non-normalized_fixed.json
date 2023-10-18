@@ -3,7 +3,7 @@
   "metadata": {
     "micron": 0.1565932,
     "micron_radius": 1,
-    "is_spreading": false
+    "is_spreading": true
   },
   "mask_radius": {
     "small_radius": 15,

@@ -58,8 +58,8 @@ def get_pillar_to_intensities(path, use_cache=True):
         with open(pillar_to_intensities_cache_path, 'wb') as handle:
             pickle.dump(pillar2frame_intensity, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-    with open(Consts.pillars_alive_location_by_frame_to_gif_cache_path, 'wb') as handle:
-        pickle.dump(frame_to_alive_pillar_loc_used_for_intensities, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    # with open(Consts.pillars_alive_location_by_frame_to_gif_cache_path, 'wb') as handle:
+    #     pickle.dump(frame_to_alive_pillar_loc_used_for_intensities, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     return pillar2frame_intensity
 
