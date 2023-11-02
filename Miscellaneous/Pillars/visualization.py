@@ -749,7 +749,7 @@ def k_means(principalComponents, output_path_type, n_clusters=2, custom_df=None)
 
 
 def plot_average_correlation_neighbors_vs_non_neighbors(lst1, lst2, labels=None, title=None, xlabel=None,
-                                                        ylabel=None, special_marker=None, cells_lst=None):
+                                                        ylabel=None, special_marker=None, cells_lst=None, arg1=None, arg2=None):
     f, ax = plt.subplots(figsize=(6, 6))
     color = iter(cm.rainbow(np.linspace(0, 1, len(labels))))
 
@@ -785,8 +785,8 @@ def plot_average_correlation_neighbors_vs_non_neighbors(lst1, lst2, labels=None,
     # colors = list(mcolors.TABLEAU_COLORS.values())[2:4]
     # # label1 = labels[0]
     # # label2 = labels[-1]
-    # label1 = 'before blebb'
-    # label2 = 'after blebb'
+    # label1 = 'higher'
+    # label2 = 'lower'
     # lst_x_1 = []
     # lst_y_1 = []
     # lst_x_2 = []
@@ -810,6 +810,10 @@ def plot_average_correlation_neighbors_vs_non_neighbors(lst1, lst2, labels=None,
     plt.setp(ax, xlim=(0, 1), ylim=(0, 1))
     # plt.setp(ax, xlim=(-0.5, 1), ylim=(-0.5, 1))
     axline([ax.get_xlim()[0], ax.get_ylim()[0]], [ax.get_xlim()[1], ax.get_ylim()[1]], ls='--')
+
+    # plt.axvline(x=arg1, color="gainsboro", linestyle="--")
+    # plt.axhline(y=arg2, color="gainsboro", linestyle="--")
+
     if title:
         plt.title(title)
     else:
@@ -822,12 +826,12 @@ def plot_average_correlation_neighbors_vs_non_neighbors(lst1, lst2, labels=None,
         plt.ylabel(ylabel, fontsize=12)
     else:
         plt.ylabel('Neighbor pair correlation')
-    if labels is not None:
+    # if labels is not None:
         # plt.legend(labels, bbox_to_anchor=(1, 1))
         # cells_int_lst = [int(c) for c in set(cells_lst)]
         # cells_int_lst.sort()
         # plt.legend(cells_int_lst)
-        plt.legend()
+        # plt.legend(title='Experiment')
     if Consts.SHOW_GRAPH:
         plt.show()
 
@@ -1254,3 +1258,28 @@ def plot_node_strengths_distribution(node_strengths):
 
     # Show the plot
     plt.show()
+
+
+def plot_avg_similarity_by_nbrhood_degree(level_to_similarities_dict):
+    levels = list(level_to_similarities_dict.keys())
+    level_avg_similarity = [np.mean(v) for v in level_to_similarities_dict.values()]
+    plt.plot(levels, level_avg_similarity, linestyle='dashed', marker='o')
+    plt.xlabel('Neighborhood Degree')
+    plt.ylabel('Avg Degree Similarity')
+    plt.title('Average Similarity Of Each Neighborhood Degree')
+    plt.show()
+
+
+def plot_distribution_similarity_of_exp_nbrs_vs_non_nbrs(nbrs_sim_lst, non_nbrs_sim_lst):
+    sns.histplot(nbrs_sim_lst, label="Neighbors similarity", kde=True, alpha=0.3, stat='density')
+    sns.histplot(non_nbrs_sim_lst, label="Non-neighbors similarity", kde=True, alpha=0.3, stat='density')
+    plt.title("Distribution of Similarity Strength of Neighbors vs. Non-Neighbors")
+    plt.xlabel('Similarity')
+    plt.legend()
+    plt.show()
+    print("Average neighbors similarity:", "%.3f" % np.mean(nbrs_sim_lst))
+    print("Average non-neighbors similarity:", "%.3f" % np.mean(non_nbrs_sim_lst))
+    t_stat, p_value = ttest_ind(nbrs_sim_lst, non_nbrs_sim_lst)
+    print("###### t-test #####")
+    print("T-statistic value: ", "%.2f" % t_stat)
+    print("P-Value: ", p_value)

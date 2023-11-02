@@ -16,100 +16,100 @@ if __name__ == '__main__':
         # '5.3/exp_27.2_type_5.3_mask_15_35_non-normalized_fixed.json',
         # '5.3/exp_30_type_5.3_mask_15_35_non-normalized_fixed.json',
 
-        '5.3/exp_20230320-02-5_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230320-02-6_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230320-02-7_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230320-02-8_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230320-02-9_type_5.3_mask_15_35_non-normalized_fixed.json',
-
-        '5.3/exp_20230320-03-5_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230320-03-6_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230320-03-7_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230320-03-8_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230320-03-9_type_5.3_mask_15_35_non-normalized_fixed.json',
-
-        '5.3/exp_20230320-04-5_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230320-04-6_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230320-04-7_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230320-04-8_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230320-04-9_type_5.3_mask_15_35_non-normalized_fixed.json',
-
-        '5.3/exp_20230320-05-5_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230320-05-7_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230320-05-8_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230320-05-9_type_5.3_mask_15_35_non-normalized_fixed.json',
-
-        '5.3/exp_20230320-06-5_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230320-06-7_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230320-06-8_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230320-06-9_type_5.3_mask_15_35_non-normalized_fixed.json',
-
-        '5.3/exp_20230323-01-1_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230320-02-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230320-02-6_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230320-02-7_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230320-02-8_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230320-02-9_type_5.3_mask_15_35_non-normalized_fixed.json',
+        #
+        # '5.3/exp_20230320-03-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230320-03-6_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230320-03-7_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230320-03-8_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230320-03-9_type_5.3_mask_15_35_non-normalized_fixed.json',
+        #
+        # '5.3/exp_20230320-04-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230320-04-6_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230320-04-7_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230320-04-8_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230320-04-9_type_5.3_mask_15_35_non-normalized_fixed.json',
+        #
+        # '5.3/exp_20230320-05-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230320-05-7_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230320-05-8_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230320-05-9_type_5.3_mask_15_35_non-normalized_fixed.json',
+        #
+        # '5.3/exp_20230320-06-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230320-06-7_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230320-06-8_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230320-06-9_type_5.3_mask_15_35_non-normalized_fixed.json',
+        #
+        # '5.3/exp_20230323-01-1_type_5.3_mask_15_35_non-normalized_fixed.json',
         '5.3/exp_20230323-01-2_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-01-3_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-01-4_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-01-5_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-01-6_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-01-7_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-01-8_type_5.3_mask_15_35_non-normalized_fixed.json',
-
-        '5.3/exp_20230323-03-1_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-01-3_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-01-4_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-01-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-01-6_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-01-7_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-01-8_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # #
+        # '5.3/exp_20230323-03-1_type_5.3_mask_15_35_non-normalized_fixed.json',
         '5.3/exp_20230323-03-2_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-03-3_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-03-4_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-03-5_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-03-6_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-03-7_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-03-8_type_5.3_mask_15_35_non-normalized_fixed.json',
-
-        '5.3/exp_20230323-04-1_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-03-3_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-03-4_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-03-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-03-6_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-03-7_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-03-8_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # #
+        # '5.3/exp_20230323-04-1_type_5.3_mask_15_35_non-normalized_fixed.json',
         '5.3/exp_20230323-04-2_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-04-3_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-04-4_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-04-5_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-04-6_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-04-7_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-04-8_type_5.3_mask_15_35_non-normalized_fixed.json',
-
-        '5.3/exp_20230323-05-1_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-04-3_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-04-4_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-04-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-04-6_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-04-7_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-04-8_type_5.3_mask_15_35_non-normalized_fixed.json',
+        #
+        # '5.3/exp_20230323-05-1_type_5.3_mask_15_35_non-normalized_fixed.json',
         '5.3/exp_20230323-05-2_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-05-3_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-05-4_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-05-5_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-05-6_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-05-7_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-05-8_type_5.3_mask_15_35_non-normalized_fixed.json',
-
-        '5.3/exp_20230323-06-1_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-05-3_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-05-4_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-05-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-05-6_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-05-7_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-05-8_type_5.3_mask_15_35_non-normalized_fixed.json',
+        #
+        # '5.3/exp_20230323-06-1_type_5.3_mask_15_35_non-normalized_fixed.json',
         '5.3/exp_20230323-06-2_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-06-3_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-06-4_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-06-5_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-06-8_type_5.3_mask_15_35_non-normalized_fixed.json',
-
-        '5.3/exp_20230323-07-1_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-06-3_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-06-4_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-06-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-06-8_type_5.3_mask_15_35_non-normalized_fixed.json',
+        #
+        # '5.3/exp_20230323-07-1_type_5.3_mask_15_35_non-normalized_fixed.json',
         '5.3/exp_20230323-07-2_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-07-4_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-07-5_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-07-8_type_5.3_mask_15_35_non-normalized_fixed.json',
-
-        '5.3/exp_20230323-08-1_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-07-4_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-07-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-07-8_type_5.3_mask_15_35_non-normalized_fixed.json',
+        #
+        # '5.3/exp_20230323-08-1_type_5.3_mask_15_35_non-normalized_fixed.json',
         '5.3/exp_20230323-08-2_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-08-3_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-08-4_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-08-5_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-08-8_type_5.3_mask_15_35_non-normalized_fixed.json',
-
-        '5.3/exp_20230323-09-1_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-08-3_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-08-4_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-08-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-08-8_type_5.3_mask_15_35_non-normalized_fixed.json',
+        #
+        # '5.3/exp_20230323-09-1_type_5.3_mask_15_35_non-normalized_fixed.json',
         '5.3/exp_20230323-09-2_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-09-4_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-09-5_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-09-8_type_5.3_mask_15_35_non-normalized_fixed.json',
-
-        '5.3/exp_20230323-10-1_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-10-4_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-10-5_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-10-8_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-09-4_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-09-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-09-8_type_5.3_mask_15_35_non-normalized_fixed.json',
+        #
+        # '5.3/exp_20230323-10-1_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-10-4_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-10-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-10-8_type_5.3_mask_15_35_non-normalized_fixed.json',
 
         ### Before blebbing exp 01 ####
         # '5.3/exp_2023071301-01-1_type_5.3_mask_15_35_non-normalized_fixed.json',
@@ -467,6 +467,9 @@ if __name__ == '__main__':
     exps_dict_distances_category_lst = []
     strength = []
     similarity = []
+    avg_nbrs_sim_lst = []
+    avg_non_nbrs_sim_lst = []
+    all_sims = {}
 
     # radiuses_by_0_10 = ['(15, 35)', '(0, 10)', '(10, 30)', '(20, 40)', '(15, 40)', '(10, 40)']
     # my_dict_0_10 = {k: [] for k in radiuses_by_0_10}
@@ -719,6 +722,25 @@ if __name__ == '__main__':
         # strength.append(avg_strength)
         # similarity.append(avg_similarity)
 
+        # total_avg_intensity, pillars_avg_intens, pillars_strength = run_config(config_path)
+        # p_to_intens, avg_ts, total_avg_intensity, pillars_avg_raw_intens, pillars_strength = run_config(config_path)
+
+        # nbrs_sim_lst, non_nbrs_sim_lst = run_config(config_path)
+        # plot_distribution_similarity_of_exp_nbrs_vs_non_nbrs(nbrs_sim_lst, non_nbrs_sim_lst)
+
+        # avg_nbrs_sim, avg_non_nbrs_sim = run_config(config_path)
+        # avg_nbrs_sim_lst.append(avg_nbrs_sim)
+        # avg_non_nbrs_sim_lst.append(avg_non_nbrs_sim)
+
+        level_to_similarities = run_config(config_path)
+        print(similarity_to_nbrhood_level_correlation(level_to_similarities))
+        # for k, v in level_to_similarities.items():
+        #     if k not in all_sims.keys():
+        #         all_sims[k] = []
+        #     all_sims[k].extend(v)
+
+        # p_2_sim_dict = run_config(config_path)
+
         ##################################### RUN  ############################################
         # run_config(config_path)
 
@@ -732,22 +754,55 @@ if __name__ == '__main__':
         # print(config_path, "completed")
         ##################################### RUN  ############################################
 
-    # plot_average_correlation_neighbors_vs_non_neighbors(strength, similarity, labels=exps,
-    #                                                     title='Pillars Avg Strength vs. Similarity - 13.2 exps',
-    #                                                     xlabel='Avg strength', ylabel='Avg similarity')
+    # plot_avg_similarity_by_nbrhood_degree(all_sims)
 
-    # sns.histplot(list_53, label="5.3", kde=True, alpha=0.3)
-    # sns.histplot(list_132, label="13.2", kde=True, alpha=0.3)
-    # plt.title("Distribution of Average Correlations Between All Pillars")
-    # plt.xlabel('Avg Correlations')
-    # plt.legend()
-    # plt.show()
-    # print("Average correlation in 5.3 exps:", "%.3f" % np.mean(list_53))
-    # print("Average correlation in 13.2 exps:", "%.3f" % np.mean(list_132))
-    # t_stat, p_value = ttest_ind(list_53, list_132)
+
+    # nbrs_sim = [tup[0] for tup in list(p_2_sim_dict.values())]
+    # non_nbrs_sim = [tup[1] for tup in list(p_2_sim_dict.values())]
+    # plot_average_correlation_neighbors_vs_non_neighbors(avg_non_nbrs_sim_lst, avg_nbrs_sim_lst, labels=exps,
+    #                                                     title='Experiment Avg Similarity Neighbors vs. Non-Neighbors',
+    #                                                     xlabel='Non-Neighbors avg similarity', ylabel='Neighbors avg similarity')
+    # print("Average neighbors similarity:", "%.3f" % np.mean(avg_nbrs_sim_lst))
+    # print("Average non-neighbors similarity:", "%.3f" % np.mean(avg_non_nbrs_sim_lst))
+    # t_stat, p_value = ttest_ind(avg_nbrs_sim_lst, avg_non_nbrs_sim_lst)
     # print("###### t-test 13.2 originals vs permutations clusters #####")
     # print("T-statistic value: ", "%.2f" % t_stat)
     # print("P-Value: ", p_value)
+
+    ######################## Individuall cell strength vs intensity and super strong pillars TS ########################
+    # min_value = min(pillars_avg_raw_intens.values())
+    # max_value = max(pillars_avg_raw_intens.values())
+    # pillars_avg_intens = {}
+    # for k, v in pillars_avg_raw_intens.items():
+    #     norm_value = (v - min_value) / (max_value - min_value)
+    #     pillars_avg_intens[k] = norm_value
+    # pillars_lst = list(pillars_avg_intens.keys())
+    # avg_strength = np.mean(list(pillars_strength.values()))
+    # avg_norm_intens = np.mean(list(pillars_avg_intens.values()))
+    # labels = []
+    # pillars_above_avgs = []
+    # for p in pillars_lst:
+    #     if pillars_strength[p] > avg_strength and pillars_avg_intens[p] > avg_norm_intens:
+    #         pillars_above_avgs.append(p)
+    #         labels.append('higher')
+    #     else:
+    #         labels.append('lower')
+    # plot_average_correlation_neighbors_vs_non_neighbors(list(pillars_strength.values()), list(pillars_avg_intens.values()), labels=labels,
+    #                                                     title='Pillars Avg Strength vs. Avg Intensity - 20230327-05-4',
+    #                                                     xlabel='Avg strength', ylabel='Avg Intensity', arg1=avg_strength, arg2=avg_norm_intens)
+    # G = build_pillars_graph(random_neighbors=False, shuffle_ts=False, draw=False)
+    # ns, strong_nodes, _ = nodes_strengths(G, draw=True, color_map_nodes=False, group_nodes_colored=pillars_above_avgs)
+    #
+    # avg_strength = np.mean(list(pillars_strength.values()))
+    # for p, ts in p_to_intens.items():
+    #     if pillars_avg_raw_intens[p] > total_avg_intensity and pillars_strength[p] > avg_strength:
+    #         plt.plot(ts, color='grey')
+    # plt.plot(avg_ts, linestyle='--', color='black', label="avg TS")
+    # plt.title("Super strong pillars time series")
+    # plt.xlabel("Frame")
+    # plt.ylabel("Raw Intensity")
+    # plt.legend()
+    # plt.show()
 
     # with open('../map_vid_to_original_and_shuffle_ts_500_avg_sim_with_pval_5.3_exps', 'wb') as f:
     #     pickle.dump(map_exp_to_statistics_original_and_random_avg_similarity, f)

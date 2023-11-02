@@ -165,8 +165,8 @@ def run_config(config_name):
     # strong_nodes_avg_distance_rand = strong_nodes_avg_distance_from_center(G_rand_nbrs, alive_centers=get_seen_centers_for_mask(),
     #                                                                   strong_nodes=strong_nodes_rand, all_nodes_strength=ns_rand,
     #                                                                   draw=False)
-    # G = build_pillars_graph(random_neighbors=False, shuffle_ts=False, draw=False)
-    # ns, strong_nodes, _ = nodes_strengths(G, draw=False, color_map_nodes=False)
+    G = build_pillars_graph(random_neighbors=False, shuffle_ts=False, draw=False)
+    ns, strong_nodes, _ = nodes_strengths(G, draw=False, color_map_nodes=False)
     # clustering_strong_nodes_by_Louvain(G, ns, strong_nodes, draw=False)
     # centrality_measure_strong_nodes(G, ns, strong_nodes, draw=True)
     # strong_nodes_avg_distance = strong_nodes_avg_distance_from_center(G, alive_centers=get_seen_centers_for_mask(), strong_nodes=strong_nodes, all_nodes_strength=ns, draw=False)
@@ -179,19 +179,49 @@ def run_config(config_name):
     # return cc, largest_cc
     # return strong_nodes_avg_distance, ns, strong_nodes
     # return ns
-    # sim_dict = nodes_similarity_by_strength(G, ns)
-    # vals = sim_dict.values()
-    # sim = [v[1] for v in vals]
-    # avg_sim = np.mean(sim)
-    # avg_strength = np.mean(list(ns.values()))
+    nbrs_sim_dict = nbrs_nodes_similarity_by_strength(G, ns)
+    all_nodes_sim_dict = non_nbrs_similarity_by_strength(G, ns)
+    nbrs_vals = nbrs_sim_dict.values()
+    noon_nbrs_vals = all_nodes_sim_dict.values()
+    nbrs_sim = [v[1] for v in nbrs_vals]
+    non_nbrs_sim = [v[1] for v in noon_nbrs_vals]
+    # avg_nbrs_sim = np.mean(nbrs_sim)
+    # avg_non_nbrs_sim = np.mean(non_nbrs_sim)
+    # return avg_nbrs_sim, avg_non_nbrs_sim
+    # return nbrs_sim, non_nbrs_sim
+    level_to_similarities = nbrs_level_to_similarities(G, nbrs_sim_dict, all_nodes_sim_dict)
+    # plot_avg_similarity_by_nbrhood_degree(level_to_similarities)
+    return level_to_similarities
     # return avg_strength, avg_sim
+    # p_2_sim_dict = get_pillar_to_avg_similarity_dict(nbrs_sim_dict, all_nodes_sim_dict)
+    # return p_2_sim_dict
     # return test_strong_nodes_distance_significance(num_permutations=100, alpha=0.05)
     # return test_strong_nodes_clusters_louvain_significance(num_permutations=1000, alpha=0.05)
     # return test_strong_nodes_distance_hops_significance(num_permutations=1000, alpha=0.05)
     # return test_strong_nodes_number_of_cc_significance(num_permutations=100, alpha=0.05)
     # return test_strong_nodes_largest_cc_significance(num_permutations=100, alpha=0.05)
-    return test_avg_similarity_significance(num_permutations=500, alpha=0.05)
+    # return test_avg_similarity_significance(num_permutations=500, alpha=0.05)
+    # return
 
+    # pillars_under_diagonal = []
+    # pillars = list(p_2_sim_dict.keys())
+    # nbrs_sim = [tup[0] for tup in list(p_2_sim_dict.values())]
+    # non_nbrs_sim = [tup[1] for tup in list(p_2_sim_dict.values())]
+    # for i in range(len(pillars)):
+    #     if nbrs_sim[i] < non_nbrs_sim[i]:
+    #         pillars_under_diagonal.append(pillars[i])
+    #
+    # ns, strong_nodes, _ = nodes_strengths(G, draw=True, color_map_nodes=False, group_nodes_colored=pillars_under_diagonal)
+
+    # pillar_strength = {}
+    # for node_idx in ns:
+    #     coor = G.nodes[node_idx]['pos']
+    #     pillar_strength[coor] = ns[node_idx]
+    # total_avg_intensity, pillars_avg_intens = get_cell_avg_intensity()
+    # # return total_avg_intensity, pillars_avg_intens, pillar_strength
+    # p_to_intens = get_overall_alive_pillars_to_intensities()
+    # avg_ts = get_cell_avg_ts()
+    # return p_to_intens, avg_ts, total_avg_intensity, pillars_avg_intens, pillar_strength
     # pillars_movements_dict = get_alive_centers_movements()
     # movement_corr_df = get_pillars_movement_correlation_df(pillars_movements_dict)
     # intensity_corr_df = get_alive_pillars_symmetric_correlation()
@@ -371,7 +401,7 @@ def run_config(config_name):
             not_neighbors_avg_movement_correlation = get_avg_movement_correlation(movement_correlations_df,
                                                                                   neighbors=False)
         elif op_key == "avg_intensity":
-            avg_intensity = get_cell_avg_intensity()
+            avg_intensity, _ = get_cell_avg_intensity()
         elif Consts.MULTI_COMPONENT and op_key == "change_mask_radius":
             print("change_mask_radius")
             temp_small_mask_radius = Consts.SMALL_MASK_RADIUS

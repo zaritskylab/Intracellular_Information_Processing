@@ -1371,7 +1371,7 @@ def build_pillars_graph(random_neighbors=False, shuffle_ts=False, draw=True):
     return my_G
 
 
-def nodes_strengths(G, draw=False, color_map_nodes=False):
+def nodes_strengths(G, draw=False, color_map_nodes=False, group_nodes_colored=None):
     # Calculate node strengths
     node_strengths = {}
     for node in G.nodes:
@@ -1406,6 +1406,12 @@ def nodes_strengths(G, draw=False, color_map_nodes=False):
             sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
             sm.set_array([])
             plt.colorbar(sm, label='Strength')
+        if group_nodes_colored is not None:
+            node_colors = ['green' if pos[node] in group_nodes_colored else 'grey' for node in G.nodes]
+            nx.draw(G, nodes_loc_y_inverse, node_color=node_colors)
+            # sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+            # sm.set_array([])
+            # plt.colorbar(sm, label='Strength')
         else:
             # Draw strong nodes in one color and weak nodes in another color
             nx.draw_networkx_nodes(G, nodes_loc_y_inverse, nodelist=strong_nodes, node_color='r')
@@ -1424,29 +1430,126 @@ def nodes_strengths(G, draw=False, color_map_nodes=False):
     return node_strengths, strong_nodes, weak_nodes
 
 
-def nodes_similarity_by_strength(G, nodes_strength):
+def nbrs_nodes_similarity_by_strength(G, nodes_strength):
     neighbors = get_alive_pillars_to_alive_neighbors()
 
-    pillar_strength = {}
+    pillar_strength_dict = {}
+    node_pos_to_idx = {}
     for node_idx in nodes_strength:
         coor = G.nodes[node_idx]['pos']
-        pillar_strength[coor] = nodes_strength[node_idx]
+        node_pos_to_idx[coor] = node_idx
+        pillar_strength_dict[coor] = nodes_strength[node_idx]
 
     similarity_dict = {}
     for pillar, nbrs in neighbors.items():
         for nbr in nbrs:
             if (pillar, nbr) not in similarity_dict and (nbr, pillar) not in similarity_dict:
-                diff = abs(pillar_strength[pillar] - pillar_strength[nbr])
+                pillar_idx = node_pos_to_idx[pillar]
+                nbr_idx = node_pos_to_idx[nbr]
+                pillar_incident_edges = G.edges(pillar_idx, data='weight')
+                nbr_incident_edges = G.edges(nbr_idx, data='weight')
+                if len(pillar_incident_edges) <= 1:
+                    pillar_strength = 0
+                else:
+                    pillar_strength = sum(weight for _, n, weight in pillar_incident_edges if n is not nbr_idx) / (
+                                len(pillar_incident_edges) - 1) if pillar_incident_edges else 0
+                if len(nbr_incident_edges) <= 1:
+                    nbr_strength = 0
+                else:
+                    nbr_strength = sum(weight for _, n, weight in nbr_incident_edges if n is not pillar_idx) / (
+                                len(nbr_incident_edges) - 1) if nbr_incident_edges else 0
+
+                diff = abs(pillar_strength - nbr_strength)
                 sim = 1 - diff
                 similarity_dict[(pillar, nbr)] = (round(diff, 3), round(sim, 3))
 
     return similarity_dict
 
 
+def non_nbrs_similarity_by_strength(G, nodes_strength):
+    neighbors = get_alive_pillars_to_alive_neighbors()
+    pillars = list(neighbors.keys())
+    pillar_strength = {}
+    for node_idx in nodes_strength:
+        coor = G.nodes[node_idx]['pos']
+        pillar_strength[coor] = nodes_strength[node_idx]
+
+    similarity_dict = {}
+    for pillar1 in pillars:
+        for pillar2 in pillars:
+            if pillar1 is not pillar2 and (pillar1, pillar2) not in similarity_dict and \
+                    (pillar2, pillar1) not in similarity_dict and pillar2 not in neighbors[pillar1]:
+                diff = abs(pillar_strength[pillar1] - pillar_strength[pillar2])
+                sim = 1 - diff
+                similarity_dict[(pillar1, pillar2)] = (round(diff, 3), round(sim, 3))
+
+    return similarity_dict
+
+
+def get_pillar_to_avg_similarity_dict(nbrs_similarity_dict, non_nbrs_similarity_dict):
+    pillars = set([element for tup in list(nbrs_similarity_dict.keys()) for element in tup])
+
+    pillar_to_nbrs_and_non_nbrs_avg_sim = {}
+    for p in pillars:
+        nbrs_sim = []
+        for k, v in nbrs_similarity_dict.items():
+            if p in k:
+                nbrs_sim.append(v[1])
+        avg_nbrs_sim = np.mean(nbrs_sim)
+        non_nbrs_sim = []
+        for k, v in non_nbrs_similarity_dict.items():
+            if p in k:
+                non_nbrs_sim.append(v[1])
+        avg_non_nbrs_sim = np.mean(non_nbrs_sim)
+        pillar_to_nbrs_and_non_nbrs_avg_sim[p] = (avg_nbrs_sim, avg_non_nbrs_sim)
+
+    return pillar_to_nbrs_and_non_nbrs_avg_sim
+
+
+def nbrs_level_to_similarities(G, nbrs_similarity_dict, non_nbrs_similarity_dict):
+    level_to_similarities = {}
+
+    level_1_sims = [v[1] for v in nbrs_similarity_dict.values()]
+    level_to_similarities[1] = level_1_sims
+
+    for k, v in non_nbrs_similarity_dict.items():
+        node1_idx = next((i for i, p in G.nodes(data=True) if p.get('pos') == k[0]), None)
+        node2_idx = next((i for i, p in G.nodes(data=True) if p.get('pos') == k[1]), None)
+        try:
+            level = nx.shortest_path_length(G, source=node1_idx, target=node2_idx)
+            if level not in level_to_similarities:
+                level_to_similarities[level] = []
+            level_to_similarities[level].append(v[1])
+        except:
+            continue
+
+    sorted_level_to_similarities = {k: level_to_similarities[k] for k in sorted(level_to_similarities)}
+
+    # keep only the degree in which the number of similarity values is higher than 50% of the largest similarity degree list
+    max_list_values = max([len(v) for v in sorted_level_to_similarities.values()])
+
+    cut_dict = {key: value for key, value in sorted_level_to_similarities.items() if len(value) >= max_list_values*0.5 or key==1}
+
+    return cut_dict
+
+
+def similarity_to_nbrhood_level_correlation(level_to_similarities_dict):
+    nbrhood_level_list = list(level_to_similarities_dict.keys())
+    levels = []
+    for l in nbrhood_level_list:
+        for i in range(len(level_to_similarities_dict[l])):
+            levels.append(l)
+    simis = list(level_to_similarities_dict.values())
+    flattened_list_sims = [item for sublist in simis for item in sublist]
+    corr = np.corrcoef(np.array(levels), flattened_list_sims)[0][1]
+
+    return corr
+
+
 def test_avg_similarity_significance(num_permutations=1000, alpha=0.05):
     G = build_pillars_graph(random_neighbors=False, shuffle_ts=False, draw=False)
     ns, strong_nodes, _ = nodes_strengths(G, draw=False)
-    sim_dict = nodes_similarity_by_strength(G, ns)
+    sim_dict = nbrs_nodes_similarity_by_strength(G, ns)
     vals = sim_dict.values()
     sim = [v[1] for v in vals]
     avg_sim = np.mean(sim)
@@ -1456,7 +1559,7 @@ def test_avg_similarity_significance(num_permutations=1000, alpha=0.05):
     for i in range(num_permutations):
         random_G = build_pillars_graph(random_neighbors=False, shuffle_ts=True, draw=False)
         random_ns, random_strong_nodes, _ = nodes_strengths(random_G, draw=False)
-        random_sim_dict = nodes_similarity_by_strength(random_G, random_ns)
+        random_sim_dict = nbrs_nodes_similarity_by_strength(random_G, random_ns)
         random_vals = random_sim_dict.values()
         random_sim = [v[1] for v in random_vals]
         random_avg_sim = np.mean(random_sim)
@@ -1472,7 +1575,8 @@ def test_avg_similarity_significance(num_permutations=1000, alpha=0.05):
     return avg_sim, permuted_test_statistics, p_value
 
 
-def strong_nodes_avg_distance_from_center(G, alive_centers, strong_nodes, all_nodes_strength=None, removed_nodes=None, draw=False):
+def strong_nodes_avg_distance_from_center(G, alive_centers, strong_nodes, all_nodes_strength=None, removed_nodes=None,
+                                          draw=False):
     central_point = (np.mean([x[0] for x in alive_centers]), np.mean([x[1] for x in alive_centers]))
 
     # Calculate distances and average distance

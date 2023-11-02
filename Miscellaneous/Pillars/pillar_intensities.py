@@ -148,14 +148,36 @@ def get_cell_avg_intensity():
             if alive_pillar not in alive_pillars_to_frame:
                 alive_pillars_to_frame[alive_pillar] = frame
 
-    pillars_avg_intens = []
+    pillars_avg_intens = {}
     for p, intens in p_to_intens.items():
         start_living_frame = alive_pillars_to_frame[p]
         avg_p_intens = np.mean(intens[start_living_frame:])
-        pillars_avg_intens.append(avg_p_intens)
+        pillars_avg_intens[p] = avg_p_intens
 
-    total_avg_intensity = np.mean(pillars_avg_intens)
-    return total_avg_intensity
+    total_avg_intensity = np.mean(list(pillars_avg_intens.values()))
+    return total_avg_intensity, pillars_avg_intens
+
+
+def get_cell_avg_ts():
+    p_to_intens = get_overall_alive_pillars_to_intensities()
+    frame_to_alive_pillars = get_alive_center_ids_by_frame_v3()
+    alive_pillars_to_frame = {}
+    for frame, alive_pillars_in_frame in frame_to_alive_pillars.items():
+        for alive_pillar in alive_pillars_in_frame:
+            if alive_pillar not in alive_pillars_to_frame:
+                alive_pillars_to_frame[alive_pillar] = frame
+
+    avg_ts = []
+    total_frames = len(list(p_to_intens.values())[0])
+    for frame in range(total_frames):
+        intens_in_frame = []
+        for p, intens in p_to_intens.items():
+            if alive_pillars_to_frame[p] <= frame:
+                intens_in_frame.append(intens[frame])
+        frame_avg_intens = np.mean(intens_in_frame)
+        avg_ts.append(frame_avg_intens)
+
+    return avg_ts
 
 
 def show_pillars_location_by_frame(frame_to_alive_pillar_loc_used_for_intensities):
