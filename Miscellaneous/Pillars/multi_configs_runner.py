@@ -4,6 +4,7 @@ from runner import *
 from pathlib import Path
 from scipy.stats import ttest_1samp
 import plotly.express as px
+from sklearn.manifold import TSNE
 
 if __name__ == '__main__':
 
@@ -45,7 +46,7 @@ if __name__ == '__main__':
         # '5.3/exp_20230320-06-9_type_5.3_mask_15_35_non-normalized_fixed.json',
         #
         # '5.3/exp_20230323-01-1_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-01-2_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-01-2_type_5.3_mask_15_35_non-normalized_fixed.json',
         # '5.3/exp_20230323-01-3_type_5.3_mask_15_35_non-normalized_fixed.json',
         # '5.3/exp_20230323-01-4_type_5.3_mask_15_35_non-normalized_fixed.json',
         # '5.3/exp_20230323-01-5_type_5.3_mask_15_35_non-normalized_fixed.json',
@@ -54,7 +55,7 @@ if __name__ == '__main__':
         # '5.3/exp_20230323-01-8_type_5.3_mask_15_35_non-normalized_fixed.json',
         # #
         # '5.3/exp_20230323-03-1_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-03-2_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-03-2_type_5.3_mask_15_35_non-normalized_fixed.json',
         # '5.3/exp_20230323-03-3_type_5.3_mask_15_35_non-normalized_fixed.json',
         # '5.3/exp_20230323-03-4_type_5.3_mask_15_35_non-normalized_fixed.json',
         # '5.3/exp_20230323-03-5_type_5.3_mask_15_35_non-normalized_fixed.json',
@@ -63,7 +64,7 @@ if __name__ == '__main__':
         # '5.3/exp_20230323-03-8_type_5.3_mask_15_35_non-normalized_fixed.json',
         # #
         # '5.3/exp_20230323-04-1_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-04-2_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-04-2_type_5.3_mask_15_35_non-normalized_fixed.json',
         # '5.3/exp_20230323-04-3_type_5.3_mask_15_35_non-normalized_fixed.json',
         # '5.3/exp_20230323-04-4_type_5.3_mask_15_35_non-normalized_fixed.json',
         # '5.3/exp_20230323-04-5_type_5.3_mask_15_35_non-normalized_fixed.json',
@@ -72,7 +73,7 @@ if __name__ == '__main__':
         # '5.3/exp_20230323-04-8_type_5.3_mask_15_35_non-normalized_fixed.json',
         #
         # '5.3/exp_20230323-05-1_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-05-2_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-05-2_type_5.3_mask_15_35_non-normalized_fixed.json',
         # '5.3/exp_20230323-05-3_type_5.3_mask_15_35_non-normalized_fixed.json',
         # '5.3/exp_20230323-05-4_type_5.3_mask_15_35_non-normalized_fixed.json',
         # '5.3/exp_20230323-05-5_type_5.3_mask_15_35_non-normalized_fixed.json',
@@ -81,32 +82,32 @@ if __name__ == '__main__':
         # '5.3/exp_20230323-05-8_type_5.3_mask_15_35_non-normalized_fixed.json',
         #
         # '5.3/exp_20230323-06-1_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-06-2_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-06-2_type_5.3_mask_15_35_non-normalized_fixed.json',
         # '5.3/exp_20230323-06-3_type_5.3_mask_15_35_non-normalized_fixed.json',
         # '5.3/exp_20230323-06-4_type_5.3_mask_15_35_non-normalized_fixed.json',
         # '5.3/exp_20230323-06-5_type_5.3_mask_15_35_non-normalized_fixed.json',
         # '5.3/exp_20230323-06-8_type_5.3_mask_15_35_non-normalized_fixed.json',
         #
         # '5.3/exp_20230323-07-1_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-07-2_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-07-2_type_5.3_mask_15_35_non-normalized_fixed.json',
         # '5.3/exp_20230323-07-4_type_5.3_mask_15_35_non-normalized_fixed.json',
         # '5.3/exp_20230323-07-5_type_5.3_mask_15_35_non-normalized_fixed.json',
         # '5.3/exp_20230323-07-8_type_5.3_mask_15_35_non-normalized_fixed.json',
         #
         # '5.3/exp_20230323-08-1_type_5.3_mask_15_35_non-normalized_fixed.json',
         '5.3/exp_20230323-08-2_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-08-3_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-08-3_type_5.3_mask_15_35_non-normalized_fixed.json', # not very good video - cell moving
         # '5.3/exp_20230323-08-4_type_5.3_mask_15_35_non-normalized_fixed.json',
         # '5.3/exp_20230323-08-5_type_5.3_mask_15_35_non-normalized_fixed.json',
         # '5.3/exp_20230323-08-8_type_5.3_mask_15_35_non-normalized_fixed.json',
         #
         # '5.3/exp_20230323-09-1_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_20230323-09-2_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-09-2_type_5.3_mask_15_35_non-normalized_fixed.json',  #not good video for superpixel
         # '5.3/exp_20230323-09-4_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-09-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-09-5_type_5.3_mask_15_35_non-normalized_fixed.json', # looks like shit
         # '5.3/exp_20230323-09-8_type_5.3_mask_15_35_non-normalized_fixed.json',
         #
-        # '5.3/exp_20230323-10-1_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_20230323-10-1_type_5.3_mask_15_35_non-normalized_fixed.json', #not good video for superpixel
         # '5.3/exp_20230323-10-4_type_5.3_mask_15_35_non-normalized_fixed.json',
         # '5.3/exp_20230323-10-5_type_5.3_mask_15_35_non-normalized_fixed.json',
         # '5.3/exp_20230323-10-8_type_5.3_mask_15_35_non-normalized_fixed.json',
@@ -264,7 +265,7 @@ if __name__ == '__main__':
         # '13.2/exp_01_type_13.2_mask_15_35_non-normalized_fixed.json',
         # '13.2/exp_05_type_13.2_mask_15_35_non-normalized_fixed.json',
         # '13.2/exp_06_type_13.2_mask_15_35_non-normalized_fixed.json',
-        # '13.2/exp_20_type_13.2_mask_15_35_non-normalized_fixed.json',
+        # '13.2/exp_20_tshype_13.2_mask_15_35_non-normalized_fixed.json',
 
         # '13.2/exp_20230319-1-149-1_type_13.2_mask_15_35_non-normalized_fixed.json',
         # '13.2/exp_20230319-1-149-2_type_13.2_mask_15_35_non-normalized_fixed.json',
@@ -363,7 +364,7 @@ if __name__ == '__main__':
         # '13.2/exp_2023071201-02-4_type_13.2_mask_15_35_non-normalized_fixed.json',
         # '13.2/exp_2023071201-02-5_type_13.2_mask_15_35_non-normalized_fixed.json',
         # '13.2/exp_2023071201-02-6_type_13.2_mask_15_35_non-normalized_fixed.json',
-        #
+        # #
         # ### After blebbing exps01 ####
         # '13.2/exp_2023071201-04-1_type_13.2_bleb_mask_15_35_non-normalized_fixed.json',
         # '13.2/exp_2023071201-04-2_type_13.2_bleb_mask_15_35_non-normalized_fixed.json',
@@ -410,7 +411,7 @@ if __name__ == '__main__':
     ]
 
     Consts.SHOW_GRAPH = True
-    Consts.WRITE_OUTPUT = True
+    Consts.WRITE_OUTPUT = False
 
     # # TODO: delete
     nbrs_corrs = []
@@ -419,14 +420,14 @@ if __name__ == '__main__':
     list_132 = []
     # nbrs_corrs_new_rad = []
     # non_nbrs_corrs_new_rad = []
-    # nbrs_corrs_53 = []
-    # non_nbrs_corrs_53 = []
-    nbrs_corrs_before_blebb = []
-    non_nbrs_corrs_before_blebb = []
-    # nbrs_corrs_132 = []
-    # non_nbrs_corrs_132 = []
-    nbrs_corrs_after_blebb = []
-    non_nbrs_corrs_after_blebb = []
+    nbrs_corrs_53 = []
+    non_nbrs_corrs_53 = []
+    # nbrs_corrs_before_blebb = []
+    # non_nbrs_corrs_before_blebb = []
+    nbrs_corrs_132 = []
+    non_nbrs_corrs_132 = []
+    # nbrs_corrs_after_blebb = []
+    # non_nbrs_corrs_after_blebb = []
     delta_corrs_before = []
     delta_corrs_after = []
     # non_nbrs_corrs_bleb_132 = []
@@ -469,12 +470,24 @@ if __name__ == '__main__':
     similarity = []
     avg_nbrs_sim_lst = []
     avg_non_nbrs_sim_lst = []
+    avg_nbrs_sim_lst_53 = []
+    avg_non_nbrs_sim_lst_53 = []
+    avg_nbrs_sim_lst_132 = []
+    avg_non_nbrs_sim_lst_132 = []
     all_sims = {}
+    core_avgs = []
+    periphery_avgs = []
+    lag_avg_corrs = []
+    similarity_nbrs_vs_nonbrs = []
+    all_data_df = pd.DataFrame()
 
     # radiuses_by_0_10 = ['(15, 35)', '(0, 10)', '(10, 30)', '(20, 40)', '(15, 40)', '(10, 40)']
     # my_dict_0_10 = {k: [] for k in radiuses_by_0_10}
     # radiuses_by_0_15 = ['(15, 35)', '(0, 15)', '(10, 30)', '(20, 40)', '(15, 40)', '(10, 40)']
     # my_dict_0_15 = {k: [] for k in radiuses_by_0_15}
+    #
+    # radiuses = ['(15, 35)', '(0, 10)', '(0, 15)', '(10, 30)', '(20, 40)', '(15, 40)', '(10, 40)']
+    # my_dict = {k: [] for k in radiuses}
     #####
 
     for config_path in config_paths:
@@ -489,7 +502,8 @@ if __name__ == '__main__':
         ######
         # f = open(Consts.RESULT_FOLDER_PATH + "/avg_corr_peripheral_vs_central.json")
         # corrs_dict = json.load(f)
-        exps.append(exp_name)
+        # exps.append(exp_name)
+        # exps_type.append(exp_type)
         # center_corrs.append(corrs_dict["centrals"])
         # periph_corrs.append(corrs_dict["peripherals"])
         ######
@@ -544,11 +558,12 @@ if __name__ == '__main__':
         # map_radius_corrs_0_10 = eval(map_radius_corrs_0_10[0])
         # for k, v in map_radius_corrs_0_10.items():
         #     my_dict_0_10[str(k)].append(float(v['nbrs_corrs']))
-        # map_radius_corrs_0_15 = get_experiment_results_data(Consts.RESULT_FOLDER_PATH + '/results.csv',
-        #                                                ['correlations_norm_by_noise_(0,15)'])
-        # map_radius_corrs_0_15 = eval(map_radius_corrs_0_15[0])
-        # for k, v in map_radius_corrs_0_15.items():
-        #     my_dict_0_15[str(k)].append(float(v['nbrs_corrs']))
+
+        # map_radius_corrs = get_experiment_results_data(Consts.RESULT_FOLDER_PATH + '/results.csv',
+        #                                                ['change_mask_radius'])
+        # map_radius_corrs = eval(map_radius_corrs[0])
+        # for k, v in map_radius_corrs.items():
+        #     my_dict[str(k)].append(float(v['nbrs_corrs']))
         # exps_type.append('(15,35)')
         # my_dict['(15, 35)'].append(float(nbrs_avg_correlation))
 
@@ -726,40 +741,177 @@ if __name__ == '__main__':
         # p_to_intens, avg_ts, total_avg_intensity, pillars_avg_raw_intens, pillars_strength = run_config(config_path)
 
         # nbrs_sim_lst, non_nbrs_sim_lst = run_config(config_path)
-        # plot_distribution_similarity_of_exp_nbrs_vs_non_nbrs(nbrs_sim_lst, non_nbrs_sim_lst)
+        # p_val = plot_distribution_similarity_of_exp_nbrs_vs_non_nbrs(nbrs_sim_lst, non_nbrs_sim_lst)
+        # similarity_nbrs_vs_nonbrs.append(p_val)
+        # avg_nbrs, avg_nonbrs = run_config(config_path)
+        # if avg_nbrs > avg_nonbrs:
+        #     similarity_nbrs_vs_nonbrs.append(1)
+        # else:
+        #     similarity_nbrs_vs_nonbrs.append(0)
 
         # avg_nbrs_sim, avg_non_nbrs_sim = run_config(config_path)
         # avg_nbrs_sim_lst.append(avg_nbrs_sim)
         # avg_non_nbrs_sim_lst.append(avg_non_nbrs_sim)
+        # exps_type.append(exp_type)
 
-        level_to_similarities = run_config(config_path)
-        print(similarity_to_nbrhood_level_correlation(level_to_similarities))
+        # level_to_similarities = run_config(config_path)
+        # # print(similarity_to_nbrhood_level_correlation(level_to_similarities))
         # for k, v in level_to_similarities.items():
         #     if k not in all_sims.keys():
         #         all_sims[k] = []
         #     all_sims[k].extend(v)
 
+        # core_strength, periphery_strength = run_config(config_path)
+        # print("Average core:", "%.3f" % np.mean(core_strength))
+        # print("Average periphery:", "%.3f" % np.mean(periphery_strength))
+        # core_corrs, periphery_corrs, border_corrs = run_config(config_path)
+        # print("Average core:", "%.3f" % np.mean(core_corrs))
+        # print("Average periphery:", "%.3f" % np.mean(periphery_corrs))
+        # print("Average border:", "%.3f" % np.mean(border_corrs))
+        # nbrs_sims, core_sims, periphery_sims, border_sims = run_config(config_path)
+        # print("Average nbrs similarity:", "%.3f" % np.mean(nbrs_sims))
+        # print("Average core:", "%.3f" % np.mean(core_sims))
+        # print("Average periphery:", "%.3f" % np.mean(periphery_sims))
+        # print("Average border:", "%.3f" % np.mean(border_sims))
+        # plt.bar(['total avg', 'core avg', 'periphery avg', 'border avg'],
+        #         [np.mean(nbrs_sims), np.mean(core_sims), np.mean(periphery_sims), np.mean(border_sims)])
+        # plt.show()
+        # avg_core_sim, avg_periphery_sim = run_config(config_path)
+        # core_avgs.append(avg_core_sim)
+        # periphery_avgs.append(avg_periphery_sim)
+
         # p_2_sim_dict = run_config(config_path)
+        # lag_to_avg_corr_dict = run_config(config_path)
+        # lag_avg_corrs.append(lag_to_avg_corr_dict)
+
+        ### t-SNE ###
+        # p_to_intns = run_config(config_path)
+        # if len(list(p_to_intns.values())[0]) < 120 or len(list(p_to_intns.values())[0]) > 122:
+        #     continue
+        # id_to_intns = {exp_name+str(k): v for k, v in p_to_intns.items()}
+        # df = pd.DataFrame(id_to_intns.items(), columns=['id', 'time_series'])
+        # type_series = pd.Series([exp_type] * len(df))
+        # df['type'] = type_series
+        # # for i, p in enumerate(list(p_to_intns.keys())):
+        # #     if p in core:
+        # #         df.loc[i, 'loc'] = 'core'
+        # #     if p in periph:
+        # #         df.loc[i, 'loc'] = 'periphery'
+        # time_series_expanded = df['time_series'].apply(pd.Series)
+        # time_series_expanded.columns = [str(i) for i in time_series_expanded.columns]
+        # result_df = pd.concat([df.drop('time_series', axis=1), time_series_expanded], axis=1)
+        # # result_df = df.drop('time_series', axis=1)
+        # X = result_df.drop(['id', 'type'], axis=1)
+        # # feature_list = X.apply(lambda row: extract_ts_features(row), axis=1)
+        # # X_features = pd.DataFrame(feature_list.tolist())
+        # df = pd.concat([df.drop(['time_series'], axis=1), X], axis=1)
+        # # df['id'] = exp_name
+        # # df = df.groupby(['id', 'type'], as_index=False).mean()
+        # all_data_df = pd.concat([all_data_df, df], axis=0)
+        # all_data_df.reset_index(drop=True, inplace=True)
+
+        # p_to_intns = run_config(config_path)
+        # row = {'experiment name': exp_name, 'type': exp_type, 'number of pillars': len(p_to_intns.keys()), 'average intensity': np.mean([np.mean(i) for i in list(p_to_intns.values())])}
+        # all_data_df = all_data_df.append(row, ignore_index=True)
+
 
         ##################################### RUN  ############################################
-        # run_config(config_path)
+        run_config(config_path)
 
         # try:
-        #     # run_config(config_path)
-        #     avg_sim, permuted_test_statistics, p_value = run_config(config_path)
-        #     map_exp_to_statistics_original_and_random_avg_similarity[exp_name] = (
-        #         avg_sim, permuted_test_statistics, p_value)
+        #     run_config(config_path)
+        # #     # observed_diff, permuted_diffs, p_value = run_config(config_path)
+        # #     # map_exp_to_statistics_original_and_random_avg_similarity[exp_name] = (
+        # #     #     observed_diff, permuted_diffs, p_value)
         # except Exception as error:
         #     print("there was an error in config path " + str(config_path) + str(error))
         # print(config_path, "completed")
         ##################################### RUN  ############################################
 
-    # plot_avg_similarity_by_nbrhood_degree(all_sims)
 
+############################### t-SNE ##################################
+    # X = all_data_df.drop(['id', 'type'], axis=1)
+    # # loc_dummies = pd.get_dummies(X['loc'])
+    # # X = pd.concat([X.drop('loc', axis=1), loc_dummies], axis=1)
+    # # feature_list = X.apply(lambda row: extract_ts_features(row), axis=1)
+    # # X_features = pd.DataFrame(feature_list.tolist())
+    # y = all_data_df['type'].astype('category')
+    # all_data_df['type'] = all_data_df['type'].astype('category')
+    # color_map = {'13.2': 'tab:red', '5.3': 'tab:green'}
+    # all_data_df['color'] = all_data_df['type'].map(color_map)
+    # # category_colors = category_codes.map(color_map)
+    # tsne = TSNE(n_components=2, perplexity=30, learning_rate=200, n_iter=1000, random_state=42)
+    # X_tsne = tsne.fit_transform(X)
+    # all_data_df['tsne-2d-one'] = X_tsne[:, 0]
+    # all_data_df['tsne-2d-two'] = X_tsne[:, 1]
+    # g = sns.jointplot(
+    #     data=all_data_df,
+    #     x='tsne-2d-one',
+    #     y='tsne-2d-two',
+    #     hue='type',
+    #     palette=color_map,
+    #     marginal_kws=dict(shade=True),
+    #     alpha=0.3
+    # )
+    # g.set_axis_labels('First t-SNE component', 'Second t-SNE component')
+    # g.fig.subplots_adjust(top=0.9)
+    # # g.add_legend(title='Type')
+    # plt.show()
+    # # # plt.figure(figsize=(10, 6))
+    # # # scatter = plt.scatter(X_tsne[:, 0], X_tsne[:, 1], c=category_colors, alpha=0.3)
+    # # plt.xlabel('First t-SNE')
+    # # plt.ylabel('Second t-SNE')
+    # # # plt.colorbar(scatter)
+    # # plt.show()
+
+    # significants = [1 if p < 0.1 else 0 for p in similarity_nbrs_vs_nonbrs]
+    # print("number of significant results:", np.sum(significants), "/", len(significants))
+    # plot_average_correlation_neighbors_vs_non_neighbors(non_nbrs_corrs, nbrs_corrs, labels=exps)
+    # plot_average_correlation_neighbors_vs_non_neighbors(non_nbrs_corrs, nbrs_corrs, labels=exps, title='Average Correlation - 5.3 vs 13.2')
+    # nbrs53 = [a for i, a in enumerate(avg_nbrs_sim_lst) if exps_type[i] == '5.3']
+    # nbrs132 = [a for i, a in enumerate(avg_nbrs_sim_lst) if exps_type[i] == '13.2']
+    # print("Average 5.3 nbrs similarity:", "%.3f" % np.mean(nbrs53))
+    # print("Average 13.2 nbrs similarity:", "%.3f" % np.mean(nbrs132))
+    # t_stat, p_value = ttest_ind(nbrs53, nbrs132)
+    # print("P-Value: ", p_value)
+
+    # for i, dict in enumerate(lag_avg_corrs):
+    #     lags = dict.keys()
+    #     avg_corrs = dict.values()
+    #     plt.plot(lags, avg_corrs, label=exps[i])
+    # plt.axvline(x=0, color="gainsboro", linestyle="--")
+    # plt.axhline(y=0, color="gainsboro", linestyle="--")
+    # plt.xlabel('lag')
+    # plt.ylabel('avg correlation')
+    # plt.title('Avg Correlation in Lag')
+    # plt.legend(title='Experiment')
+    # plt.show()
+    # plot_average_correlation_neighbors_vs_non_neighbors(periphery_avgs, core_avgs, labels=exps,
+    #                                                     title='Experiment Avg Similarity Core vs. Periphery',
+    #                                                     xlabel='Periphery', ylabel='Core')
+    # print("Average core similarity:", "%.3f" % np.mean(core_avgs))
+    # print("Average periphery similarity:", "%.3f" % np.mean(periphery_avgs))
+    # t_stat, p_value = ttest_ind(core_avgs, periphery_avgs)
+    # print("P-Value: ", p_value)
+
+    # sns.histplot(core_corrs, label="core", kde=True, alpha=0.3)
+    # sns.histplot(periphery_corrs, label="core", kde=True, alpha=0.3)
+    # plt.show()
+    # print("Average core:", "%.3f" % np.mean(core_corrs))
+    # print("Average periphery:", "%.3f" % np.mean(periphery_corrs))
+    # print("Average border:", "%.3f" % np.mean(border_corrs))
+    # t_stat, p_value = ttest_ind(core_corrs, periphery_corrs)
+    # print("P-Value: ", p_value)
+
+    # max_list_values = max([len(v) for v in all_sims.values()])
+    # cut_dict = {key: value for key, value in all_sims.items() if
+    #             len(value) >= max_list_values * 0.5 or key == 1}
+    # plot_avg_correlation_by_nbrhood_degree(cut_dict)
+    # print(correlation_between_nbrhood_level_to_avg_correlation(cut_dict))
 
     # nbrs_sim = [tup[0] for tup in list(p_2_sim_dict.values())]
     # non_nbrs_sim = [tup[1] for tup in list(p_2_sim_dict.values())]
-    # plot_average_correlation_neighbors_vs_non_neighbors(avg_non_nbrs_sim_lst, avg_nbrs_sim_lst, labels=exps,
+    # plot_average_correlation_neighbors_vs_non_neighbors(avg_non_nbrs_sim_lst, avg_nbrs_sim_lst, labels=exps_type,
     #                                                     title='Experiment Avg Similarity Neighbors vs. Non-Neighbors',
     #                                                     xlabel='Non-Neighbors avg similarity', ylabel='Neighbors avg similarity')
     # print("Average neighbors similarity:", "%.3f" % np.mean(avg_nbrs_sim_lst))
@@ -804,9 +956,9 @@ if __name__ == '__main__':
     # plt.legend()
     # plt.show()
 
-    # with open('../map_vid_to_original_and_shuffle_ts_500_avg_sim_with_pval_5.3_exps', 'wb') as f:
+    # with open('../map_vid_to_original_and_shuffle_ts_500_avg_core_periphery_sim_diff_with_pval_5.3_20230323_cell_2_exps', 'wb') as f:
     #     pickle.dump(map_exp_to_statistics_original_and_random_avg_similarity, f)
-    # with open('../map_vid_to_strong_nodes_original_and_shuffle_ts_largest_cc_with_pval_5.3_exps', 'rb') as file:
+    # with open('../map_vid_to_original_and_shuffle_ts_500_avg_core_periphery_sim_diff_with_pval_5.3_20230323_cell_2_exps', 'rb') as file:
     #     loaded_dict_53 = pickle.load(file)
     # with open('../map_vid_to_original_and_shuffle_ts_500_avg_sim_with_pval_5.3_exps', 'rb') as file:
     #     loaded_dict_132 = pickle.load(file)
@@ -979,9 +1131,9 @@ if __name__ == '__main__':
     # plt.show()
 
     #### change in correlation by radius - control and sensitivity ####
-    # df = pd.DataFrame.from_dict(my_dict_0_15)
-    # means = [np.mean(df[col]) for col in list(df.columns)]
-    # median = [np.median(df[col]) for col in list(df.columns)]
+    # df = pd.DataFrame.from_dict(my_dict)
+    # means = [(df[col].mean()) for col in list(df.columns)]
+    # median = [(df[col].median()) for col in list(df.columns)]
     # print("means", [float("%.3f" % m) for m in means])
     # print("median", median)
     # box_plot = sns.boxplot(data=df)
@@ -989,9 +1141,9 @@ if __name__ == '__main__':
     #     box_plot.annotate(str("%.3f" % median[i]), xy=(i+0.2, median[i]), ha='right', color='white', fontsize="8")
     # plt.ylabel("Neighbors Correlations", size=10)
     # plt.xlabel("Radius", size=10)
-    # plt.title("Neighbors Correlations of Different Radius - 5.3 exp202308018 After Blebb")
+    # plt.title("Neighbors Correlations of Different Radius - 13.2")
     # plt.show()
-    ##t-test for control##
+    # ##t-test for control##
     # rad_0_15 = df['(0, 15)']
     # rad_15_35 = df['(15, 35)']
     # t_stat, p_value = ttest_ind(rad_0_15, rad_15_35)
@@ -1113,6 +1265,7 @@ if __name__ == '__main__':
     # sns.distplot(diff_132, kde=True, label='13.2', color='red')
     # plt.axvline(x=0, color="gainsboro", linestyle="--")
     # plt.xlabel("sub(avg_nbrs_corrs, avg_non_nbrs_corrs)")
+    # plt.title("Delta correlations of nbrs and non-nbrs histogram")
     # plt.legend()
     # plt.show()
 

@@ -353,6 +353,14 @@ def get_image_whiten(img):
     return img
 
 
+def get_mask_radiuses(mask_radius):
+    small_mask_radius_ratio = mask_radius['small_radius'] / 20
+    large_mask_radius_ratio = mask_radius['large_radius'] / 20
+    small = math.floor(Consts.CIRCLE_RADIUS_FOR_MASK_CALCULATION * small_mask_radius_ratio)
+    large = math.floor(Consts.CIRCLE_RADIUS_FOR_MASK_CALCULATION * large_mask_radius_ratio)
+    return {'small': small, 'large': large}
+
+
 def get_all_center_generated_ids():
     if Consts.USE_CACHE and os.path.isfile(Consts.centers_cache_path):
         with open(Consts.centers_cache_path, 'rb') as handle:
@@ -492,7 +500,6 @@ def get_seen_centers_for_mask(img=None, all_center_ids=None):
                     not np.linalg.norm(np.array(fixed_tagged_center) - np.array(closest_center_to_tagged)) < \
                         Consts.MAX_DISTANCE_PILLAR_FIXED:
                 alive_centers_fixed.append(fixed_tagged_center)
-
 
     if original_image is None and all_center_ids is None and Consts.USE_CACHE:
 
@@ -1381,5 +1388,3 @@ def closest_to_point(points, target):
     if len(points) == 0:
         return None
     return min(points, key=lambda point: math.hypot(target[1] - point[1], target[0] - point[0]))
-
-

@@ -7,201 +7,207 @@ from statsmodels.tsa.api import VAR
 from Pillars.analyzer import *
 from Pillars.consts import *
 import pandas as pd
+import statsmodels.api as sm
 
 
-MAXLAG = 10
+def differencing_time_series(pillar_to_intens_dict):
+    pillar_to_differenced_intens = {node: np.diff(series) for node, series in pillar_to_intens_dict.items()}
+
+    return pillar_to_differenced_intens
 
 
-def grangers_causation_matrix(data, variables, maxlag=4, test='ssr_chi2test'):
-    """Check Granger Causality of all possible combinations of the Time series.
-    The rows are the response variable, columns are predictors. The values in the table
-    are the P-Values. P-Values lesser than the significance level (0.05), implies
-    the Null Hypothesis that the coefficients of the corresponding past values is
-    zero, that is, the X does not cause Y can be rejected.
+def get_stationary_and_non_stationary_pillars(pillar_to_intens_dict):
+    def check_stationarity(time_series):
+        result = sm.tsa.adfuller(time_series, autolag='AIC')
+        return result[1] <= 0.05
 
-    data      : pandas dataframe containing the time series variables
-    variables : list containing names of the time series variables.
-    """
-    df = pd.DataFrame(np.zeros((len(variables), len(variables))), columns=variables, index=variables)
-    for c in df.columns:
-        for r in df.index:
-            test_result = grangercausalitytests(data[[r, c]], maxlag=maxlag, verbose=False)
-            p_values = [round(test_result[i + 1][0][test][1], 4) for i in range(maxlag)]
-            min_p_value = np.min(p_values)
-            df.loc[r, c] = min_p_value
-    df.columns = [var for var in variables]
-    df.index = [var for var in variables]
-    return df
-
-
-def stationary_test(df, method='adf'):
-    non_stationary = []
-    for i, p in enumerate(df.columns):
-        if method == 'adf':
-            result = adfuller(df[p])
-            if result[1] > Consts.gc_pvalue_threshold:
-                non_stationary.append(p)
-        if method == 'kpss':
-            result = kpss(df[p])
-            if result[1] < Consts.gc_pvalue_threshold:
-                non_stationary.append(p)
-    print(non_stationary)
-    return non_stationary
-
-
-def var_model(df):
-    model = VAR(df)
-    aic_res = []
-    for i in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]:
-        result = model.fit(i)
-        try:
-            aic_res.append((i, result.aic))
-        except:
-            continue
-    if len(aic_res) == 0:
-        maxlag = [4]
-    else:
-        maxlag = min(aic_res, key=lambda t: t[1])
-
-    return maxlag[0]
-
-
-def get_gc_df():
-    if Consts.USE_CACHE and os.path.isfile(Consts.gc_df_cache_path):
-        with open(Consts.gc_df_cache_path, 'rb') as handle:
-            gc_df = pickle.load(handle)
-            return gc_df
-
-    p2i = get_overall_alive_pillars_to_intensities()
-    p2i_df = pd.DataFrame({str(k): v for k, v in p2i.items()})
-    p2i_df_diff = p2i_df.diff().dropna()
-    df_size = len(p2i_df_diff.columns)
-
-    # Check if data is stationary
-    non_stationary_adf = stationary_test(p2i_df_diff, method='adf')
-    stationary_adf_percentage = 100 - ((len(non_stationary_adf) / df_size) * 100)
-    print("adf test - non stationary pillars: " + str(non_stationary_adf))
-    print("adf test - stationary percentage: " + str(stationary_adf_percentage) + "%")
-    if stationary_adf_percentage > Consts.PILLAR_PERCENTAGE_MUST_PASS:
-        non_stationary_kpss = stationary_test(p2i_df_diff, method='kpss')
-        stationary_kpss_percentage = 100 - ((len(non_stationary_kpss) / df_size) * 100)
-        print("kpss test - non stationary pillars: " + str(non_stationary_kpss))
-        print("kpss test - stationary percentage: " + str(stationary_kpss_percentage) + "%")
-        if stationary_kpss_percentage > Consts.PILLAR_PERCENTAGE_MUST_PASS:
-            non_stationary_adf.extend(non_stationary_kpss)
-            stationary_pillars_intens = p2i_df_diff.drop(non_stationary_adf, axis=1)
-            maxlag = var_model(stationary_pillars_intens)
-            gc_df = grangers_causation_matrix(stationary_pillars_intens, stationary_pillars_intens.columns,
-                                              maxlag=maxlag)
-            total_passed = 100 - (len(set(non_stationary_adf)) / df_size * 100)
-            print("total passed stationary test: " + str(total_passed) + "%")
-
-            if Consts.USE_CACHE:
-                with open(Consts.gc_df_cache_path, 'wb') as handle:
-                    pickle.dump(gc_df, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-            return gc_df
+    stationary_p_to_intens = {}
+    non_stationary_pillars = []
+    for pillar, ts in pillar_to_intens_dict.items():
+        if check_stationarity(ts):
+            stationary_p_to_intens[pillar] = ts
         else:
-            raise RuntimeError("Not enough pillars passed stationary kpss test. Pillars passed: " + str(
-                stationary_kpss_percentage) + "%")
-    else:
-        raise RuntimeError(
-            "Not enough pillars passed stationary adf test. Pillars passed: " + str(stationary_adf_percentage) + "%")
+            non_stationary_pillars.append(pillar)
+
+    print("passed stationary", len(stationary_p_to_intens), "not passed stationary", len(non_stationary_pillars))
+    return stationary_p_to_intens, non_stationary_pillars
 
 
-def get_gc_df_test():
-    # if Consts.USE_CACHE and os.path.isfile(Consts.gc_df_cache_path):
-    #     with open(Consts.gc_df_cache_path, 'rb') as handle:
-    #         gc_df = pickle.load(handle)
-    #         return gc_df
-
-    p2i = get_overall_alive_pillars_to_intensities()
-    p2i_df = pd.DataFrame({str(k): v for k, v in p2i.items()})
-    p2i_df_diff = p2i_df.diff().dropna()
-    df_size = len(p2i_df_diff.columns)
-
-    # Check if data is stationary
-    non_stationary_adf = stationary_test(p2i_df_diff, method='adf')
-    stationary_adf_percentage = 100 - ((len(non_stationary_adf) / df_size) * 100)
-    print("adf test - non stationary pillars: " + str(non_stationary_adf))
-    print("adf test - stationary percentage: " + str(stationary_adf_percentage) + "%")
-    if stationary_adf_percentage > Consts.PILLAR_PERCENTAGE_MUST_PASS:
-        non_stationary_kpss = stationary_test(p2i_df_diff, method='kpss')
-        stationary_kpss_percentage = 100 - ((len(non_stationary_kpss) / df_size) * 100)
-        print("kpss test - non stationary pillars: " + str(non_stationary_kpss))
-        print("kpss test - stationary percentage: " + str(stationary_kpss_percentage) + "%")
-        if stationary_kpss_percentage > Consts.PILLAR_PERCENTAGE_MUST_PASS:
-            non_stationary_adf.extend(non_stationary_kpss)
-            stationary_pillars_intens = p2i_df_diff.drop(non_stationary_adf, axis=1)
-            gc_df = grangers_causation_matrix_test(stationary_pillars_intens, stationary_pillars_intens.columns)
-            total_passed = 100 - (len(set(non_stationary_adf)) / df_size * 100)
-            print("total passed stationary test: " + str(total_passed) + "%")
-
-            # if Consts.USE_CACHE:
-            #     with open(Consts.gc_df_cache_path, 'wb') as handle:
-            #         pickle.dump(gc_df, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-            return gc_df
-        else:
-            raise RuntimeError("Not enough pillars passed stationary kpss test. Pillars passed: " + str(
-                stationary_kpss_percentage) + "%")
-    else:
-        raise RuntimeError(
-            "Not enough pillars passed stationary adf test. Pillars passed: " + str(stationary_adf_percentage) + "%")
+def find_optimal_lag(stationary_pillar_to_intensity, max_lag=3):
+    df = pd.DataFrame(stationary_pillar_to_intensity)
+    model = sm.tsa.VAR(df)
+    results = model.select_order(maxlags=max_lag)
+    results.summary()
 
 
-def grangers_causation_matrix_test(data, variables, test='ssr_chi2test'):
-    """Check Granger Causality of all possible combinations of the Time series.
-    The rows are the response variable, columns are predictors. The values in the table
-    are the P-Values. P-Values lesser than the significance level (0.05), implies
-    the Null Hypothesis that the coefficients of the corresponding past values is
-    zero, that is, the X does not cause Y can be rejected.
-
-    data      : pandas dataframe containing the time series variables
-    variables : list containing names of the time series variables.
-    """
-    df = pd.DataFrame(np.zeros((len(variables), len(variables))), columns=variables, index=variables)
-    for c in df.columns:
-        for r in df.index:
-            pillars_pair = data[[r, c]]
-            model = VAR(pillars_pair)
-            adjusted_lag = MAXLAG
-            while True:
-                try:
-                    lags_results = model.select_order(adjusted_lag)
-                    break
-                except np.linalg.LinAlgError as err:
-                    adjusted_lag -= 1
-            lags = [lags_results.aic, lags_results.bic]
-            opt_lag = np.min(lags)
-            ## if the minimum is 0, the maximum will be taken. if it also 0, 1 will be taken.
-            if opt_lag == 0:
-                print(f"at least one if the metrics yield lag 0")
-                opt_lag = np.max([np.max(lags), 4])
-                if np.max(lags) == 0:
-                    print(f"both lags are 0; 4 will be taken")
-            print(f'opt lag for {r} follow {c} = {opt_lag}')
-            test_result = grangercausalitytests(data[[r, c]], maxlag=opt_lag)
-            p_value = test_result[opt_lag][0][test][1]
-            df.loc[r, c] = p_value
-    df.columns = [var for var in variables]
-    df.index = [var for var in variables]
-    return df
+def perform_granger_test(stationary_pillar_to_intensity, maxlag=3):
+    neighbors = get_alive_pillars_to_alive_neighbors()
+    nbrs_granger_results = {}
+    for pillar1 in stationary_pillar_to_intensity:
+        for pillar2 in stationary_pillar_to_intensity:
+            if pillar1 != pillar2 and pillar1 in neighbors[pillar2]:
+                test_result = grangercausalitytests(
+                    list(zip(stationary_pillar_to_intensity[pillar1], stationary_pillar_to_intensity[pillar2])),
+                    maxlag=maxlag, verbose=False
+                )
+                p_values = [test_result[i + 1][0]['ssr_chi2test'][1] for i in range(maxlag)]
+                nbrs_granger_results[(pillar1, pillar2)] = min(p_values)
+    return nbrs_granger_results
 
 
-def get_non_stationary_pillars_lst():
-    p2i = get_overall_alive_pillars_to_intensities()
-    p2i_df = pd.DataFrame({str(k): v for k, v in p2i.items()})
-    p2i_df_diff = p2i_df.diff().dropna()
+def build_gc_graph(gc_dict, threshold=0.05):
+    G = nx.DiGraph()
 
-    non_stationary_adf = stationary_test(p2i_df_diff, method='adf')
-    non_stationary_kpss = stationary_test(p2i_df_diff, method='kpss')
+    nodes_loc = get_alive_pillar_ids_overall_v3()
+    nodes_loc = list(nodes_loc)
+    node_loc2index = {}
+    for i in range(len(nodes_loc)):
+        node_loc2index[str(nodes_loc[i])] = i
+        G.add_node(i, pos=nodes_loc[i])
 
-    non_stationary_pillars = non_stationary_adf.copy()
-    non_stationary_pillars.extend(non_stationary_kpss)
+    for (p1, p2), p_value in gc_dict.items():
+        if p_value < threshold:
+            G.add_edge(node_loc2index[str(p1)], node_loc2index[str(p2)])
 
-    total_passed = 1 - len(set(non_stationary_pillars)) / len(p2i_df_diff.columns)
-    total_passed_percentage = format(total_passed * 100, ".2f")
-    print("total passed stationary test: " + str(total_passed_percentage) + "%")
+    return G
 
-    return non_stationary_pillars, total_passed_percentage
+
+def plot_graph(G):
+    img = get_last_image_whiten(build_image=Consts.build_image)
+    fig, ax = plt.subplots()
+    ax.imshow(img, cmap='gray')
+
+    pos = nx.get_node_attributes(G, 'pos')
+    nodes_loc_y_inverse = {k: (v[1], v[0]) for k, v in pos.items()}
+
+    nx.draw(G, nodes_loc_y_inverse, edge_color='tab:red', width=1.5, node_size=100, arrows=True)
+
+    plt.show()
+
+
+def in_degree_centrality(G):
+    neighbors = get_alive_pillars_to_alive_neighbors()
+    custom_in_degree_centrality = {}
+    max_neighbors = max(len(neighbors[n]) for n in neighbors)
+
+    for i, p in G.nodes(data=True):
+        node_pos = p.get('pos')
+        num_neighbors = len(neighbors[node_pos])
+        raw_in_degree = G.in_degree(i)
+        centrality = raw_in_degree / num_neighbors if num_neighbors > 0 else 0
+        weight_factor = num_neighbors / max_neighbors
+        custom_in_degree_centrality[i] = centrality * weight_factor
+
+    return custom_in_degree_centrality
+
+
+def plot_graph_in_degree_label(G, in_degree_nodes, non_stationary_pillars):
+    img = get_last_image_whiten(build_image=Consts.build_image)
+    fig, ax = plt.subplots()
+    ax.imshow(img, cmap='gray')
+
+    pos = nx.get_node_attributes(G, 'pos')
+    nodes_loc_y_inverse = {k: (v[1], v[0]) for k, v in pos.items()}
+
+    non_stationary_pillars_idx = [i for i, n in G.nodes(data=True) if n.get('pos') in non_stationary_pillars]
+    only_stationary_pillars_data = {k: round(v, 2) for k, v in in_degree_nodes.items() if
+                                    k not in non_stationary_pillars_idx}
+    # avg_weighted_degree = np.sum(list(only_stationary_pillars_data.values())) / len(only_stationary_pillars_data.values())
+    top_weighted_degree = np.percentile(list(only_stationary_pillars_data.values()), 85)
+
+    in_degree_nodes = {k: round(v, 2) for k, v in in_degree_nodes.items()}
+    nodes_color = ['tab:red' if d > top_weighted_degree else 'tab:blue' for n, d in in_degree_nodes.items()]
+    nx.draw(G, nodes_loc_y_inverse, node_size=250, arrows=True, width=1.5, node_color=nodes_color)
+    nx.draw_networkx_labels(G, nodes_loc_y_inverse, labels=in_degree_nodes, font_size=8)
+
+    plt.show()
+
+
+def out_degree_centrality(G):
+    neighbors = get_alive_pillars_to_alive_neighbors()
+    custom_out_degree_centrality = {}
+    max_neighbors = max(len(neighbors[n]) for n in neighbors)
+    for i, p in G.nodes(data=True):
+        node_pos = p.get('pos')
+        num_neighbors = len(neighbors[node_pos])
+        raw_out_degree = G.out_degree(i)
+        centrality = raw_out_degree / num_neighbors if num_neighbors > 0 else 0
+        weight_factor = num_neighbors / max_neighbors
+        custom_out_degree_centrality[i] = centrality * weight_factor
+
+    return custom_out_degree_centrality
+
+
+def plot_graph_out_degree_label(G, out_degree_nodes, non_stationary_pillars):
+    img = get_last_image_whiten(build_image=Consts.build_image)
+    fig, ax = plt.subplots()
+    ax.imshow(img, cmap='gray')
+
+    pos = nx.get_node_attributes(G, 'pos')
+    nodes_loc_y_inverse = {k: (v[1], v[0]) for k, v in pos.items()}
+
+    non_stationary_pillars_idx = [i for i, n in G.nodes(data=True) if n.get('pos') in non_stationary_pillars]
+    only_stationary_pillars_data = {k: round(v, 2) for k, v in out_degree_nodes.items() if
+                                    k not in non_stationary_pillars_idx}
+    # avg_weighted_degree = np.sum(list(only_stationary_pillars_data.values())) / len(only_stationary_pillars_data.values())
+    top_weighted_degree = np.percentile(list(only_stationary_pillars_data.values()), 85)
+
+    out_degree_nodes = {k: round(v, 2) for k, v in out_degree_nodes.items()}
+    nodes_color = ['tab:green' if d > top_weighted_degree else 'tab:blue' for n, d in out_degree_nodes.items()]
+    nx.draw(G, nodes_loc_y_inverse, node_size=250, arrows=True, width=1.5, node_color=nodes_color)
+    nx.draw_networkx_labels(G, nodes_loc_y_inverse, labels=out_degree_nodes, font_size=8)
+
+    plt.show()
+
+
+def plot_main_in_out_centrality_pillars(G, non_stationary_pillars, in_degree_nodes, out_degree_nodes):
+    non_stationary_pillars_idx = [i for i, n in G.nodes(data=True) if n.get('pos') in non_stationary_pillars]
+
+    stationary_pillars = [k for k in in_degree_nodes.keys() if k not in non_stationary_pillars_idx]
+    only_stationary_pillars_data_in = {k: round(v, 2) for k, v in in_degree_nodes.items() if
+                                       k not in non_stationary_pillars_idx}
+    top_weighted_in_degree = np.percentile(list(only_stationary_pillars_data_in.values()), 85)
+
+    only_stationary_pillars_data_out = {k: round(v, 2) for k, v in out_degree_nodes.items() if
+                                        k not in non_stationary_pillars_idx}
+    top_weighted_out_degree = np.percentile(list(only_stationary_pillars_data_out.values()), 85)
+
+    img = get_last_image_whiten(build_image=Consts.build_image)
+    fig, ax = plt.subplots()
+    ax.imshow(img, cmap='gray')
+
+    pos = nx.get_node_attributes(G, 'pos')
+    nodes_loc_y_inverse = {k: (v[1], v[0]) for k, v in pos.items()}
+    nodes_color = [
+        'tab:orange' if p in stationary_pillars and only_stationary_pillars_data_out[p] > top_weighted_out_degree and
+                        only_stationary_pillars_data_in[p] > top_weighted_in_degree else 'tab:blue' for p in
+        in_degree_nodes.keys()]
+    nx.draw(G, nodes_loc_y_inverse, node_size=200, arrows=True, width=1.5, node_color=nodes_color)
+    plt.show()
+
+
+def eigenvector_centrality(G):
+    eigenvector_centrality = nx.eigenvector_centrality(G, max_iter=1000)
+
+    return eigenvector_centrality
+
+
+def connected_component(G):
+    scc = list(nx.strongly_connected_components(G))
+    comp = [c for c in scc if len(c) > 1]
+    color_list = plt.cm.tab10(np.linspace(0, 1, len(comp)))
+    component_map = {node: color_list[cid] for cid, component in enumerate(comp) for node in component}
+    colors = [component_map.get(node, 'tab:blue') for node in G.nodes()]
+
+    # component_map = {node: cid for cid, component in enumerate(comp) for node in component}
+    # colors = [component_map[node] if node in component_map.keys() else 'tab:blue' for node in G.nodes()]
+
+    img = get_last_image_whiten(build_image=Consts.build_image)
+    fig, ax = plt.subplots()
+    ax.imshow(img, cmap='gray')
+
+    pos = nx.get_node_attributes(G, 'pos')
+    nodes_loc_y_inverse = {k: (v[1], v[0]) for k, v in pos.items()}
+
+    nx.draw(G, nodes_loc_y_inverse, node_color=colors, node_size=100, arrows=True)
+    plt.show()

@@ -21,18 +21,20 @@ from matplotlib.animation import PillowWriter
 from Pillars.pillar_neighbors import *
 
 
-def show_last_image_masked(mask_path=None, pillars_mask=None, save_mask=True):
+def show_last_image_masked(mask_path=None, pillars_mask=None, save_mask=True, frame=None):
     """
     show the mask on the video's last image
     :param mask_path:
     :return:
     """
-    last_img = get_last_image()
+    img = get_last_image()
+    if frame is not None:
+        img = frame
 
-    plt.imshow(last_img, cmap=plt.cm.gray)
-    if Consts.RESULT_FOLDER_PATH is not None:
-        plt.savefig(Consts.RESULT_FOLDER_PATH + "/last_image.png")
-        plt.close()  # close the figure window
+    plt.imshow(img, cmap=plt.cm.gray)
+    # if Consts.RESULT_FOLDER_PATH is not None:
+    #     plt.savefig(Consts.RESULT_FOLDER_PATH + "/last_image.png")
+    #     plt.close()  # close the figure window
 
     if Consts.SHOW_GRAPH:
         plt.show()
@@ -41,7 +43,7 @@ def show_last_image_masked(mask_path=None, pillars_mask=None, save_mask=True):
         with open(mask_path, 'rb') as f:
             pillars_mask = np.load(f)
     pillars_mask = 255 - pillars_mask
-    mx = ma.masked_array(last_img, pillars_mask)
+    mx = ma.masked_array(img, pillars_mask)
     plt.imshow(mx, cmap=plt.cm.gray)
     if save_mask and Consts.RESULT_FOLDER_PATH is not None:
         plt.savefig(Consts.RESULT_FOLDER_PATH + "/mask.png")
@@ -73,7 +75,7 @@ def indirect_alive_neighbors_correlation_plot(pillar_location, only_alive=True):
         my_G.add_node(i)
 
     if only_alive:
-        pillars = get_overall_alive_pillars_to_intensities()
+        pillars = get_pillar_to_intensity_norm_by_inner_pillar_noise()
     else:
         # pillars = get_pillar_to_intensities(get_images_path())
         pillars = normalized_intensities_by_mean_background_intensity()
@@ -443,33 +445,53 @@ def non_neighbors_correlation_histogram(correlations_lst):
         plt.show()
 
 
-def plot_pillar_time_series():
+def nbrs_and_non_nbrs_corrs_gistogram(correlations_dict, neighbors_dict):
+    nbrs_mean_corr, nbrs_corrs_list = get_neighbors_avg_correlation(correlations_dict, neighbors_dict)
+    non_nbrs_mean_corr, non_nbrs_corrs_list = get_non_neighbors_mean_correlation(correlations_dict, neighbors_dict)
+
+    sns.histplot(data=nbrs_corrs_list, label="nbrs corrs", kde=True, alpha=0.3, stat='density')
+    sns.histplot(data=non_nbrs_corrs_list, label="non-neighbors corrs", kde=True, alpha=0.3, stat='density')
+    plt.xlabel("Correlations")
+    plt.title("Neighbors & Non-Neighbors Correlation Histogram")
+    print("avg nbrs corrs:", nbrs_mean_corr)
+    print("avg non-nbrs corrs:", non_nbrs_mean_corr)
+    plt.legend()
+    plt.show()
+
+
+def plot_pillar_time_series(pillars_loc, temporal_res=30, img_res=0.1565932, inner_pillar=False, ring_vs_inner=False):
     """
     Plotting a time series graph of the pillar intensity over time
     :return:
     """
+    color = 'tab:blue'
     if Consts.normalized:
         pillar2intens = normalized_intensities_by_mean_background_intensity()
+    elif inner_pillar:
+        pillar2intens = pillar_to_inner_intensity()
+        color = 'tab:orange'
+    elif ring_vs_inner:
+        inner = pillar_to_inner_intensity()
+        ring = get_pillar_to_intensity_norm_by_inner_pillar_noise()
     else:
-        pillar2intens = get_pillar_to_intensities(get_images_path())
+        pillar2intens = get_pillar_to_intensity_norm_by_inner_pillar_noise()
 
-    # for p in pillar2intens.keys():
+    if ring_vs_inner:
+        intensities_inner = inner[pillars_loc]
+        intensities_ring = ring[pillars_loc]
+        x = [i * temporal_res for i in range(len(intensities_ring))]
+        intensities_inner = [i * img_res for i in intensities_inner]
+        intensities_ring = [i * img_res for i in intensities_ring]
+        plt.plot(x, intensities_ring, label='ring intensity')
+        plt.plot(x, intensities_inner, label='pillar intensity')
+    else:
+        intensities_1 = pillar2intens[pillars_loc]
+        x = [i * temporal_res for i in range(len(intensities_1))]
+        intensities_1 = [i * img_res for i in intensities_1]
+        plt.plot(x, intensities_1, label=str(pillars_loc), color=color)
 
-    intensities_1 = pillar2intens[(524, 523)]
-    intensities_2 = pillar2intens[(454, 493)]
-    intensities_3 = pillar2intens[(463, 569)]
-    x = [i * 19.94 for i in range(len(intensities_1))]
-    intensities_1 = [i * 0.0519938 for i in intensities_1]
-    intensities_2 = [i * 0.0519938 for i in intensities_2]
-    intensities_3 = [i * 0.0519938 for i in intensities_3]
-    plt.plot(x, intensities_1, label='(524, 523)')
-    plt.plot(x, intensities_2, label='(454, 493)')
-    plt.plot(x, intensities_3, label='(463, 569)')
-
-    # plt.plot(x, intensities)
     plt.xlabel('Time (sec)')
     plt.ylabel('Intensity (micron)')
-    # plt.title('Pillar ' + str(pillar_loc))
     plt.legend()
     if Consts.SHOW_GRAPH:
         plt.show()
@@ -754,61 +776,61 @@ def plot_average_correlation_neighbors_vs_non_neighbors(lst1, lst2, labels=None,
     color = iter(cm.rainbow(np.linspace(0, 1, len(labels))))
 
     cmap = None
-    if cells_lst:
-        cmap = {}
-        cell_color = mcolors.TABLEAU_COLORS.values()
-        cell_color = list(cell_color)
-        cell_color.extend(cell_color)
-
-    for i in range(len(lst1)):
-        c = next(color)
-
-        if cells_lst:
-            k = cells_lst[i]
-            if k in cmap.keys():
-                c = cmap[k]
-            else:
-                c = list(cell_color)[int(float(k))-1]
-                cmap[k] = c
-
-        marker = 'bo'
-        if special_marker:
-            marker = "*" if special_marker[i] == 'special' else '.'
-
-        if cmap:
-            c = cmap[k]
-
-        plt.plot(float(lst1[i]), float(lst2[i]), marker, label=labels[i], c=c, alpha=0.5)
-        # plt.plot(float(lst1[i]), float(lst2[i]), marker, label=k, c=c)
+    # if cells_lst:
+    #     cmap = {}
+    #     cell_color = mcolors.TABLEAU_COLORS.values()
+    #     cell_color = list(cell_color)
+    #     cell_color.extend(cell_color)
+    #
+    # for i in range(len(lst1)):
+    #     c = next(color)
+    #
+    #     if cells_lst:
+    #         k = cells_lst[i]
+    #         if k in cmap.keys():
+    #             c = cmap[k]
+    #         else:
+    #             c = list(cell_color)[int(float(k))-1]
+    #             cmap[k] = c
+    #
+    #     marker = 'bo'
+    #     if special_marker:
+    #         marker = "*" if special_marker[i] == 'special' else '.'
+    #
+    #     if cmap:
+    #         c = cmap[k]
+    #
+    #     plt.plot(float(lst1[i]), float(lst2[i]), marker, label=labels[i], c=c, alpha=0.5)
+    #     # plt.plot(float(lst1[i]), float(lst2[i]), marker, label=k, c=c)
 
     ## TODO: this code is for the comparison of 5.3 vs 13.2
-    # colors = list(mcolors.TABLEAU_COLORS.values())[2:4]
-    # # label1 = labels[0]
-    # # label2 = labels[-1]
-    # label1 = 'higher'
-    # label2 = 'lower'
-    # lst_x_1 = []
-    # lst_y_1 = []
-    # lst_x_2 = []
-    # lst_y_2 = []
-    #
-    # for label_index in range(len(labels)):
-    #     if labels[label_index] == label1:
-    #         lst_x_1.append(float(lst1[label_index]))
-    #         lst_y_1.append(float(lst2[label_index]))
-    #     else:
-    #         lst_x_2.append(float(lst1[label_index]))
-    #         lst_y_2.append(float(lst2[label_index]))
-    #
-    # plt.plot(lst_x_1, lst_y_1, 'bo', label=label1, c=colors[0], alpha=0.3)
-    # plt.plot(lst_x_2, lst_y_2, 'bo', label=label2, c=colors[1], alpha=0.3)
+    colors = list(mcolors.TABLEAU_COLORS.values())[2:4]
+    # label1 = labels[0]
+    # label2 = labels[-1]
+    label1 = '5.3'
+    label2 = '13.2'
+    lst_x_1 = []
+    lst_y_1 = []
+    lst_x_2 = []
+    lst_y_2 = []
 
+    for label_index in range(len(labels)):
+        if labels[label_index] == label1:
+            lst_x_1.append(float(lst1[label_index]))
+            lst_y_1.append(float(lst2[label_index]))
+        else:
+            lst_x_2.append(float(lst1[label_index]))
+            lst_y_2.append(float(lst2[label_index]))
+
+    plt.plot(lst_x_1, lst_y_1, 'bo', label=label1, c=colors[0], alpha=0.3)
+    plt.plot(lst_x_2, lst_y_2, 'bo', label=label2, c=colors[1], alpha=0.3)
+    #
     plt.axvline(x=0, color="gainsboro", linestyle="--")
     plt.axhline(y=0, color="gainsboro", linestyle="--")
-
-    # plt.axis('square')
-    plt.setp(ax, xlim=(0, 1), ylim=(0, 1))
-    # plt.setp(ax, xlim=(-0.5, 1), ylim=(-0.5, 1))
+    #
+    plt.axis('square')
+    plt.setp(ax, xlim=(-1, 1), ylim=(-1, 1))
+    # plt.setp(ax, xlim=(0.5, 1), ylim=(0.5, 1))
     axline([ax.get_xlim()[0], ax.get_ylim()[0]], [ax.get_xlim()[1], ax.get_ylim()[1]], ls='--')
 
     # plt.axvline(x=arg1, color="gainsboro", linestyle="--")
@@ -826,12 +848,13 @@ def plot_average_correlation_neighbors_vs_non_neighbors(lst1, lst2, labels=None,
         plt.ylabel(ylabel, fontsize=12)
     else:
         plt.ylabel('Neighbor pair correlation')
-    # if labels is not None:
+    if labels is not None:
         # plt.legend(labels, bbox_to_anchor=(1, 1))
         # cells_int_lst = [int(c) for c in set(cells_lst)]
         # cells_int_lst.sort()
         # plt.legend(cells_int_lst)
-        # plt.legend(title='Experiment')
+        plt.legend(title='Type')
+        # plt.legend()
     if Consts.SHOW_GRAPH:
         plt.show()
 
@@ -940,7 +963,7 @@ def show_correlated_pairs_in_last_image(n=5, neighbor_pairs=True):
 
 def plot_pillar_intensity_with_movement():
     centers_movements = get_alive_centers_movements_v2()
-    pillars_intens = get_overall_alive_pillars_to_intensities()
+    pillars_intens = get_pillar_to_intensity_norm_by_inner_pillar_noise()
     for pillar, moves in centers_movements.items():
         pillar_id = min(pillars_intens.keys(), key=lambda point: math.hypot(point[1] - pillar[1], point[0] - pillar[0]))
         pillar_movment = []
@@ -1265,21 +1288,166 @@ def plot_avg_similarity_by_nbrhood_degree(level_to_similarities_dict):
     level_avg_similarity = [np.mean(v) for v in level_to_similarities_dict.values()]
     plt.plot(levels, level_avg_similarity, linestyle='dashed', marker='o')
     plt.xlabel('Neighborhood Degree')
-    plt.ylabel('Avg Degree Similarity')
+    plt.ylabel('Avg Similarity')
     plt.title('Average Similarity Of Each Neighborhood Degree')
     plt.show()
 
 
-def plot_distribution_similarity_of_exp_nbrs_vs_non_nbrs(nbrs_sim_lst, non_nbrs_sim_lst):
-    sns.histplot(nbrs_sim_lst, label="Neighbors similarity", kde=True, alpha=0.3, stat='density')
-    sns.histplot(non_nbrs_sim_lst, label="Non-neighbors similarity", kde=True, alpha=0.3, stat='density')
-    plt.title("Distribution of Similarity Strength of Neighbors vs. Non-Neighbors")
+def plot_avg_correlation_by_nbrhood_degree(level_to_corrs_dict):
+    levels = list(level_to_corrs_dict.keys())
+    level_avg_similarity = [np.mean(v) for v in level_to_corrs_dict.values()]
+    plt.plot(levels, level_avg_similarity, linestyle='dashed', marker='o')
+    plt.xlabel('Neighborhood Degree')
+    plt.ylabel('Avg Correlation')
+    plt.title('Average Correlation Of Each Neighborhood Degree')
+    plt.show()
+
+
+def plot_avg_cluster_time_series(segments, matrix_3d, pillars_id_matrix_2d, save_clusters_fig=None):
+    p_to_intens = get_pillar_to_intensity_norm_by_inner_pillar_noise()
+    for i in range(matrix_3d.shape[0]):
+        plt.imshow(matrix_3d[i], cmap='gray')  # Use 'cmap' appropriate for your data
+        plt.title(f"Frame {i}")
+        plt.pause(0.5)  # Pause time between frames in seconds
+        plt.clf()
+    plt.show()
+    unique_labels = np.unique(segments)
+    unique_labels.sort()
+    avg_segment_intnes = []
+    for l in unique_labels:
+        if l != 0:
+            intens = []
+            pillars_in_labels = pillars_id_matrix_2d[segments == l]
+            for p in pillars_in_labels:
+                intens.append(p_to_intens[p])
+            average_intensity_in_segment = [sum(values) / len(values) for values in zip(*intens)]
+            avg_segment_intnes.append(average_intensity_in_segment)
+    for index, intensity in enumerate(avg_segment_intnes):
+        plt.plot(intensity, label=f'Segment {index + 1}')
+    plt.xlabel('Index')
+    plt.ylabel('Avg Intensity')
+    plt.legend()
+    if save_clusters_fig is not None:
+        file_name = "/Superpixel_Segmentation_avg_intensity_frames_" + str(save_clusters_fig) + ".png"
+        plt.savefig(Consts.RESULT_FOLDER_PATH + file_name)
+        plt.close()
+    # plt.show()
+
+
+def show_superpixel_intensity_gif(n_segments):
+    segments, matrix_3d, pillars_id_matrix_2d = superpixel_segmentation(n_segments=n_segments, shuffle_ts=False)
+    from matplotlib.animation import FuncAnimation
+    fig, ax = plt.subplots()
+    def update(i):
+        ax.imshow(matrix_3d[i], cmap='gray')  # Update with frame i
+        ax.set_title(f"Frame {i}")
+    ani = FuncAnimation(fig, update, frames=matrix_3d.shape[0], interval=300)
+    video_filename = Consts.RESULT_FOLDER_PATH + "/pillars_as_pixel_intensity_vid.gif"
+    ani.save(video_filename, writer='ffmpeg')
+
+
+def similarities_above_avg_graph(G_sims, pillars_pair_to_sim_above_avg):
+    pos = nx.get_node_attributes(G_sims, 'pos')
+    nodes_loc_y_inverse = {k: (v[1], v[0]) for k, v in pos.items()}
+
+    edges_list = []
+    for pair, sim in pillars_pair_to_sim_above_avg.items():
+        node1_idx = next((i for i, p in G_sims.nodes(data=True) if p.get('pos') == pair[0]), None)
+        node2_idx = next((i for i, p in G_sims.nodes(data=True) if p.get('pos') == pair[1]), None)
+        edges_list.append((node1_idx, node2_idx))
+
+    img = get_last_image_whiten(build_image=Consts.build_image)
+    fig, ax = plt.subplots()
+    ax.imshow(img, cmap='gray')
+
+    nx.draw(G_sims, nodes_loc_y_inverse, edge_color='black', width=3.0, node_size=50)
+    nx.draw_networkx_edges(G_sims, nodes_loc_y_inverse, edgelist=edges_list, edge_color='red', width=3.0)
+
+    plt.show()
+
+
+def plot_core_periphery_pillars_in_graph(G, core_list, periphery_list):
+    core_pos_to_idx = [i for n in core_list for i, p in G.nodes(data=True) if p.get('pos') == n]
+    periphery_pos_to_idx = [i for n in periphery_list for i, p in G.nodes(data=True) if p.get('pos') == n]
+    # for n in core_list:
+    #     for i, p in G.nodes(data=True):
+    #         if p.get('pos')==n:
+    #             core_pos_to_idx.append(i)
+
+    pos = nx.get_node_attributes(G, 'pos')
+    nodes_loc_y_inverse = {k: (v[1], v[0]) for k, v in pos.items()}
+    img = get_last_image_whiten(build_image=Consts.build_image)
+    fig, ax = plt.subplots()
+    ax.imshow(img, cmap='gray')
+
+    nx.draw_networkx_nodes(G, nodes_loc_y_inverse, nodelist=core_pos_to_idx, node_color='g', label='C')
+    nx.draw_networkx_nodes(G, nodes_loc_y_inverse, nodelist=periphery_pos_to_idx, node_color='r', label='P')
+    nx.draw_networkx_edges(G, nodes_loc_y_inverse)
+    plt.show()
+
+
+def plot_distribution_similarity_core_vs_periphery(core_sim_lst, periphery_sim_lst, total_avg_similarity):
+    sns.histplot(core_sim_lst, label="core similarity", kde=True, alpha=0.3, stat='density')
+    sns.histplot(periphery_sim_lst, label="periphery similarity", kde=True, alpha=0.3, stat='density')
+    plt.axvline(total_avg_similarity, linestyle='--', color='grey', label='total_avg_similarity')
+    plt.axvline(np.mean(core_sim_lst), linestyle='--', color='blue', label='core_avg_similarity')
+    plt.axvline(np.mean(periphery_sim_lst), linestyle='--', color='orange', label='periphery_avg_similarity')
+    plt.title("Similarity Distribution Core vs. Periphery")
     plt.xlabel('Similarity')
+    print("Total average similarity:", "%.3f" % total_avg_similarity)
+    print("Average core similarity:", "%.3f" % np.mean(core_sim_lst))
+    print("Average periphery similarity:", "%.3f" % np.mean(periphery_sim_lst))
+    t_stat, p_value = ttest_ind(core_sim_lst, periphery_sim_lst)
+    print("P-Value: ", "%.5f" % p_value)
     plt.legend()
     plt.show()
+
+
+def plot_distribution_similarity_of_exp_nbrs_vs_non_nbrs(nbrs_sim_lst, non_nbrs_sim_lst):
+    if Consts.SHOW_GRAPH:
+        sns.histplot(nbrs_sim_lst, label="Neighbors similarity", kde=True, alpha=0.3, stat='density')
+        sns.histplot(non_nbrs_sim_lst, label="Non-neighbors similarity", kde=True, alpha=0.3, stat='density')
+        plt.title("Distribution of Similarity Strength of Neighbors vs. Non-Neighbors")
+        plt.xlabel('Similarity')
+        plt.legend()
+        plt.show()
     print("Average neighbors similarity:", "%.3f" % np.mean(nbrs_sim_lst))
     print("Average non-neighbors similarity:", "%.3f" % np.mean(non_nbrs_sim_lst))
     t_stat, p_value = ttest_ind(nbrs_sim_lst, non_nbrs_sim_lst)
     print("###### t-test #####")
     print("T-statistic value: ", "%.2f" % t_stat)
     print("P-Value: ", p_value)
+    return p_value
+
+
+def plot_significance_bar(type_1_significant, type_1_total, type_2_significant, type_2_total, type_labels_lst):
+    type_1_insignificant = type_1_total - type_1_significant
+    type_2_insignificant = type_2_total - type_2_significant
+    significant_counts = [type_1_significant, type_2_significant]
+    insignificant_counts = [type_1_insignificant, type_2_insignificant]
+    type_1_percentage = (type_1_significant / type_1_total) * 100
+    type_2_percentage = (type_2_significant / type_2_total) * 100
+
+    x = range(len(type_labels_lst))
+    fig, ax = plt.subplots()
+
+    ax.bar(x[0], significant_counts[0], width=0.4, label='5.3 Significant', color='tab:green')
+    # ax.bar(x[0], insignificant_counts[0], width=0.4, bottom=significant_counts[0], label='5.3 Insignificant',
+    #        color='lightgreen')
+    ax.bar(x[1], significant_counts[1], width=0.4, label='13.2 Significant', color='tab:red')
+    # ax.bar(x[1], insignificant_counts[1], width=0.4, bottom=significant_counts[1], label='13.2 Insignificant', color='pink')
+
+    # ax.bar(x, significant_counts, width=0.4, label='Significant', color='tab:blue')b
+    ax.bar(x, insignificant_counts, width=0.4, label='Insignificant', bottom=significant_counts, color='lightgrey')
+    ax.set_ylabel('Number of Experiments')
+    ax.set_title('Significant Similarity Neighbors vs. Non-Neighbors')
+    ax.set_xticks(x)
+    ax.set_xticklabels(type_labels_lst)
+    ax.text(x[0], significant_counts[0], f'{type_1_percentage:.1f}%', ha='center', va='bottom', color='black')
+    ax.text(x[1], significant_counts[1], f'{type_2_percentage:.1f}%', ha='center', va='bottom', color='black')
+    # ax.legend()
+    plt.show()
+
+
+
+

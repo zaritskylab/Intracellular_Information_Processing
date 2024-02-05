@@ -5,11 +5,12 @@ from matplotlib.pyplot import axline
 from pathlib import Path
 
 from Pillars.visualization import *
-from Pillars.granger_causality import *
+from Pillars.granger_causality_old import *
 from Pillars.repositioning import *
 from Pillars.analyzer import *
 from pathlib import Path
 from Pillars.runner_helper import *
+from Pillars.cross_correlation import *
 
 import json
 import math
@@ -98,12 +99,15 @@ def update_const_by_config(config_data):
 
     # Update caches path.
     Consts.pillar_to_intensities_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'pillar_to_intensities_cached.pickle'
+    Consts.pillar_to_intensities_norm_by_noise_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'pillar_to_intensities_norm_by_noise_cached.pickle'
+    Consts.inner_pillar_noise_series_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'inner_pillar_noise_series_cached.pickle'
     Consts.correlation_alive_normalized_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'alive_pillar_correlation_normalized_cached.pickle'
     Consts.correlation_alive_not_normalized_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'alive_pillar_correlation_cached.pickle'
     Consts.all_pillars_correlation_normalized_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'all_pillar_correlation_normalized_cached.pickle'
     Consts.all_pillars_correlation_not_normalized_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'all_pillar_correlation_cached.pickle'
     Consts.gc_df_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'gc_df_cached.pickle'
     Consts.alive_pillars_sym_corr_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'alive_pillars_corr_cached.pickle'
+    Consts.alive_pillars_sym_corr_norm_by_inner_p_noise_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'alive_pillars_corr_norm_by_noise_cached.pickle'
     Consts.mask_for_each_pillar_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'mask_for_each_pillar_cached.pickle'
     Consts.gc_graph_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'gc_cached.pickle'
     Consts.alive_pillars_correlations_frame_windows_cache_path = '../SavedPillarsData/' + perturbation_type + '/SavedPillarsData_' + experiment_id + '/' + path_postfix + 'alive_pillars_correlations_frame_windows_cache.pickle'
@@ -151,22 +155,41 @@ def run_config(config_name):
     operations = config_data.get("operations", [])
 
     # TODO: delete
-    # if os.path.exists(Consts.alive_pillars_to_alive_neighbors_cache_path):
-    #     os.remove(Consts.alive_pillars_to_alive_neighbors_cache_path)
+    # if os.path.exists(Consts.pillar_to_intensities_norm_by_noise_cache_path):
+    #     os.remove(Consts.pillar_to_intensities_norm_by_noise_cache_path)
 
-    # Update caches path.
+    # show_last_image_masked(pillars_mask=build_pillars_mask(get_all_center_generated_ids()), save_mask=False, frame=get_images(get_images_path())[174])
+    # get_alive_pillars_to_alive_neighbors()
+    # return
 
     # show_peripheral_pillars_in_video()
     # x = 1
     # return get_neighbors_avg_correlation(get_alive_pillars_symmetric_correlation(),
     #                                                             get_alive_pillars_to_alive_neighbors())
+
+    # p_to_intns = get_pillar_to_intensity_norm_by_inner_pillar_noise()
+    # core, periph = get_core_periphery_pillars()
+    # return p_to_intns
+
+    # p_to_diff_intens = differencing_time_series(get_overall_alive_pillars_to_intensities())
+    # stationary_p_to_intens, non_stationary_pillars = get_stationary_and_non_stationary_pillars(p_to_diff_intens)
+    # gc_dict = perform_granger_test(stationary_p_to_intens, maxlag=3)
+    # G = build_gc_graph(gc_dict, threshold=0.05)
+    # plot_graph(G)
+    # in_degree_nodes = in_degree_centrality(G)
+    # plot_graph_in_degree_label(G, in_degree_nodes, non_stationary_pillars)
+    # out_degree_nodes = out_degree_centrality(G)
+    # plot_graph_out_degree_label(G, out_degree_nodes, non_stationary_pillars)
+    # connected_component(G)
+    # plot_main_in_out_centrality_pillars(G, non_stationary_pillars, in_degree_nodes, out_degree_nodes)
+
     # G_rand_nbrs = build_pillars_graph(random_neighbors=True, draw=False)
     # ns_rand, strong_nodes_rand, _ = nodes_strengths(G_rand_nbrs, draw=False)
     # strong_nodes_avg_distance_rand = strong_nodes_avg_distance_from_center(G_rand_nbrs, alive_centers=get_seen_centers_for_mask(),
     #                                                                   strong_nodes=strong_nodes_rand, all_nodes_strength=ns_rand,
     #                                                                   draw=False)
     G = build_pillars_graph(random_neighbors=False, shuffle_ts=False, draw=False)
-    ns, strong_nodes, _ = nodes_strengths(G, draw=False, color_map_nodes=False)
+    # ns, strong_nodes, _ = nodes_strengths(G, draw=False, color_map_nodes=False)
     # clustering_strong_nodes_by_Louvain(G, ns, strong_nodes, draw=False)
     # centrality_measure_strong_nodes(G, ns, strong_nodes, draw=True)
     # strong_nodes_avg_distance = strong_nodes_avg_distance_from_center(G, alive_centers=get_seen_centers_for_mask(), strong_nodes=strong_nodes, all_nodes_strength=ns, draw=False)
@@ -174,24 +197,36 @@ def run_config(config_name):
     # plot_node_strengths_distribution(ns)
     # strong_nodes_avg_distance = strong_nodes_avg_distance_from_center_by_hops(G, alive_centers=get_seen_centers_for_mask(), strong_nodes=strong_nodes, removed_nodes=removed_nodes)
     # return strong_nodes_avg_distance, strong_nodes_avg_distance_rand
-    # cc, largest_cc = strong_nodes_connected_components(G, ns, strong_nodes, draw=False)
+    # cc, largest_cc = strong_nodes_connected_components(G, ns, strong_nodes, draw=True)
     # return len(largest_cc)
     # return cc, largest_cc
     # return strong_nodes_avg_distance, ns, strong_nodes
     # return ns
-    nbrs_sim_dict = nbrs_nodes_similarity_by_strength(G, ns)
-    all_nodes_sim_dict = non_nbrs_similarity_by_strength(G, ns)
-    nbrs_vals = nbrs_sim_dict.values()
-    noon_nbrs_vals = all_nodes_sim_dict.values()
-    nbrs_sim = [v[1] for v in nbrs_vals]
-    non_nbrs_sim = [v[1] for v in noon_nbrs_vals]
+    # nbrs_sim_dict = nbrs_nodes_similarity_by_strength(G, ns)
+    # all_nodes_sim_dict = non_nbrs_similarity_by_strength(G, ns)
+    # core_pillars, periphery_pillars = get_core_periphery_pillars()
+    # core_strength, periphery_strength = get_core_periphery_values_by_strength(core_pillars, periphery_pillars, G, ns)
+    # nbrs_sims = [v[1] for v in nbrs_sim_dict.values()]
+    # core_sims, periphery_sims, border_sims = get_core_periphery_values_by_similarity(core_pillars, periphery_pillars, nbrs_sim_dict)
+    # core_corrs, periphery_corrs, border_corrs = get_core_periphery_values_by_correlation(core_pillars, periphery_pillars)
+    # plot_core_periphery_pillars_in_graph(G, core_pillars, periphery_pillars)
+    # plot_distribution_similarity_core_vs_periphery(core_sims, periphery_sims, np.mean(nbrs_sims))
+    # similarities_above_avg_graph(G_sims, pillars_pair_to_sim_above_avg)
+    # nbrs_vals = nbrs_sim_dict.values()
+    # noon_nbrs_vals = all_nodes_sim_dict.values()
+    # nbrs_sim = [v[1] for v in nbrs_vals]
+    # non_nbrs_sim = [v[1] for v in noon_nbrs_vals]
     # avg_nbrs_sim = np.mean(nbrs_sim)
     # avg_non_nbrs_sim = np.mean(non_nbrs_sim)
     # return avg_nbrs_sim, avg_non_nbrs_sim
     # return nbrs_sim, non_nbrs_sim
-    level_to_similarities = nbrs_level_to_similarities(G, nbrs_sim_dict, all_nodes_sim_dict)
+    # nbrs_to_corrs_dict = get_neighbors_to_correlation(get_alive_pillars_symmetric_correlation(),
+    #                               get_alive_pillars_to_alive_neighbors())
+    # non_nbrs_to_corrs_dict = get_non_neighbors_to_correlation_dict(get_alive_pillars_symmetric_correlation(),
+    #                               get_alive_pillars_to_alive_neighbors())
+    # level_to_similarities = nbrs_level_to_correlation(G, nbrs_to_corrs_dict, non_nbrs_to_corrs_dict)
     # plot_avg_similarity_by_nbrhood_degree(level_to_similarities)
-    return level_to_similarities
+    # return level_to_similarities
     # return avg_strength, avg_sim
     # p_2_sim_dict = get_pillar_to_avg_similarity_dict(nbrs_sim_dict, all_nodes_sim_dict)
     # return p_2_sim_dict
@@ -201,7 +236,127 @@ def run_config(config_name):
     # return test_strong_nodes_number_of_cc_significance(num_permutations=100, alpha=0.05)
     # return test_strong_nodes_largest_cc_significance(num_permutations=100, alpha=0.05)
     # return test_avg_similarity_significance(num_permutations=500, alpha=0.05)
+    # return core_strength, periphery_strength
+    # return core_corrs, periphery_corrs, border_corrs
+    # return nbrs_sims, core_sims, periphery_sims, border_sims
+    # return np.mean(core_sims), np.mean(periphery_sims)
+    # return test_avg_core_periphery_similarity_significance(num_permutations=500, alpha=0.05)
+    # correlations = cross_correlations(get_overall_alive_pillars_to_intensities(), get_alive_pillars_to_alive_neighbors(), max_lag=3)
+    # lag_correlations_heatmap(correlations)
+    # lag_to_avg_corr_dict = cross_correlation_avg_each_lag(correlations)
+    # plot_total_avg_correlation_in_lag(lag_to_avg_corr_dict)
+    # peak_lags = identify_peaks(correlations)
+    # DG = plot_cross_correlation_directed_graph(peak_lags)
+    # lag_distribution_plot(peak_lags)
+    # plot_peak_correlation_vs_lag(peak_lags)
+    # leading_nodes, lagging_nodes = categorize_patterns(peak_lags)
+    # plot_nodes_correlations_through_lags(G, strong_nodes, correlations)
+    # plot_only_in_or_only_out_degree_in_graph(DG)
+    # return lag_to_avg_corr_dict
+    # pillars_strength_by_intens_similarity_in_time(get_pillar_to_intensity_norm_by_inner_pillar_noise(), get_alive_pillars_to_alive_neighbors(), G, n_frames_to_avg=20, show_above_avg=True)
     # return
+
+    # nbrs_and_non_nbrs_corrs_gistogram(get_alive_pillars_symmetric_correlation(), get_alive_pillars_to_alive_neighbors())
+    # superpixel()
+    # G = build_graph(random_neighbors=False, shuffle_ts=False, draw=False)
+    # G = build_fully_connected_graph(draw=False)
+    # louvain_cluster_nodes(G, draw=True)
+    # gcn(G)
+    pillar_ids = list(get_alive_pillar_ids_overall_v3())
+    p_to_intens = get_pillar_to_intensity_norm_by_inner_pillar_noise()
+    # norm_p_to_intens = min_max_intensity_normalization(p_to_intens)
+
+    # TODO: intensity animation
+    # show_superpixel_intensity_gif(n_segments)
+    # TODO: avg time series of each cluster
+    # plot_avg_cluster_time_series(segments, matrix_3d, pillars_id_matrix_2d)
+    # TODO: superpixel on video with stuck of 20 frames
+    # for i in range(0, len(list(p_to_intens.values())[0])+1, 20):
+    #     start = i
+    #     end = i + 20
+    #     if start == 100:
+    #         end = 122
+        # TODO: the problem is that its always picks the same centroids and never change them. why?
+        # print("start frame:", start)
+        # print("end frame:", end)
+        # val = int(np.ceil(len(pillar_ids) / 15))
+        # n_vals = [[val]]
+    # n_vals = [[6]]
+    custom_p_to_intensity = None
+    n_vals = [[int(np.ceil(len(pillar_ids) / 22))], [int(np.ceil(len(pillar_ids) / 15))], [int(np.ceil(len(pillar_ids) / 11))], [int(np.ceil(len(pillar_ids) / 8))]]
+    for n in n_vals:
+        print("number of clusters:", n[0], "avg number of pillars in cluster:", str(len(pillar_ids)/n[0]))
+        print("######### No ts shuffle #########")
+        # custom_p_to_intensity = {k: v[start:end] for k,v in p_to_intens.items()}
+        intra_variance, intra_dtw_distance, intra_vec_dist, inter_dtw_distance, inter_vec_dist = superpixel_segmentation_evaluation(n, shuffle_ts=False, custom_p_to_intensity=custom_p_to_intensity, channel='correlation', save_clusters_fig=n)
+        print("intra variance:", intra_variance)
+        print("intra DTW distance:", intra_dtw_distance)
+        print("intra vec distance:", intra_vec_dist)
+        print("inter DTW distance:", inter_dtw_distance)
+        print("inter vec distance:", inter_vec_dist)
+        print("######### ts shuffle #########")
+        num_permutations = 100
+        alpha = 0.05
+        permuted_test_intra_var_statistics = np.zeros(num_permutations)
+        permuted_test_intra_dtw_distance_statistics = np.zeros(num_permutations)
+        permuted_test_intra_vec_dist_statistics = np.zeros(num_permutations)
+        permuted_test_inter_dtw_distance_statistics = np.zeros(num_permutations)
+        permuted_test_inter_vec_dist_statistics = np.zeros(num_permutations)
+        for i in range(num_permutations):
+            p_to_intensity = get_pillar_to_intensity_for_shuffle_ts()
+            # custom_p_to_intensity = {k: v[start:end] for k,v in p_to_intensity.items()}
+            rand_intra_variance, rand_intra_dtw_distance, rand_intra_vec_dist, rand_inter_dtw_distance, rand_inter_vec_dist = superpixel_segmentation_evaluation(n, shuffle_ts=True, custom_p_to_intensity=custom_p_to_intensity, channel='correlation')
+            permuted_test_intra_var_statistics[i] = list(rand_intra_variance.values())[0]
+            permuted_test_intra_dtw_distance_statistics[i] = list(rand_intra_dtw_distance.values())[0]
+            permuted_test_intra_vec_dist_statistics[i] = list(rand_intra_vec_dist.values())[0]
+            permuted_test_inter_dtw_distance_statistics[i] = list(rand_inter_dtw_distance.values())[0]
+            permuted_test_inter_vec_dist_statistics[i] = list(rand_inter_vec_dist.values())[0]
+
+        # Calculate the p-value
+        p_value = np.sum(permuted_test_intra_var_statistics <= list(intra_variance.values())[0]) / num_permutations
+        print("p-value for intra variance:", p_value)
+        if p_value < alpha:
+            print("Reject the null hypothesis for intra var with n=" + str(n[0]) + ". The original values are statistically significant.")
+        else:
+            print("Fail to reject the null hypothesis for intra var n=" + str(n[0]) + ".")
+
+        p_value = np.sum(permuted_test_intra_dtw_distance_statistics <= list(intra_dtw_distance.values())[0]) / num_permutations
+        print("p-value for intra DTW distance:", p_value)
+        if p_value < alpha:
+            print("Reject the null hypothesis for intra DTW distance with n=" + str(n[0]) + ". The original values are statistically significant.")
+        else:
+            print("Fail to reject the null hypothesis for intra DTW distance n=" + str(n[0]) + ".")
+
+        p_value = np.sum(permuted_test_intra_vec_dist_statistics <= list(intra_vec_dist.values())[0]) / num_permutations
+        print("p-value for intra vector distance:", p_value)
+        if p_value < alpha:
+            print("Reject the null hypothesis for intra vector distance with n=" + str(
+                n[0]) + ". The original values are statistically significant.")
+        else:
+            print("Fail to reject the null hypothesis for intra vector distance n=" + str(n[0]) + ".")
+
+        p_value = np.sum(permuted_test_inter_dtw_distance_statistics >= list(inter_dtw_distance.values())[0]) / num_permutations
+        print("p-value for inter DTW distance:", p_value)
+        if p_value < alpha:
+            print("Reject the null hypothesis for inter DTW distance with n=" + str(n[0]) + ". The original values are statistically significant.")
+        else:
+            print("Fail to reject the null hypothesis for inter DTW distance n=" + str(n[0]) + ".")
+
+        p_value = np.sum(permuted_test_inter_vec_dist_statistics >= list(inter_vec_dist.values())[0]) / num_permutations
+        print("p-value for inter vector distance:", p_value)
+        if p_value < alpha:
+            print("Reject the null hypothesis for inter vector distance with n=" + str(
+                n[0]) + ". The original values are statistically significant.")
+        else:
+            print("Fail to reject the null hypothesis for inter vector distance n=" + str(n[0]) + ".")
+    return
+
+    # plot_significance_bar(53, 81, 34, 72, ['5.3', '13.2'])
+    # plot_pillar_time_series((511,537), temporal_res=19.87, img_res=0.0519938, inner_pillar=False)
+    # plot_pillar_time_series((511, 537), temporal_res=19.87, img_res=0.0519938, inner_pillar=True)
+    # plot_pillar_time_series((511, 537), temporal_res=19.87, img_res=00.0519938, inner_pillar=False, ring_vs_inner=True)
+    # return
+
 
     # pillars_under_diagonal = []
     # pillars = list(p_2_sim_dict.keys())
@@ -441,16 +596,16 @@ def run_config(config_name):
 
             Consts.SMALL_MASK_RADIUS = temp_small_mask_radius
             Consts.LARGE_MASK_RADIUS = temp_large_mask_radius
-        elif op_key == "correlations_norm_by_noise_(0,10)":
-            mask_radius = (0, 10)
-            radiuses = [(15, 35), (0, 10), (10, 30), (20, 40), (15, 40), (10, 40)]
-
-            map_radius_to_norm_corr_by_0_10 = get_correlations_norm_by_noise(mask_radius, radiuses)
-        elif op_key == "correlations_norm_by_noise_(0,15)":
-            mask_radius = (0, 15)
-            radiuses = [(15, 35), (0, 15), (10, 30), (20, 40), (15, 40), (10, 40)]
-
-            map_radius_to_norm_corr_by_0_15 = get_correlations_norm_by_noise(mask_radius, radiuses)
+        # elif op_key == "correlations_norm_by_noise_(0,10)":
+        #     mask_radius = (0, 10)
+        #     radiuses = [(15, 35), (0, 10), (10, 30), (20, 40), (15, 40), (10, 40)]
+        #
+        #     map_radius_to_norm_corr_by_0_10 = get_correlations_norm_by_noise(mask_radius, radiuses)
+        # elif op_key == "correlations_norm_by_noise_(0,15)":
+        #     mask_radius = (0, 15)
+        #     radiuses = [(15, 35), (0, 15), (10, 30), (20, 40), (15, 40), (10, 40)]
+        #
+        #     map_radius_to_norm_corr_by_0_15 = get_correlations_norm_by_noise(mask_radius, radiuses)
 
     if Consts.MULTI_COMPONENT and Consts.WRITE_OUTPUT:
         features_dict = {'passed_stationary': passed_stationary,
@@ -489,6 +644,7 @@ def run_config(config_name):
         else:
             output_df = pd.DataFrame(features_dict, index=[index])
             output_df.to_csv(output_path)
+        print("Writen output")
 
 
 if __name__ == '__main__':

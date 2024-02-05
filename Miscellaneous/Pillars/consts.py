@@ -33,7 +33,7 @@ class Consts:
     NUM_NEIGHBORS_TO_CONSIDER_PERIPHERAL = 4
     FIND_BETTER_CENTER_IN_RANGE = None # TODO: change to be based on radius if needed later
     NUMBER_OF_NBRS_TO_CONSIDER_CENTRAL = 6
-    MULTI_COMPONENT = False
+    MULTI_COMPONENT = True
 
     last_image_path = None
     fixed_images_path = None
@@ -42,6 +42,8 @@ class Consts:
     consider_as_full_circle_percentage = 70
 
     pillar_to_intensities_cache_path = None
+    pillar_to_intensities_norm_by_noise_cache_path = None
+    inner_pillar_noise_series_cache_path = None
     correlation_alive_normalized_cache_path = None
     correlation_alive_not_normalized_cache_path = None
     all_pillars_correlation_normalized_cache_path = None
@@ -50,6 +52,7 @@ class Consts:
     frame2alive_pillars_cache_path = None
     gc_df_cache_path = None
     alive_pillars_sym_corr_cache_path = None
+    alive_pillars_sym_corr_norm_by_inner_p_noise_cache_path = None
     centers_cache_path = None
     pillar_to_neighbors_cache_path = None
     alive_pillars_to_alive_neighbors_cache_path = None

@@ -176,7 +176,7 @@ def get_alive_pillars_to_alive_neighbors():
             alive_pillars_to_alive_neighbors = pickle.load(handle)
             return alive_pillars_to_alive_neighbors
 
-    Consts.MULTI_COMPONENT = False
+    # Consts.MULTI_COMPONENT = False
 
     pillar_to_neighbors = get_pillar_to_neighbors()
     alive_pillars = get_alive_pillar_ids_in_last_frame_v3()
@@ -192,8 +192,8 @@ def get_alive_pillars_to_alive_neighbors():
     # Remove pillars neighours that are not connected to main graph
     components = find_connected_components(alive_pillars_to_alive_neighbors)
     print("number of components:", len(components))
-    if len(components) > 1:
-        Consts.MULTI_COMPONENT = True
+    # if len(components) > 1:
+    #     Consts.MULTI_COMPONENT = True
     # Remove biggest component
     longest_list = max(components, key=len)
     components.remove(longest_list)

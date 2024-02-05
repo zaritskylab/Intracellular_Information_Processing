@@ -5,6 +5,11 @@ from scipy import stats
 from Pillars.consts import *
 from matplotlib.pyplot import cm
 from matplotlib import animation
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import RobustScaler
+from sklearn.preprocessing import StandardScaler
+
+
 
 def get_pillar_to_intensities(path, use_cache=True):
     """
@@ -64,7 +69,7 @@ def get_pillar_to_intensities(path, use_cache=True):
     return pillar2frame_intensity
 
 
-def get_overall_alive_pillars_to_intensities(use_cache=True):
+def _get_overall_alive_pillars_to_intensities(use_cache=True):
     """
     Mapping only alive pillars to theirs intensity in every frame
     :return:
@@ -81,12 +86,115 @@ def get_overall_alive_pillars_to_intensities(use_cache=True):
     return alive_pillars_dict
 
 
+def get_inner_pillar_noise_series(inner_mask_radius=(0, 10), use_cache=True):
+    inner_pillar_noise_series_cache_path = Consts.inner_pillar_noise_series_cache_path
+    if use_cache and Consts.USE_CACHE and os.path.isfile(inner_pillar_noise_series_cache_path):
+        with open(inner_pillar_noise_series_cache_path, 'rb') as handle:
+            mean_series = pickle.load(handle)
+            return mean_series
+
+    origin_small_mask_radius = Consts.SMALL_MASK_RADIUS
+    origin_large_mask_radius = Consts.LARGE_MASK_RADIUS
+
+    ratio_radiuses = get_mask_radiuses({'small_radius': inner_mask_radius[0], 'large_radius': inner_mask_radius[1]})
+    Consts.SMALL_MASK_RADIUS = ratio_radiuses['small']
+    Consts.LARGE_MASK_RADIUS = ratio_radiuses['large']
+
+    alive_pillars_intens = _get_overall_alive_pillars_to_intensities(use_cache=False)
+    alive_pillars = list(alive_pillars_intens.keys())
+    alive_pillars_str = [str(p) for p in alive_pillars]
+
+    inner_pillars_intensity_df = pd.DataFrame.from_dict(alive_pillars_intens, orient='index')
+    inner_pillars_intensity_df = inner_pillars_intensity_df.transpose()
+    inner_pillars_intensity_df.columns = alive_pillars_str
+
+    # normalized intensity by the avg intensity per frame
+    mean_series = inner_pillars_intensity_df.mean(axis=1)
+
+    Consts.SMALL_MASK_RADIUS = origin_small_mask_radius
+    Consts.LARGE_MASK_RADIUS = origin_large_mask_radius
+
+    if use_cache and Consts.USE_CACHE:
+        with open(inner_pillar_noise_series_cache_path, 'wb') as handle:
+            pickle.dump(mean_series, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+    return mean_series
+
+
+def get_pillar_to_intensity_norm_by_inner_pillar_noise(inner_mask_radius=(0, 10), use_cache=True):
+    pillar_to_intensities_norm_by_noise_cache_path = Consts.pillar_to_intensities_norm_by_noise_cache_path
+    if use_cache and Consts.USE_CACHE and os.path.isfile(pillar_to_intensities_norm_by_noise_cache_path):
+        with open(pillar_to_intensities_norm_by_noise_cache_path, 'rb') as handle:
+            ring_pillars_to_norm_by_inner_pillar_intens = pickle.load(handle)
+            return ring_pillars_to_norm_by_inner_pillar_intens
+
+    mean_series = get_inner_pillar_noise_series(inner_mask_radius=inner_mask_radius, use_cache=True)
+
+    ring_alive_pillars_to_intensity = _get_overall_alive_pillars_to_intensities(use_cache=use_cache)
+    alive_pillars = list(ring_alive_pillars_to_intensity.keys())
+    alive_pillars_str = [str(p) for p in alive_pillars]
+
+    ring_pillars_intensity_df = pd.DataFrame.from_dict(ring_alive_pillars_to_intensity, orient='index')
+    ring_pillars_intensity_df = ring_pillars_intensity_df.transpose()
+    ring_pillars_intensity_df.columns = alive_pillars_str
+
+    ring_df_subtracted = ring_pillars_intensity_df.subtract(mean_series, axis=0)
+    ring_pillars_to_norm_by_inner_pillar_intens = {tuple(map(int, col[1:-1].split(', '))): values.tolist() for col, values in
+                                    ring_df_subtracted.items()}
+
+    if use_cache and Consts.USE_CACHE:
+        with open(pillar_to_intensities_norm_by_noise_cache_path, 'wb') as handle:
+            pickle.dump(ring_pillars_to_norm_by_inner_pillar_intens, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+    return ring_pillars_to_norm_by_inner_pillar_intens
+
+
+def pillar_to_inner_intensity(inner_mask_radius=(0, 10)):
+    origin_small_mask_radius = Consts.SMALL_MASK_RADIUS
+    origin_large_mask_radius = Consts.LARGE_MASK_RADIUS
+
+    ratio_radiuses = get_mask_radiuses({'small_radius': inner_mask_radius[0], 'large_radius': inner_mask_radius[1]})
+    Consts.SMALL_MASK_RADIUS = ratio_radiuses['small']
+    Consts.LARGE_MASK_RADIUS = ratio_radiuses['large']
+
+    alive_pillars_to_inner_intens = _get_overall_alive_pillars_to_intensities(use_cache=False)
+
+    Consts.SMALL_MASK_RADIUS = origin_small_mask_radius
+    Consts.LARGE_MASK_RADIUS = origin_large_mask_radius
+
+    return alive_pillars_to_inner_intens
+
+
+def min_max_intensity_normalization(pillar_intensity_dict):
+    min_max_scaler = MinMaxScaler()
+    normalized_p_to_intens = {key: min_max_scaler.fit_transform(np.array(value).reshape(-1, 1)).flatten() for
+                              key, value in pillar_intensity_dict.items()}
+
+    return normalized_p_to_intens
+
+
+def robust_intensity_normalization(pillar_intensity_dict):
+    scaler = RobustScaler()
+    normalized_p_to_intens = {key: scaler.fit_transform(np.array(value).reshape(-1, 1)).flatten() for
+                              key, value in pillar_intensity_dict.items()}
+
+    return normalized_p_to_intens
+
+
+def zscore_intensity_normalization(pillar_intensity_dict):
+    scaler = StandardScaler()
+    normalized_p_to_intens = {key: scaler.fit_transform(np.array(value).reshape(-1, 1)).flatten() for
+                              key, value in pillar_intensity_dict.items()}
+
+    return normalized_p_to_intens
+
+
 def normalized_intensities_by_max_background_intensity():
     """
     Normalization of pillars intensities by the maximum intensity of the background
     :return:
     """
-    alive_pillars = get_overall_alive_pillars_to_intensities()
+    alive_pillars = _get_overall_alive_pillars_to_intensities()
     all_pillars = get_pillar_to_intensities(get_images_path())
     background_pillars_intensities = {pillar: all_pillars[pillar] for pillar in all_pillars.keys() if
                                       pillar not in alive_pillars}
@@ -140,7 +248,8 @@ def normalized_intensities_by_zscore():
 
 
 def get_cell_avg_intensity():
-    p_to_intens = get_overall_alive_pillars_to_intensities()
+    # p_to_intens = get_overall_alive_pillars_to_intensities()
+    p_to_intens = get_pillar_to_intensity_norm_by_inner_pillar_noise()
     frame_to_alive_pillars = get_alive_center_ids_by_frame_v3()
     alive_pillars_to_frame = {}
     for frame, alive_pillars_in_frame in frame_to_alive_pillars.items():
@@ -159,7 +268,8 @@ def get_cell_avg_intensity():
 
 
 def get_cell_avg_ts():
-    p_to_intens = get_overall_alive_pillars_to_intensities()
+    # p_to_intens = get_overall_alive_pillars_to_intensities()
+    p_to_intens = get_pillar_to_intensity_norm_by_inner_pillar_noise()
     frame_to_alive_pillars = get_alive_center_ids_by_frame_v3()
     alive_pillars_to_frame = {}
     for frame, alive_pillars_in_frame in frame_to_alive_pillars.items():
@@ -216,6 +326,7 @@ def show_pillars_location_by_frame(frame_to_alive_pillar_loc_used_for_intensitie
     #     plt.close()  # close the figure window
 
     plt.show()
+
 
 def show_pillars_location_by_frame_is_alive(pillar_loc, frame_to_alive_pillars):
     alive_closest_real_location = min(frame_to_alive_pillars,

@@ -5,13 +5,34 @@ from Pillars.pillar_intensities import *
 from Pillars.pillars_utils import *
 from Pillars.pillar_neighbors import *
 from Pillars.consts import *
+# from Pillars.visualization import *
 # from Pillars.granger_causality_test import *
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 import networkx as nx
+from networkx.algorithms import core
 import community
+import statsmodels.api as sm
 from sklearn.cluster import DBSCAN
+import scipy.fftpack
+from skimage.segmentation import slic
+from skimage import io, color, filters, segmentation, util, exposure, restoration, feature, morphology, measure
+from scipy import ndimage as ndi
+from sklearn.preprocessing import MinMaxScaler
+import torch
+from torch_geometric.data import Data
+from torch_geometric.nn import GCNConv
+from collections import deque
+from math import atan2, degrees
+from skimage.util import img_as_float
+from skimage.segmentation import mark_boundaries
+import matplotlib.colors as mcolors
+from fastdtw import fastdtw
+# from Pillars.slic import *
+from sklearn.metrics import mean_squared_error
+from scipy.spatial.distance import euclidean
+from scipy.stats import wasserstein_distance
 
 
 def get_correlations_between_neighboring_pillars(pillar_to_pillars_dict):
@@ -42,7 +63,7 @@ def get_alive_pillars_correlation():
             correlation = pickle.load(handle)
             return correlation
 
-    relevant_pillars_dict = get_overall_alive_pillars_to_intensities()
+    relevant_pillars_dict = get_pillar_to_intensity_norm_by_inner_pillar_noise()
 
     pillar_intensity_df = pd.DataFrame({str(k): v for k, v in relevant_pillars_dict.items()})
     alive_pillars_corr = pillar_intensity_df.corr()
@@ -59,7 +80,7 @@ def get_alive_pillars_correlations_with_running_frame_windows():
             alive_pillars_correlations_with_running_frame_windows = pickle.load(handle)
             return alive_pillars_correlations_with_running_frame_windows
 
-    pillar_intensity_dict = get_overall_alive_pillars_to_intensities()
+    pillar_intensity_dict = get_pillar_to_intensity_norm_by_inner_pillar_noise()
 
     all_pillar_intensity_df = pd.DataFrame({str(k): v for k, v in pillar_intensity_dict.items()})
 
@@ -81,7 +102,7 @@ def get_alive_pillars_correlations_frame_windows(frame_window=Consts.FRAME_WINDO
             pillars_corrs_frame_window = pickle.load(handle)
             return pillars_corrs_frame_window
 
-    pillar_intensity_dict = get_overall_alive_pillars_to_intensities()
+    pillar_intensity_dict = get_pillar_to_intensity_norm_by_inner_pillar_noise()
 
     all_pillar_intensity_df = pd.DataFrame({str(k): v for k, v in pillar_intensity_dict.items()})
 
@@ -217,7 +238,7 @@ def get_all_pillars_corr_path():
 
 
 def get_alive_pillars_symmetric_correlation(frame_start=None, frame_end=None, use_cache=True,
-                                            pillar_to_intensities_dict=None):
+                                            pillar_to_intensities_dict=None, norm_by_noise=True):
     """
     Create dataframe of alive pillars correlation as the correlation according to
     maximum_frame(pillar a start to live, pillar b start to live) -> correlation(a, b) == correlation(b, a)
@@ -225,7 +246,12 @@ def get_alive_pillars_symmetric_correlation(frame_start=None, frame_end=None, us
     """
     origin_frame_start = frame_start
     origin_frame_end = frame_end
-    if use_cache and origin_frame_start is None and origin_frame_end is None and Consts.USE_CACHE and os.path.isfile(
+    if norm_by_noise and use_cache and origin_frame_start is None and origin_frame_end is None and Consts.USE_CACHE and os.path.isfile(
+            Consts.alive_pillars_sym_corr_norm_by_inner_p_noise_cache_path):
+        with open(Consts.alive_pillars_sym_corr_norm_by_inner_p_noise_cache_path, 'rb') as handle:
+            alive_pillars_symmetric_correlation = pickle.load(handle)
+            return alive_pillars_symmetric_correlation
+    if not norm_by_noise and use_cache and origin_frame_start is None and origin_frame_end is None and Consts.USE_CACHE and os.path.isfile(
             Consts.alive_pillars_sym_corr_cache_path):
         with open(Consts.alive_pillars_sym_corr_cache_path, 'rb') as handle:
             alive_pillars_symmetric_correlation = pickle.load(handle)
@@ -247,8 +273,12 @@ def get_alive_pillars_symmetric_correlation(frame_start=None, frame_end=None, us
 
     if pillar_to_intensities_dict:
         pillars_intens = pillar_to_intensities_dict
+    elif norm_by_noise:
+        pillars_intens = get_pillar_to_intensity_norm_by_inner_pillar_noise(inner_mask_radius=(0, 10),
+                                                                            use_cache=use_cache)
     else:
-        pillars_intens = get_overall_alive_pillars_to_intensities(use_cache)
+        pillars_intens = _get_overall_alive_pillars_to_intensities(use_cache=use_cache)
+
     alive_pillars = list(pillars_intens.keys())
     alive_pillars_str = [str(p) for p in alive_pillars]
     pillars_corr = pd.DataFrame(0.0, index=alive_pillars_str, columns=alive_pillars_str)
@@ -269,7 +299,10 @@ def get_alive_pillars_symmetric_correlation(frame_start=None, frame_end=None, us
                 if Consts.CORRELATION == "kendall":
                     pillars_corr.loc[str(p2), str(p1)] = kendalltau(p1_relevant_intens, p2_relevant_intens)[0]
 
-    if use_cache and origin_frame_start is None and origin_frame_end is None and Consts.USE_CACHE:
+    if norm_by_noise and use_cache and origin_frame_start is None and origin_frame_end is None and Consts.USE_CACHE:
+        with open(Consts.alive_pillars_sym_corr_norm_by_inner_p_noise_cache_path, 'wb') as handle:
+            pickle.dump(pillars_corr, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    if not norm_by_noise and use_cache and origin_frame_start is None and origin_frame_end is None and Consts.USE_CACHE:
         with open(Consts.alive_pillars_sym_corr_cache_path, 'wb') as handle:
             pickle.dump(pillars_corr, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -343,6 +376,17 @@ def get_neighbors_avg_correlation(correlations_df, neighbors_dict):
     return mean_corr, corrs
 
 
+def get_neighbors_to_correlation(correlations_df, neighbors_dict):
+    corrs_dict = {}
+    for pillar, nbrs in neighbors_dict.items():
+        for nbr in nbrs:
+            if str(nbr) in correlations_df and str(pillar) in correlations_df and \
+                    (pillar, nbr) not in corrs_dict and (nbr, pillar) not in corrs_dict:
+                corrs_dict[(pillar, nbr)] = correlations_df[str(pillar)][str(nbr)]
+
+    return corrs_dict
+
+
 def get_non_neighbors_mean_correlation(correlations_df, neighbors_dict):
     correlation_list = []
     df = correlations_df.mask(np.tril(np.ones(correlations_df.shape)).astype(np.bool))
@@ -354,6 +398,17 @@ def get_non_neighbors_mean_correlation(correlations_df, neighbors_dict):
     mean_corr = np.nanmean(correlation_list)
     mean_corr = format(mean_corr, ".3f")
     return mean_corr, correlation_list
+
+
+def get_non_neighbors_to_correlation_dict(correlations_df, neighbors_dict):
+    correlation_dict = {}
+    for pillar1 in correlations_df.columns:
+        for pillar2 in correlations_df.columns:
+            if pillar1 != pillar2 and eval(pillar2) not in neighbors_dict[eval(pillar1)] and \
+                    (pillar1, pillar2) not in correlation_dict and (pillar2, pillar1) not in correlation_dict:
+                correlation_dict[(eval(pillar1), eval(pillar2))] = correlations_df[pillar1][pillar2]
+
+    return correlation_dict
 
 
 def get_number_of_inwards_outwards_gc_edges(gc_df):
@@ -594,6 +649,25 @@ def get_pca(output_path_type, n_components, custom_df=None):
     return pca, principle_comp
 
 
+def extract_ts_features(time_series):
+    # Ensure time_series is a NumPy array
+    time_series = np.asarray(time_series)
+
+    # Extract features
+    features = {
+        'mean': np.mean(time_series),
+        'std_dev': np.std(time_series),
+        'median': np.median(time_series),
+        'skewness': stats.skew(time_series),
+        'kurtosis': stats.kurtosis(time_series),
+        'max_value': np.max(time_series),
+        'min_value': np.min(time_series),
+        'dominant_freq': np.argmax(np.abs(scipy.fftpack.fft(time_series)))
+    }
+
+    return features
+
+
 def t_test(samp_lst_1, samp_lst_2):
     stat, pval = ttest_ind(samp_lst_1, samp_lst_2)
     print("p-value: " + str(pval))
@@ -671,7 +745,7 @@ def get_pillars_intensity_movement_correlations():
         p_to_distances_dict[p] = distances
     pillars_dist_movements_df = pd.DataFrame({str(k): v for k, v in p_to_distances_dict.items()})
 
-    pillar_to_intens_dict = get_overall_alive_pillars_to_intensities()
+    pillar_to_intens_dict = get_pillar_to_intensity_norm_by_inner_pillar_noise()
     pillar_intens_df = pd.DataFrame({str(k): v for k, v in pillar_to_intens_dict.items()})
     pillar_intens_df = pillar_intens_df[:-1]
 
@@ -718,7 +792,7 @@ def get_average_intensity_by_distance():
         p_to_distances_dict[p] = distances
     pillars_dist_movements_df = pd.DataFrame({str(k): v for k, v in p_to_distances_dict.items()})
 
-    pillar_to_intens_dict = get_overall_alive_pillars_to_intensities()
+    pillar_to_intens_dict = get_pillar_to_intensity_norm_by_inner_pillar_noise()
     pillar_intens_df = pd.DataFrame({str(k): v for k, v in pillar_to_intens_dict.items()})
     pillar_intens_df = pillar_intens_df[:-1]
 
@@ -855,7 +929,7 @@ def get_pillars_intensity_movement_sync_by_frames(pillar_to_frames_dict):
         p_to_distances_dict[p] = distances
     pillars_dist_movements_df = pd.DataFrame({str(k): v for k, v in p_to_distances_dict.items()})
 
-    pillar_to_intens_dict = get_overall_alive_pillars_to_intensities()
+    pillar_to_intens_dict = get_pillar_to_intensity_norm_by_inner_pillar_noise()
     pillar_intens_df = pd.DataFrame({str(k): v for k, v in pillar_to_intens_dict.items()})
     pillar_intens_df = pillar_intens_df[:-1]
 
@@ -1013,7 +1087,7 @@ def get_cc_pp_cp_correlations():
 
         results[(p1, p2)] = {'cc': cc_list, 'cp': cp_list}
 
-    alive_pillars_to_intensities = get_overall_alive_pillars_to_intensities()
+    alive_pillars_to_intensities = get_pillar_to_intensity_norm_by_inner_pillar_noise()
 
     cc_corr_list = []
     cp_corr_list = []
@@ -1156,93 +1230,69 @@ def BFS_for_distance_from_middle(nbrs_dict, source_pillar, dest_pillar, alive_pi
     return False
 
 
-def get_mask_radiuses(mask_radius):
-    small_mask_radius_ratio = mask_radius['small_radius'] / 20
-    large_mask_radius_ratio = mask_radius['large_radius'] / 20
-    small = math.floor(Consts.CIRCLE_RADIUS_FOR_MASK_CALCULATION * small_mask_radius_ratio)
-    large = math.floor(Consts.CIRCLE_RADIUS_FOR_MASK_CALCULATION * large_mask_radius_ratio)
-    return {'small': small, 'large': large}
-
-
-def get_correlations_norm_by_noise(mask_radius, radius_tuples):
-    origin_small_mask_radius = Consts.SMALL_MASK_RADIUS
-    origin_large_mask_radius = Consts.LARGE_MASK_RADIUS
-
-    ratio_radiuses = get_mask_radiuses({'small_radius': mask_radius[0], 'large_radius': mask_radius[1]})
-    Consts.SMALL_MASK_RADIUS = ratio_radiuses['small']
-    Consts.LARGE_MASK_RADIUS = ratio_radiuses['large']
-
-    alive_pillars_intens = get_overall_alive_pillars_to_intensities(use_cache=False)
-    alive_pillars = list(alive_pillars_intens.keys())
-    alive_pillars_str = [str(p) for p in alive_pillars]
-
-    inner_pillars_intensity_df = pd.DataFrame.from_dict(alive_pillars_intens, orient='index')
-    inner_pillars_intensity_df = inner_pillars_intensity_df.transpose()
-    inner_pillars_intensity_df.columns = alive_pillars_str
-
-    # # corrs before normalization
-    # inner_corrs_before_norm, _ = get_neighbors_avg_correlation(
-    #     get_alive_pillars_symmetric_correlation(use_cache=False),
-    #     get_alive_pillars_to_alive_neighbors())
-
-    # normalized intensity by the avg intensity per frame
-    mean_series = inner_pillars_intensity_df.mean(axis=1)
-    #
-    # inner_df_subtracted = inner_pillars_intensity_df.subtract(mean_series, axis=0)
-    # inner_pillars_to_norm_intens = {tuple(map(int, col[1:-1].split(', '))): values.tolist() for col, values in
-    #                                 inner_df_subtracted.items()}
-    #
-    # corrs after normalization
-    # inner_corrs_after_norm, _ = get_neighbors_avg_correlation(
-    #     get_alive_pillars_symmetric_correlation(use_cache=False,
-    #                                             pillar_to_intensities_dict=inner_pillars_to_norm_intens),
-    #     get_alive_pillars_to_alive_neighbors())
-
-    map_radius_to_norm_corr = {}
-    for radiuses in radius_tuples:
-        ratio_radiuses = get_mask_radiuses({'small_radius': radiuses[0], 'large_radius': radiuses[1]})
-        Consts.SMALL_MASK_RADIUS = ratio_radiuses['small']
-        Consts.LARGE_MASK_RADIUS = ratio_radiuses['large']
-
-        ring_alive_pillars_to_intensity = get_overall_alive_pillars_to_intensities(use_cache=False)
-        alive_pillars = list(ring_alive_pillars_to_intensity.keys())
-        alive_pillars_str = [str(p) for p in alive_pillars]
-
-        ring_pillars_intensity_df = pd.DataFrame.from_dict(ring_alive_pillars_to_intensity, orient='index')
-        ring_pillars_intensity_df = ring_pillars_intensity_df.transpose()
-        ring_pillars_intensity_df.columns = alive_pillars_str
-
-        ring_corrs_before_norm, _ = get_neighbors_avg_correlation(
-            get_alive_pillars_symmetric_correlation(use_cache=False),
-            get_alive_pillars_to_alive_neighbors())
-
-        ring_df_subtracted = ring_pillars_intensity_df.subtract(mean_series, axis=0)
-        ring_pillars_to_norm_intens = {tuple(map(int, col[1:-1].split(', '))): values.tolist() for col, values in
-                                       ring_df_subtracted.items()}
-
-        # corrs after normalization
-        ring_nbrs_corrs_after_norm, _ = get_neighbors_avg_correlation(
-            get_alive_pillars_symmetric_correlation(use_cache=False,
-                                                    pillar_to_intensities_dict=ring_pillars_to_norm_intens),
-            get_alive_pillars_to_alive_neighbors())
-
-        ring_non_nbrs_corrs_after_norm, _ = get_non_neighbors_mean_correlation(
-            get_alive_pillars_symmetric_correlation(use_cache=False,
-                                                    pillar_to_intensities_dict=ring_pillars_to_norm_intens),
-            get_alive_pillars_to_alive_neighbors())
-
-        map_radius_to_norm_corr[radiuses] = {}
-        map_radius_to_norm_corr[radiuses]['nbrs_corrs'] = ring_nbrs_corrs_after_norm
-        map_radius_to_norm_corr[radiuses]['non_nbrs_corrs'] = ring_non_nbrs_corrs_after_norm
-
-        print("norm by radius:", mask_radius, "curr radius:", radiuses, "before norm:", ring_corrs_before_norm,
-              "after norm:", ring_nbrs_corrs_after_norm)
-
-    # Return to default values
-    Consts.SMALL_MASK_RADIUS = origin_small_mask_radius
-    Consts.LARGE_MASK_RADIUS = origin_large_mask_radius
-
-    return map_radius_to_norm_corr
+# def get_correlations_norm_by_noise(mask_radius, radius_tuples):
+#     origin_small_mask_radius = Consts.SMALL_MASK_RADIUS
+#     origin_large_mask_radius = Consts.LARGE_MASK_RADIUS
+#
+#     ratio_radiuses = get_mask_radiuses({'small_radius': mask_radius[0], 'large_radius': mask_radius[1]})
+#     Consts.SMALL_MASK_RADIUS = ratio_radiuses['small']
+#     Consts.LARGE_MASK_RADIUS = ratio_radiuses['large']
+#
+#     alive_pillars_intens = get_overall_alive_pillars_to_intensities(use_cache=False)
+#     alive_pillars = list(alive_pillars_intens.keys())
+#     alive_pillars_str = [str(p) for p in alive_pillars]
+#
+#     inner_pillars_intensity_df = pd.DataFrame.from_dict(alive_pillars_intens, orient='index')
+#     inner_pillars_intensity_df = inner_pillars_intensity_df.transpose()
+#     inner_pillars_intensity_df.columns = alive_pillars_str
+#
+#     mean_series = inner_pillars_intensity_df.mean(axis=1)
+#
+#     map_radius_to_norm_corr = {}
+#     for radiuses in radius_tuples:
+#         ratio_radiuses = get_mask_radiuses({'small_radius': radiuses[0], 'large_radius': radiuses[1]})
+#         Consts.SMALL_MASK_RADIUS = ratio_radiuses['small']
+#         Consts.LARGE_MASK_RADIUS = ratio_radiuses['large']
+#
+#         ring_alive_pillars_to_intensity = get_overall_alive_pillars_to_intensities(use_cache=False)
+#         alive_pillars = list(ring_alive_pillars_to_intensity.keys())
+#         alive_pillars_str = [str(p) for p in alive_pillars]
+#
+#         ring_pillars_intensity_df = pd.DataFrame.from_dict(ring_alive_pillars_to_intensity, orient='index')
+#         ring_pillars_intensity_df = ring_pillars_intensity_df.transpose()
+#         ring_pillars_intensity_df.columns = alive_pillars_str
+#
+#         ring_corrs_before_norm, _ = get_neighbors_avg_correlation(
+#             get_alive_pillars_symmetric_correlation(use_cache=False),
+#             get_alive_pillars_to_alive_neighbors())
+#
+#         ring_df_subtracted = ring_pillars_intensity_df.subtract(mean_series, axis=0)
+#         ring_pillars_to_norm_intens = {tuple(map(int, col[1:-1].split(', '))): values.tolist() for col, values in
+#                                        ring_df_subtracted.items()}
+#
+#         # corrs after normalization
+#         ring_nbrs_corrs_after_norm, _ = get_neighbors_avg_correlation(
+#             get_alive_pillars_symmetric_correlation(use_cache=False,
+#                                                     pillar_to_intensities_dict=ring_pillars_to_norm_intens),
+#             get_alive_pillars_to_alive_neighbors())
+#
+#         ring_non_nbrs_corrs_after_norm, _ = get_non_neighbors_mean_correlation(
+#             get_alive_pillars_symmetric_correlation(use_cache=False,
+#                                                     pillar_to_intensities_dict=ring_pillars_to_norm_intens),
+#             get_alive_pillars_to_alive_neighbors())
+#
+#         map_radius_to_norm_corr[radiuses] = {}
+#         map_radius_to_norm_corr[radiuses]['nbrs_corrs'] = ring_nbrs_corrs_after_norm
+#         map_radius_to_norm_corr[radiuses]['non_nbrs_corrs'] = ring_non_nbrs_corrs_after_norm
+#
+#         print("norm by radius:", mask_radius, "curr radius:", radiuses, "before norm:", ring_corrs_before_norm,
+#               "after norm:", ring_nbrs_corrs_after_norm)
+#
+#     # Return to default values
+#     Consts.SMALL_MASK_RADIUS = origin_small_mask_radius
+#     Consts.LARGE_MASK_RADIUS = origin_large_mask_radius
+#
+#     return map_radius_to_norm_corr
 
 
 def find_vertex_distance_from_center(p1, p2, pillar2middle_img_steps):
@@ -1253,7 +1303,7 @@ def find_vertex_distance_from_center(p1, p2, pillar2middle_img_steps):
 # Not simple_swap = replace intensisies + live of living
 def get_correlations_df_for_mixed_ts(simple_swap=True):
     # Get intensities (in timeseries)
-    pillar_intens = get_overall_alive_pillars_to_intensities()
+    pillar_intens = get_pillar_to_intensity_norm_by_inner_pillar_noise()
     # Shuffle timeseries (between pillars)
 
     # if simple_swap:
@@ -1284,7 +1334,7 @@ def get_correlations_df_for_mixed_ts(simple_swap=True):
     return corrs_df
 
 
-def build_pillars_graph(random_neighbors=False, shuffle_ts=False, draw=True):
+def build_pillars_graph(random_neighbors=False, shuffle_ts=False, draw=False):
     my_G = nx.Graph()
     # nodes_loc_old = get_all_center_generated_ids()
     nodes_loc = get_alive_pillar_ids_overall_v3()
@@ -1383,7 +1433,8 @@ def nodes_strengths(G, draw=False, color_map_nodes=False, group_nodes_colored=No
     # median_strength = sorted(node_strengths.values())[len(node_strengths) // 2]
 
     # Find the strong threshold based on a higher percentile
-    strong_threshold = np.percentile(list(node_strengths.values()), 80)
+    # strong_threshold = np.percentile(list(node_strengths.values()), 80)
+    strong_threshold = np.sum(list(node_strengths.values())) / len(node_strengths.values())
 
     # Separate nodes based on their strength compared to the median
     strong_nodes = [node for node, strength in node_strengths.items() if strength > strong_threshold]
@@ -1400,13 +1451,13 @@ def nodes_strengths(G, draw=False, color_map_nodes=False, group_nodes_colored=No
         if color_map_nodes:
             cmap = cm.get_cmap('coolwarm')
             # norm = plt.Normalize(min(node_strengths.values()), max(node_strengths.values()))
-            norm = plt.Normalize(0.1, 1)
+            norm = plt.Normalize(0, 1)
             node_colors = [cmap(norm(node_strengths[node])) for node in G.nodes]
             nx.draw(G, nodes_loc_y_inverse, node_color=node_colors, cmap=cmap)
             sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
             sm.set_array([])
             plt.colorbar(sm, label='Strength')
-        if group_nodes_colored is not None:
+        elif group_nodes_colored is not None:
             node_colors = ['green' if pos[node] in group_nodes_colored else 'grey' for node in G.nodes]
             nx.draw(G, nodes_loc_y_inverse, node_color=node_colors)
             # sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
@@ -1431,6 +1482,10 @@ def nodes_strengths(G, draw=False, color_map_nodes=False, group_nodes_colored=No
 
 
 def nbrs_nodes_similarity_by_strength(G, nodes_strength):
+    """
+    The similarity here is measured by the subtraction of the two (neighbors or not) pillars strength,
+    which their strength is the avg correlation with its neighbors except the correlations between the 2 pillars
+    """
     neighbors = get_alive_pillars_to_alive_neighbors()
 
     pillar_strength_dict = {}
@@ -1452,12 +1507,12 @@ def nbrs_nodes_similarity_by_strength(G, nodes_strength):
                     pillar_strength = 0
                 else:
                     pillar_strength = sum(weight for _, n, weight in pillar_incident_edges if n is not nbr_idx) / (
-                                len(pillar_incident_edges) - 1) if pillar_incident_edges else 0
+                            len(pillar_incident_edges) - 1) if pillar_incident_edges else 0
                 if len(nbr_incident_edges) <= 1:
                     nbr_strength = 0
                 else:
                     nbr_strength = sum(weight for _, n, weight in nbr_incident_edges if n is not pillar_idx) / (
-                                len(nbr_incident_edges) - 1) if nbr_incident_edges else 0
+                            len(nbr_incident_edges) - 1) if nbr_incident_edges else 0
 
                 diff = abs(pillar_strength - nbr_strength)
                 sim = 1 - diff
@@ -1506,6 +1561,34 @@ def get_pillar_to_avg_similarity_dict(nbrs_similarity_dict, non_nbrs_similarity_
     return pillar_to_nbrs_and_non_nbrs_avg_sim
 
 
+def nbrs_level_to_correlation(G, nbrs_corrs_dict, non_nbrs_corrs_dict):
+    level_to_corrs = {}
+
+    level_1_sims = list(nbrs_corrs_dict.values())
+    level_to_corrs[1] = level_1_sims
+
+    for k, v in non_nbrs_corrs_dict.items():
+        node1_idx = next((i for i, p in G.nodes(data=True) if p.get('pos') == k[0]), None)
+        node2_idx = next((i for i, p in G.nodes(data=True) if p.get('pos') == k[1]), None)
+        try:
+            level = nx.shortest_path_length(G, source=node1_idx, target=node2_idx)
+            if level not in level_to_corrs:
+                level_to_corrs[level] = []
+            level_to_corrs[level].append(v)
+        except:
+            continue
+
+    sorted_level_to_similarities = {k: level_to_corrs[k] for k in sorted(level_to_corrs)}
+
+    # keep only the degree in which the number of similarity values is higher than 50% of the largest similarity degree list
+    max_list_values = max([len(v) for v in sorted_level_to_similarities.values()])
+
+    cut_dict = {key: value for key, value in sorted_level_to_similarities.items() if
+                len(value) >= max_list_values * 0.5 or key == 1}
+
+    return cut_dict
+
+
 def nbrs_level_to_similarities(G, nbrs_similarity_dict, non_nbrs_similarity_dict):
     level_to_similarities = {}
 
@@ -1528,22 +1611,169 @@ def nbrs_level_to_similarities(G, nbrs_similarity_dict, non_nbrs_similarity_dict
     # keep only the degree in which the number of similarity values is higher than 50% of the largest similarity degree list
     max_list_values = max([len(v) for v in sorted_level_to_similarities.values()])
 
-    cut_dict = {key: value for key, value in sorted_level_to_similarities.items() if len(value) >= max_list_values*0.5 or key==1}
+    cut_dict = {key: value for key, value in sorted_level_to_similarities.items() if
+                len(value) >= max_list_values * 0.5 or key == 1}
 
     return cut_dict
 
 
 def similarity_to_nbrhood_level_correlation(level_to_similarities_dict):
     nbrhood_level_list = list(level_to_similarities_dict.keys())
-    levels = []
-    for l in nbrhood_level_list:
-        for i in range(len(level_to_similarities_dict[l])):
-            levels.append(l)
     simis = list(level_to_similarities_dict.values())
-    flattened_list_sims = [item for sublist in simis for item in sublist]
-    corr = np.corrcoef(np.array(levels), flattened_list_sims)[0][1]
+    avgs = [np.mean(sublist) for sublist in simis]
+    corr = np.corrcoef(np.array(nbrhood_level_list), avgs)[0][1]
 
     return corr
+
+
+def correlation_between_nbrhood_level_to_avg_correlation(level_to_corrs_dict):
+    nbrhood_level_list = list(level_to_corrs_dict.keys())
+    simis = list(level_to_corrs_dict.values())
+    avgs = [np.mean(sublist) for sublist in simis]
+    corr = np.corrcoef(np.array(nbrhood_level_list), avgs)[0][1]
+
+    return corr
+
+
+def get_core_periphery_pillars():
+    neighbors = get_alive_pillars_to_alive_neighbors()
+    core = [k for k, v in neighbors.items() if len(v) == 8]
+    periphery = [k for k, v in neighbors.items() if len(v) < 8]
+
+    return core, periphery
+
+
+def get_core_periphery_values_by_strength(core_pillars, periphery_pillars, G, pillars_strength):
+    pillar_strength_dict = {}
+    for node_idx in pillars_strength:
+        coor = G.nodes[node_idx]['pos']
+        pillar_strength_dict[coor] = pillars_strength[node_idx]
+
+    core_strength = [v for k, v in pillar_strength_dict.items() if k in core_pillars]
+    periphery_strength = [v for k, v in pillar_strength_dict.items() if k in periphery_pillars]
+
+    return core_strength, periphery_strength
+
+
+def get_core_periphery_values_by_correlation(core_pillars, periphery_pillars):
+    corrs = get_alive_pillars_symmetric_correlation()
+    nbrs = get_alive_pillars_to_alive_neighbors()
+
+    border_corrs = []
+    core_corrs = []
+    periphery_corrs = []
+    pillars = corrs.columns
+    for i in range(len(pillars)):
+        for j in range(i + 1, len(pillars)):
+            p1 = pillars[i]
+            p2 = pillars[j]
+            if eval(p1) in nbrs[eval(p2)]:
+                corr = corrs[p1][p2]
+                if eval(p1) in core_pillars and eval(p2) in core_pillars:
+                    core_corrs.append(corr)
+                elif eval(p1) in periphery_pillars and eval(p2) in periphery_pillars:
+                    periphery_corrs.append(corr)
+                else:
+                    border_corrs.append(corr)
+
+    return core_corrs, periphery_corrs, border_corrs
+
+
+def get_core_periphery_values_by_similarity(core_pillars, periphery_pillars, nbrs_similarity_dict):
+    border_corrs = []
+    core_corrs = []
+    periphery_corrs = []
+    for pair, sim in nbrs_similarity_dict.items():
+        similarity = sim[1]
+        p1 = pair[0]
+        p2 = pair[1]
+        if p1 in core_pillars and p2 in core_pillars:
+            core_corrs.append(similarity)
+        elif p1 in periphery_pillars and p2 in periphery_pillars:
+            periphery_corrs.append(similarity)
+        else:
+            border_corrs.append(similarity)
+
+    return core_corrs, periphery_corrs, border_corrs
+
+
+def test_avg_core_periphery_similarity_significance(num_permutations=1000, alpha=0.05):
+    G = build_pillars_graph(shuffle_ts=False, draw=False)
+    ns, strong_nodes, _ = nodes_strengths(G, draw=False)
+    nbrs_sim_dict = nbrs_nodes_similarity_by_strength(G, ns)
+    core_pillars, periphery_pillars = get_core_periphery_pillars()
+    core_sims, periphery_sims, border_sims = get_core_periphery_values_by_similarity(core_pillars, periphery_pillars,
+                                                                                     nbrs_sim_dict)
+
+    core_avg_sim = np.mean(core_sims)
+    periphery_avg_sim = np.mean(periphery_sims)
+
+    observed_diff = core_avg_sim - periphery_avg_sim
+
+    # Initialize an array to store permuted test statistics
+    permuted_diffs = np.zeros(num_permutations)
+    for i in range(num_permutations):
+        random_G = build_pillars_graph(shuffle_ts=True, draw=False)
+        random_ns, random_strong_nodes, _ = nodes_strengths(random_G, draw=False)
+        random_sim_dict = nbrs_nodes_similarity_by_strength(random_G, random_ns)
+        random_core_pillars, random_periphery_pillars = get_core_periphery_pillars()
+        random_core_sims, random_periphery_sims, random_border_sims = get_core_periphery_values_by_similarity(
+            random_core_pillars,
+            random_periphery_pillars,
+            random_sim_dict)
+        random_core_avg_sim = np.mean(random_core_sims)
+        random_periphery_avg_sim = np.mean(random_periphery_sims)
+        permuted_diff = random_core_avg_sim - random_periphery_avg_sim
+        permuted_diffs[i] = (permuted_diff)
+
+        # Calculate the p-value
+    p_value = np.sum(permuted_diffs >= observed_diff) / num_permutations
+    if p_value < alpha:
+        print("Reject the null hypothesis. The original values are statistically significant.")
+    else:
+        print("Fail to reject the null hypothesis.")
+
+    return observed_diff, permuted_diffs, p_value
+
+
+def build_pillars_similarity_graph(G, nbrs_similarity_dict):
+    for pair, sim in nbrs_similarity_dict.items():
+        node1_idx = next((i for i, p in G.nodes(data=True) if p.get('pos') == pair[0]), None)
+        node2_idx = next((i for i, p in G.nodes(data=True) if p.get('pos') == pair[1]), None)
+        G[node1_idx][node2_idx]['weight'] = sim[1]
+
+    img = get_last_image_whiten(build_image=Consts.build_image)
+    fig, ax = plt.subplots()
+    ax.imshow(img, cmap='gray')
+
+    pos = nx.get_node_attributes(G, 'pos')
+    nodes_loc_y_inverse = {k: (v[1], v[0]) for k, v in pos.items()}
+
+    edges, weights = zip(*nx.get_edge_attributes(G, 'weight').items())
+
+    nx.draw(G, nodes_loc_y_inverse, edgelist=edges, edge_color=weights,
+            width=3.0, node_size=50)
+
+    sm = plt.cm.ScalarMappable()
+    sm.set_array(weights)
+    plt.colorbar(sm)
+
+    if Consts.SHOW_GRAPH:
+        plt.show()
+
+    return G
+
+
+def get_pillars_edges_over_avg_similarity(nbrs_similarity_dict):
+    all_sims = [v[1] for v in nbrs_similarity_dict.values()]
+    avg_sim = np.sum(all_sims) / len(all_sims)
+
+    pillars_pair_to_sim_abov_avg = {}
+    for k, v in nbrs_similarity_dict.items():
+        if v[1] > avg_sim:
+            pillars_pair_to_sim_abov_avg[k] = v[1]
+
+    return pillars_pair_to_sim_abov_avg
 
 
 def test_avg_similarity_significance(num_permutations=1000, alpha=0.05):
@@ -1964,6 +2194,1012 @@ def graph_communities(G):
     # Print the communities
     for community_id, nodes in communities.items():
         print(f"Community {community_id}: {nodes}")
+
+
+def adf_stationary_test(pillars_time_series):
+    pillars_time_series_stationary = {}
+    non_stationary_pillars = []
+    for p, ts in pillars_time_series.items():
+        adf_test = sm.tsa.adfuller(ts, autolag='AIC')
+        diff_series = pd.Series(ts)
+        if adf_test[1] >= 0.05:
+            for i in range(5):
+                diff_series = diff_series.diff().dropna()
+                adf_test = sm.tsa.adfuller(diff_series, autolag='AIC')
+                if adf_test[1] < 0.05:
+                    break
+        if adf_test[1] >= 0.05:
+            non_stationary_pillars.append(p)
+
+        if adf_test[1] < 0.05:
+            pillars_time_series_stationary[p] = diff_series
+    max_possible_len = len(list(pillars_time_series.values())[0])
+    for i, s in enumerate(list(pillars_time_series_stationary.values())):
+        if len(s) < max_possible_len:
+            max_possible_len = len(s)
+
+    for p, ts in pillars_time_series_stationary.items():
+        pillars_time_series_stationary[p] = ts[len(ts) - max_possible_len:]
+
+    return pillars_time_series_stationary, non_stationary_pillars
+
+
+def pillars_strength_by_intens_similarity_in_time(pillar_intensity_dict, pillar_to_nbrs, G, n_frames_to_avg=10,
+                                                  show_strength_colormap=False, show_above_avg=False):
+    def normalize_ts_by_min_max(data):
+        normalized_data = {}
+        for key, series in data.items():
+            min_val = np.min(series)
+            max_val = np.max(series)
+            # Avoid division by zero in case max and min are the same
+            range_val = max_val - min_val if max_val != min_val else 1
+            normalized_series = (series - min_val) / range_val
+            normalized_data[key] = normalized_series
+        return normalized_data
+
+    normalized_pillar_intensity_dict = normalize_ts_by_min_max(pillar_intensity_dict)
+
+    frame_to_alive_pillars = get_alive_center_ids_by_frame_v3()
+    frame_start = 0
+    frame_end = len(frame_to_alive_pillars)
+    alive_pillars_to_start_living_frame = {}
+    for curr_frame, alive_pillars_in_frame in frame_to_alive_pillars.items():
+        if frame_start <= curr_frame <= frame_end:
+            for alive_pillar in alive_pillars_in_frame:
+                if alive_pillar not in alive_pillars_to_start_living_frame:
+                    alive_pillars_to_start_living_frame[alive_pillar] = curr_frame
+
+    nodes_loc = get_alive_pillar_ids_overall_v3()
+    nodes_loc = list(nodes_loc)
+    nodes_loc_y_inverse = [(loc[1], loc[0]) for loc in nodes_loc]
+    node_loc2index = {}
+    for i in range(len(nodes_loc)):
+        node_loc2index[str(nodes_loc[i])] = i
+
+    pillars_pair_to_sim_dict = {}
+    for frame in frame_to_alive_pillars.keys():
+        for p in pillar_to_nbrs.keys():
+            p1_start_frame = alive_pillars_to_start_living_frame[p]
+            if p1_start_frame <= frame:
+                for nbr in pillar_to_nbrs[p]:
+                    p2_start_frame = alive_pillars_to_start_living_frame[nbr]
+                    if p2_start_frame <= frame:
+                        diff = abs(
+                            normalized_pillar_intensity_dict[p][frame] - normalized_pillar_intensity_dict[nbr][frame])
+                        sim = 1 - diff
+                        if (p, nbr) not in pillars_pair_to_sim_dict:
+                            pillars_pair_to_sim_dict[(p, nbr)] = []
+                        pillars_pair_to_sim_dict[(p, nbr)].append(sim)
+
+        if (frame + 1) % n_frames_to_avg == 0:
+            pillars_pair_to_sim_dict = {k: np.mean(v) for k, v in pillars_pair_to_sim_dict.items()}
+            if G.number_of_edges() > 0:
+                G.remove_edges_from(list(G.edges()))
+            for p, nbrs in pillar_to_nbrs.items():
+                for nbr in nbrs:
+                    if (p, nbr) in pillars_pair_to_sim_dict.keys():
+                        G.add_edge(node_loc2index[str(p)], node_loc2index[str(nbr)])
+                        G[node_loc2index[str(p)]][node_loc2index[str(nbr)]]['weight'] = pillars_pair_to_sim_dict[
+                            (p, nbr)]
+
+            node_strengths = {}
+            for node in G.nodes:
+                incident_edges = G.edges(node, data='weight')
+                strength = sum(weight for _, _, weight in incident_edges) / len(incident_edges) if incident_edges else 0
+                node_strengths[node] = round(strength, 2)
+
+            if show_strength_colormap:
+                img = get_last_image_whiten(build_image=Consts.build_image)
+                fig, ax = plt.subplots()
+                ax.imshow(img, cmap='gray')
+                cmap = cm.get_cmap('coolwarm')
+                norm = plt.Normalize(0, 1)
+                node_colors = [cmap(norm(node_strengths[node])) for node in G.nodes]
+                nx.draw(G, nodes_loc_y_inverse, node_color=node_colors, cmap=cmap)
+                sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+                sm.set_array([])
+                plt.colorbar(sm, label='Strength')
+                nx.draw_networkx_edges(G, nodes_loc_y_inverse)
+                nx.draw_networkx_labels(G, nodes_loc_y_inverse, labels=node_strengths, font_size=8)
+                plt.axis('off')
+                plt.show()
+            if show_above_avg:
+                avg_strength = np.percentile(list(node_strengths.values()), 80)
+                # avg_strength = np.median(list(node_strengths.values()))
+                node_color = ["green" if s > avg_strength else "grey" for s in node_strengths.values()]
+                img = get_last_image_whiten(build_image=Consts.build_image)
+                fig, ax = plt.subplots()
+                ax.imshow(img, cmap='gray')
+                nx.draw(G, nodes_loc_y_inverse, node_color=node_color)
+                nx.draw_networkx_edges(G, nodes_loc_y_inverse)
+                nx.draw_networkx_labels(G, nodes_loc_y_inverse, labels=node_strengths, font_size=8)
+                plt.axis('off')
+                plt.show()
+
+            pillars_pair_to_sim_dict = {}
+
+
+def get_pillar_to_intensity_for_shuffle_ts():
+    # Get intensities (in timeseries)
+    pillar_intens = get_pillar_to_intensity_norm_by_inner_pillar_noise()
+    # Shuffle timeseries (between pillars)
+    # Get a list of the dictionary values
+    values = list(pillar_intens.values())
+
+    # Shuffle the list of values in place
+    random.shuffle(values)
+
+    # Create a new dictionary with the shuffled values
+    shuffled_pillar_intens = {key: value for key, value in zip(pillar_intens.keys(), values)}
+
+    return shuffled_pillar_intens
+
+
+def pillars_to_pixels():
+    def find_lines_for_isolated(isolated_points, pillar_chains, tolerance=11):
+        isolated_matched = []
+        curr_m = 0
+        for chain in pillar_chains:
+            if len(chain['pillars']) >= 2:
+                pillar1 = chain['pillars'][0]
+                pillar2 = chain['pillars'][1]
+                x1, y1 = pillar1
+                x2, y2 = pillar2
+                curr_m = (y2 - y1) / (x2 - x1)
+                b = y1 - curr_m * x1
+
+                for x, y in isolated_points:
+                    if abs(y - (curr_m * x + b)) <= tolerance:
+                        chain['pillars'].append((x, y))
+                        isolated_matched.append((x, y))
+
+        # TODO: what if isolated are on the same line themselves? need to match them together
+        # add remaining isolated points as new chains
+        still_isolated = [p for p in isolated_points if p not in isolated_matched]
+        for p in still_isolated:
+            b = p[1] - curr_m * p[0]
+            pillars_chain.append({'pillars': [p], 'b': b})
+
+    def points_on_line(points, m, b, point1, point2, tolerance=11):
+        on_line = {point1, point2}
+
+        x1, y1 = point1
+        x2, y2 = point2
+        x_diff = x1 - x2
+        last_point = point1
+
+        add_points(b, last_point, m, on_line, points, tolerance, x1, x_diff)
+        add_points(b, last_point, m, on_line, points, tolerance, x1, x_diff, -1)
+
+        return list(on_line)
+
+    def add_points(b, last_point, m, on_line, points, tolerance, x1, x_diff, sign=1):
+        for i in range(0, sign * 20, sign):
+            potential_x = x1 + (x_diff * sign)
+            potential_y = m * potential_x + b
+            potential_point = closest_to_point(points, (potential_x, potential_y))
+            if get_distance(potential_point, (potential_x, potential_y)) <= tolerance:
+                on_line.add(potential_point)
+                if last_point != potential_point:
+                    x1, y1 = last_point
+                    x2, y2 = potential_point
+                    m = (y2 - y1) / (x2 - x1)
+                    b = y1 - m * x1
+                    prev_x_diff = x_diff
+                    x_diff = (x1 - x2)
+                    if (x_diff < 0 and prev_x_diff > 0) or (x_diff > 0 and prev_x_diff < 0):
+                        x_diff *= -1
+                    last_point = potential_point
+                    x1, y1 = last_point
+            else:
+                x1 = potential_x
+
+    img_shape = get_images(get_images_path())[0].shape
+    pillars_chain = []
+    all_nbrs = get_alive_pillars_to_alive_neighbors()
+    pillar_ids = list(get_alive_pillar_ids_overall_v3())
+
+    m = None
+    Ms = []
+    pillar_ids_to_fit_on_line = list(pillar_ids)
+    isolated_points = []
+    while len(pillar_ids_to_fit_on_line) > 0 and pillar_ids_to_fit_on_line != isolated_points:
+        pillars_not_searched = [p for p in pillar_ids_to_fit_on_line if p not in isolated_points]
+        if len(pillars_not_searched) == 0:
+            break
+        pillar1 = closest_to_point(pillars_not_searched, (0, 0))
+        nbrs = [i for i in all_nbrs[pillar1] if i in pillar_ids_to_fit_on_line]
+        if len(nbrs) == 0:
+            isolated_points.append(pillar1)
+            continue
+        found_pillar2 = False
+        if m is None:
+            pillar2 = nbrs[0]
+            found_pillar2 = True
+        else:
+            for potential_nbr in nbrs:
+                x1, y1 = pillar1
+                x2, y2 = potential_nbr
+                potential_m = (y2 - y1) / (x2 - x1)
+                if sum(abs(np.array(Ms) - potential_m) <= 0.5) > 0:
+                    pillar2 = potential_nbr
+                    found_pillar2 = True
+                    break
+        if not found_pillar2:
+            isolated_points.append(pillar1)
+            continue
+
+        x1, y1 = pillar1
+        x2, y2 = pillar2
+        m = (y2 - y1) / (x2 - x1)
+        Ms.append(m)
+        b = y1 - m * x1
+
+        pillars_on_line = points_on_line(pillar_ids_to_fit_on_line, m, b, pillar1, pillar2)
+        for pc in pillars_on_line:
+            if pc in pillar_ids_to_fit_on_line:
+                pillar_ids_to_fit_on_line.remove(pc)
+            if pc in isolated_points:
+                isolated_points.remove(pc)
+        pillars_chain.append({'pillars': pillars_on_line, 'b': b})
+
+    # add pillars w/o neighbours
+    find_lines_for_isolated(isolated_points, pillars_chain)
+
+    # show_pillars_on_line(pillars_chain)
+
+    # Re-calc avg b for all chains
+    for pc in pillars_chain:
+        pillars = pc['pillars']
+        if len(pillars) >= 2:
+            bs = []
+            for p1 in pillars:
+                for p2 in pillars:
+                    if p1 != p2:
+                        x1, y1 = p1
+                        x2, y2 = p2
+                        m = (y2 - y1) / (x2 - x1)
+                        b = y1 - m * x1
+                        bs.append(b)
+
+            pc['b'] = np.mean(bs)
+
+    # TODO: set on matrix, before that, sort pillars_chain lists
+    for pc in pillars_chain:
+        pc['pillars'].sort(key=lambda x: x[0])
+    pillars_chain.sort(key=lambda x: x['b'])
+
+    x_diffs = []
+    for pc in pillars_chain:
+        pillars = pc['pillars']
+        for i in range(len(pillars) - 1):
+            p0 = pillars[0]
+            p1 = pillars[1]
+            x_diffs.append(p1[0] - p0[0])
+    x_diff = max(x_diffs, key=x_diffs.count)
+
+    # TODO: make sure sorted correctly
+
+    cols = max([len(x['pillars']) for x in pillars_chain]) * 5 + 1
+    rows = len(pillars_chain) * 5 + 1
+    matrix = np.zeros((cols, rows), dtype='object')
+
+    pillars_with_gaps = []
+    for pc in pillars_chain:
+        curr_chain = []
+        pillars = pc['pillars']
+        prev_pillar = pillars[0]
+        curr_chain.append(prev_pillar)
+
+        for p in pillars[1:]:
+            gaps = round((p[0] - prev_pillar[0]) / x_diff) - 1
+            curr_chain.extend([0] * gaps)
+            curr_chain.append(p)
+            prev_pillar = p
+
+        pillars_with_gaps.append(curr_chain)
+
+    current_row = 0
+    current_col = cols // 2
+    for first_row_pillar in pillars_with_gaps[0]:
+        # If gap
+        if first_row_pillar == 0:
+            matrix[current_row][current_col] = first_row_pillar
+            current_col += 2
+            continue
+        else:
+            matrix[current_row][current_col] = first_row_pillar
+            current_col += 2
+
+    current_row = 2
+    for chain in pillars_with_gaps[1:]:
+        number_of_pillars_placed_in_line = 0
+        matrix_upper_raw = matrix[current_row - 2]
+        pillars_in_upper_row = list(matrix_upper_raw[matrix_upper_raw != 0])
+        for i, p in enumerate(chain):
+            if p == 0:
+                continue
+            pillar_upper_row_nbrs = [n for n in all_nbrs[p] if n in pillars_in_upper_row]
+            # copy the list to modify
+            check_closest_nbrs = list(pillar_upper_row_nbrs)
+            if len(pillar_upper_row_nbrs) < 2:
+                continue
+            if len(pillar_upper_row_nbrs) == 3:
+                closest_nbr1 = closest_to_point(check_closest_nbrs, p)
+                check_closest_nbrs.remove(closest_nbr1)
+                closest_nbr2 = closest_to_point(check_closest_nbrs, p)
+                check_closest_nbrs.remove(closest_nbr2)
+                closest_nbr3 = closest_to_point(check_closest_nbrs, p)
+                nbr1_idx = list(matrix_upper_raw).index(closest_nbr1)
+                nbr2_idx = list(matrix_upper_raw).index(closest_nbr2)
+                nbr3_idx = list(matrix_upper_raw).index(closest_nbr3)
+                sort_idx = sorted([nbr1_idx, nbr2_idx, nbr3_idx])
+                referenced_col = sort_idx[0]
+            if len(pillar_upper_row_nbrs) == 2:
+                closest_nbr = closest_to_point(check_closest_nbrs, p)
+                nbr_idx = list(matrix_upper_raw).index(closest_nbr)
+                referenced_col = nbr_idx
+            matrix[current_row, referenced_col] = p
+            number_of_pillars_placed_in_line += 1
+            next_col = referenced_col
+            if i == 0:
+                for next_p in chain[i + 1:]:
+                    next_col += 2
+                    matrix[current_row, next_col] = next_p
+                    number_of_pillars_placed_in_line += 1
+            elif i == len(chain) - 1:
+                for prev_p in chain[i - 1::-1]:
+                    prev_col -= 2
+                    matrix[current_row, prev_col] = prev_p
+                    number_of_pillars_placed_in_line += 1
+            else:
+                for next_p in chain[i + 1:]:
+                    if next_p == 0:
+                        next_col += 2
+                        matrix[current_row, next_col] = next_p
+                        continue
+                    next_col += 2
+                    matrix[current_row, next_col] = next_p
+                    number_of_pillars_placed_in_line += 1
+                prev_col = referenced_col
+                for prev_p in chain[i - 1::-1]:
+                    if prev_p == 0:
+                        prev_col -= 2
+                        matrix[current_row, prev_col] = prev_p
+                        continue
+                    prev_col -= 2
+                    matrix[current_row, prev_col] = prev_p
+                    number_of_pillars_placed_in_line += 1
+            break
+
+        # If failed to found place in row - we need to rely on single neighbour
+        if number_of_pillars_placed_in_line == 0:
+            for i, p in enumerate(chain):
+                if p == 0:
+                    continue
+                pillar_upper_row_nbrs = [n for n in all_nbrs[p] if n in pillars_in_upper_row]
+                if len(pillar_upper_row_nbrs) == 1:
+                    nbr_idx = list(matrix_upper_raw).index(pillar_upper_row_nbrs[0])
+                    referenced_col = nbr_idx
+                    # options to for the col: right, left, bottom
+                    # We will check based on the line (if there is one, if there isn't - put on bottom)
+                    upper_nbr = pillar_upper_row_nbrs[0]
+                    if current_row < 4:
+                        referenced_col = referenced_col
+                    else:
+                        upper_upper_left = matrix[current_row - 4, referenced_col - 2]
+                        upper_upper = matrix[current_row - 4, referenced_col]
+                        upper_upper_right = matrix[current_row - 4, referenced_col + 2]
+
+                        if upper_upper_left != 0:
+                            sub1 = np.subtract(upper_upper_left, upper_nbr)
+                            sub2 = np.subtract(upper_nbr, p)
+                            # Not equal but close enough
+                            if np.allclose(sub1, sub2, atol=5):
+                                referenced_col += 4
+                        if upper_upper_right != 0:
+                            sub1 = np.subtract(upper_upper_right, upper_nbr)
+                            sub2 = np.subtract(upper_nbr, p)
+                            # Not equal but close enough
+                            if np.allclose(sub1, sub2, atol=5):
+                                referenced_col -= 4
+                        if upper_upper != 0:
+                            sub1 = np.subtract(upper_upper, upper_nbr)
+                            sub2 = np.subtract(upper_nbr, p)
+                            # Not equal but close enough
+                            if np.allclose(sub1, sub2, atol=5):
+                                referenced_col = referenced_col
+                    # TODO:If neither of them -> maybe the one with the 0 upper upper?
+
+                    matrix[current_row, referenced_col] = p
+                    number_of_pillars_placed_in_line += 1
+                    next_col = referenced_col
+                    if i == 0:
+                        for next_p in chain[i + 1:]:
+                            next_col += 2
+                            matrix[current_row, next_col] = next_p
+                            number_of_pillars_placed_in_line += 1
+                    elif i == len(chain) - 1:
+                        for prev_p in chain[i - 1::-1]:
+                            prev_col -= 2
+                            matrix[current_row, prev_col] = prev_p
+                            number_of_pillars_placed_in_line += 1
+                    else:
+                        for next_p in chain[i + 1:]:
+                            if next_p == 0:
+                                next_col += 2
+                                matrix[current_row, next_col] = next_p
+                                continue
+                            next_col += 2
+                            matrix[current_row, next_col] = next_p
+                            number_of_pillars_placed_in_line += 1
+                        prev_col = referenced_col
+                        for prev_p in chain[i - 1::-1]:
+                            if prev_p == 0:
+                                prev_col -= 2
+                                matrix[current_row, prev_col] = prev_p
+                                continue
+                            prev_col -= 2
+                            matrix[current_row, prev_col] = prev_p
+                            number_of_pillars_placed_in_line += 1
+                    break
+            if number_of_pillars_placed_in_line == 0:
+                raise Exception("didn't place all pillars")
+        current_row += 2
+
+    return matrix
+
+
+def build_3d_pillars_pixel_matrix(matrix, shuffle_ts=False, custom_p_to_intensity=None, channel='ts'):
+    if custom_p_to_intensity is not None:
+        p_to_intensity = custom_p_to_intensity
+    elif shuffle_ts:
+        p_to_intensity = get_pillar_to_intensity_for_shuffle_ts()
+    else:
+        p_to_intensity = get_pillar_to_intensity_norm_by_inner_pillar_noise()
+
+    non_zero_rows = np.any(matrix != 0, axis=1)
+    non_zero_cols = np.any(matrix != 0, axis=0)
+    pillars_id_trimmed_matrix = matrix[non_zero_rows][:, non_zero_cols]
+    # matrix_3d = np.zeros((pillars_id_trimmed_matrix.shape[0],pillars_id_trimmed_matrix.shape[1], ts_length))
+    matrix_pillars = list(pillars_id_trimmed_matrix[pillars_id_trimmed_matrix != 0])
+
+    if channel == 'ts':
+        channel_length = len(list(p_to_intensity.values())[0])
+        matrix_3d = np.zeros((channel_length, pillars_id_trimmed_matrix.shape[0], pillars_id_trimmed_matrix.shape[1]))
+        # norm_p_to_intens = min_max_intensity_normalization(p_to_intensity)
+        # norm_p_to_intens = robust_intensity_normalization(p_to_intensity)
+        channel_vals = zscore_intensity_normalization(p_to_intensity)
+        channel_vals = {str(k): v for k, v in channel_vals.items()}
+    if channel == 'correlation':
+        channel_length = get_alive_pillars_correlation().shape[0]
+        matrix_3d = np.zeros((channel_length, pillars_id_trimmed_matrix.shape[0], pillars_id_trimmed_matrix.shape[1]))
+        channel_vals = get_alive_pillars_correlation()
+
+    for p in matrix_pillars:
+        p_indexes = [(i, j) for i in range(pillars_id_trimmed_matrix.shape[0]) for j in
+                     range(pillars_id_trimmed_matrix.shape[1]) if pillars_id_trimmed_matrix[i, j] == p]
+        x, y = p_indexes[0]
+        matrix_3d[:, x, y] = channel_vals[str(p)]
+
+    return matrix_3d, pillars_id_trimmed_matrix
+
+
+def show_pillars_on_line(pillars_chain):
+    colors = list(mcolors.TABLEAU_COLORS)
+    for i, coords in enumerate([p['pillars'] for p in pillars_chain]):
+        y, x = zip(*coords)
+        color = colors[i % len(colors)]
+        plt.imshow(get_last_image(), cmap='gray')
+        plt.scatter(x, y, color=color)
+    plt.show()
+
+
+# TODO: delete from here
+def plot_avg_cluster_time_series(custom_p_to_intensity, segments, matrix_3d, pillars_id_matrix_2d, save_clusters_fig=None):
+    unique_labels = np.unique(segments)
+    unique_labels.sort()
+    avg_segment_intnes = []
+    for l in unique_labels:
+        if l != 0:
+            intens = []
+            pillars_in_labels = pillars_id_matrix_2d[segments == l]
+            for p in pillars_in_labels:
+                intens.append(custom_p_to_intensity[p])
+            average_intensity_in_segment = [sum(values) / len(values) for values in zip(*intens)]
+            avg_segment_intnes.append(average_intensity_in_segment)
+    plt.figure(figsize=(10, 8))
+    for index, intensity in enumerate(avg_segment_intnes):
+        plt.plot(intensity, label=f'Segment {index + 1}')
+    plt.xlabel('Index')
+    plt.ylabel('Avg Intensity')
+    plt.legend()
+    if save_clusters_fig is not None:
+        file_name = "/Superpixel_Segmentation_avg_intensity_frames_" + str(save_clusters_fig) + ".png"
+        plt.savefig(Consts.RESULT_FOLDER_PATH + file_name)
+        plt.close()
+
+
+def superpixel_segmentation(n_segments=4, shuffle_ts=False, custom_p_to_intensity=None, channel='ts', save_clusters_fig=None):
+    matrix = pillars_to_pixels()
+    matrix_3d, pillars_id_matrix_2d = build_3d_pillars_pixel_matrix(matrix, shuffle_ts=shuffle_ts, custom_p_to_intensity=custom_p_to_intensity, channel=channel)
+    pillars_matrix_2d_to_mask = np.where(np.vectorize(lambda x: isinstance(x, tuple))(pillars_id_matrix_2d), 1, 0)
+    mask_2d = pillars_matrix_2d_to_mask > 0
+
+    matrix_3d_float = img_as_float(matrix_3d)
+    segments = slic(matrix_3d_float, n_segments=n_segments, mask=mask_2d, channel_axis=0, slic_zero=True)
+
+    if save_clusters_fig is not None:
+        if save_clusters_fig is True:
+            save_clusters_fig = ''
+        # plot_avg_cluster_time_series(custom_p_to_intensity, segments, matrix_3d, pillars_id_matrix_2d, save_clusters_fig=save_clusters_fig)
+        unique_labels = np.unique(segments)
+        colors = plt.cm.jet(np.linspace(0, 1, len(unique_labels)))
+        colored_image = np.zeros((*segments.shape, 3), dtype=np.float32)
+        legend_patches = []
+        import matplotlib.patches as mpatches
+        for label, color in zip(unique_labels, colors):
+            if label != 0:
+                colored_image[segments == label] = color[:3]
+                patch = mpatches.Patch(color=color[:3], label=f'Segment {label}')
+                legend_patches.append(patch)
+
+        plt.figure(figsize=(10, 8))
+        plt.imshow(colored_image)
+        plt.title("Colored SLIC Superpixel Segmentation by ts")
+        plt.legend(handles=legend_patches, bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+        plt.tight_layout()
+        plt.axis('off')
+        file_name = "/Superpixel_Segmentation_by_ts_" + str(save_clusters_fig) + ".png"
+        plt.savefig(Consts.RESULT_FOLDER_PATH + file_name)
+        plt.close()
+    # plt.show()
+
+    return segments, matrix_3d, pillars_id_matrix_2d
+
+
+def segmentation_accuracy(segments, matrix_3d):
+    labels = [l for l in list(np.unique(segments)) if l != 0]
+    pillars_corrs_df = get_alive_pillars_symmetric_correlation()
+    p_to_intens = get_pillar_to_intensity_norm_by_inner_pillar_noise()
+    correlations = {}
+    intra_class_variability = []
+    intra_class_dtw_distances = []
+    intra_class_vec_dist = []
+    # intra_class_variability = {}
+    for segment_id in labels:
+        seg_intens = matrix_3d[:, segments == segment_id]
+        # Calculate intra-class variability (variance)
+        intra_variability = np.var(seg_intens, ddof=1)
+        # intra_class_variability[segment_id] = intra_variability
+        intra_class_variability.append(intra_variability)
+        indices = list(zip(np.where(segments == segment_id)[0], np.where(segments == segment_id)[1]))
+        # Calculate DTW distances between all pairs of the same segment
+        dtw_distances = []
+        for idx1 in indices:
+            for idx2 in indices:
+                if idx1 != idx2:
+                    intensity1 = matrix_3d[:, idx1[0], idx1[1]]
+                    intensity2 = matrix_3d[:, idx2[0], idx2[1]]
+                    dtw_distance, _ = fastdtw(intensity1, intensity2)
+
+                    dtw_distances.append(dtw_distance)
+        if len(dtw_distances) > 0:
+            intra_class_dtw_distances.append(np.mean(dtw_distances))
+        # Calculate distance between all pairs of the same segment
+        vec_distances = []
+        for idx1 in indices:
+            for idx2 in indices:
+                if idx1 != idx2:
+                    intensity1 = matrix_3d[:, idx1[0], idx1[1]]
+                    intensity2 = matrix_3d[:, idx2[0], idx2[1]]
+                    vec_dist = np.linalg.norm(intensity1-intensity2)
+
+                    vec_distances.append(vec_dist)
+        if len(vec_distances) > 0:
+            intra_class_vec_dist.append(np.mean(vec_distances))
+    intra_class_variability = np.mean(intra_class_variability)
+    overall_intra_class_dtw_distance = np.mean(intra_class_dtw_distances)
+    overall_intra_class_vec_dist = np.mean(intra_class_vec_dist)
+
+    inter_class_dtw_distances = []
+    inter_class_vec_dist = []
+    for i in range(len(labels)):
+        for j in range(i + 1, len(labels)):
+            label1 = labels[i]
+            label2 = labels[j]
+            # Get indices of segments belonging to class label1 and class label2
+            indices1 = list(zip(np.where(segments == label1)[0], np.where(segments == label1)[1]))
+            indices2 = list(zip(np.where(segments == label2)[0], np.where(segments == label2)[1]))
+            # Calculate DTW distances between all pairs of segments from different classes
+            dtw_distances = []
+            for idx1 in indices1:
+                for idx2 in indices2:
+                    intensity1 = matrix_3d[:, idx1[0], idx1[1]]
+                    intensity2 = matrix_3d[:, idx2[0], idx2[1]]
+                    distance, _ = fastdtw(intensity1, intensity2)
+                    dtw_distances.append(distance)
+            # Calculate the average DTW distance between segments of different classes
+            inter_class_dtw_distances.append(np.mean(dtw_distances))
+            # Calculate similarity between all pairs of segments from different classes
+            vec_dists = []
+            for idx1 in indices1:
+                for idx2 in indices2:
+                    intensity1 = matrix_3d[:, idx1[0], idx1[1]]
+                    intensity2 = matrix_3d[:, idx2[0], idx2[1]]
+                    dist = np.linalg.norm(intensity1-intensity2)
+                    vec_dists.append(dist)
+            inter_class_vec_dist.append(np.mean(vec_dists))
+    # Calculate the overall inter-class variability as the mean of all inter-class distances
+    overall_inter_class_dtw_distance = np.mean(inter_class_dtw_distances)
+    overall_inter_class_vec_dist = np.mean(inter_class_vec_dist)
+
+    return intra_class_variability, overall_intra_class_dtw_distance, overall_intra_class_vec_dist, overall_inter_class_dtw_distance, overall_inter_class_vec_dist
+
+
+def superpixel_segmentation_evaluation(number_of_segmentations, shuffle_ts=False, custom_p_to_intensity=None, channel='ts', save_clusters_fig=None):
+    intra_variance = {}
+    intra_dtw_distance = {}
+    intra_vector_distance = {}
+    inter_dtw_distance = {}
+    inter_vector_distance = {}
+    for n in number_of_segmentations:
+        segments, matrix_3d, _ = superpixel_segmentation(n_segments=n, shuffle_ts=shuffle_ts, custom_p_to_intensity=custom_p_to_intensity, channel=channel, save_clusters_fig=save_clusters_fig)
+        intra_class_variability, overall_intra_class_dtw_distance, overall_intra_class_vec_dist, \
+        overall_inter_class_dtw_distance, overall_inter_class_vec_dist = segmentation_accuracy(segments, matrix_3d)
+        intra_variance[n] = intra_class_variability
+        intra_dtw_distance[n] = overall_intra_class_dtw_distance
+        intra_vector_distance[n] = overall_intra_class_vec_dist
+        inter_dtw_distance[n] = overall_inter_class_dtw_distance
+        inter_vector_distance[n] = overall_inter_class_vec_dist
+    # lowest_intra_n = min(intra_variance, key=intra_variance.get)
+    # lowest_intra_dist_n = min(intra_dtw_distance, key=intra_dtw_distance.get)
+    # highest_inter_n = max(inter_dtw_distance, key=inter_dtw_distance.get)
+    # print("intra similarity:", intra_similarity)
+    # print("intra distance:", intra_distance)
+    # print("inter dissimilarity:", inter_dissimilarity)
+    # print("lowest_intra_n", lowest_intra_n)
+    # print("lowest_intra_dist_n", lowest_intra_dist_n)
+    # print("highest_inter_dist_n", highest_inter_n)
+
+    return intra_variance, intra_dtw_distance, intra_vector_distance, inter_dtw_distance, inter_vector_distance
+
+
+def dfs_pillar_pixel_build(pillars_loc, alive_generated_center_ids, graph, vertex_generated_id, dense_matrix,
+                           curr_matrix_loc, visited=None):
+    if visited is None:
+        visited = set()
+    visited.add(vertex_generated_id)
+
+    vertex_center_loc = closest_to_point(pillars_loc, vertex_generated_id)
+
+    for neighbor_loc in graph[vertex_center_loc]:
+        neighbor_generated_id = closest_to_point(alive_generated_center_ids, neighbor_loc)
+        if neighbor_generated_id not in visited:
+            angle = (degrees(atan2(neighbor_generated_id[0] - vertex_generated_id[0],
+                                   neighbor_generated_id[1] - vertex_generated_id[1])) + 90 + 360) % 360
+            # right up
+            if 22.5 <= angle < 67.5:
+                curr_matrix_loc = (curr_matrix_loc[0] - 1, curr_matrix_loc[1] + 1)
+            # right
+            elif 67.5 <= angle < 112.5:
+                curr_matrix_loc = (curr_matrix_loc[0], curr_matrix_loc[1] + 2)
+            # right down
+            elif 112.5 <= angle < 157.5:
+                curr_matrix_loc = (curr_matrix_loc[0] + 1, curr_matrix_loc[1] + 1)
+            # Down
+            elif 157.5 <= angle < 202.5:
+                curr_matrix_loc = (curr_matrix_loc[0] + 2, curr_matrix_loc[1])
+            # Left down
+            elif 202.5 <= angle < 247.5:
+                curr_matrix_loc = (curr_matrix_loc[0] + 1, curr_matrix_loc[1] - 1)
+            # Left
+            elif 247.5 <= angle < 292.5:
+                curr_matrix_loc = (curr_matrix_loc[0], curr_matrix_loc[1] - 2)
+            # Left up
+            elif 292.5 <= angle < 337.5:
+                curr_matrix_loc = (curr_matrix_loc[0] - 1, curr_matrix_loc[1] - 1)
+            # Up
+            else:
+                curr_matrix_loc = (curr_matrix_loc[0] - 2, curr_matrix_loc[1])
+
+            # Put 2 pillars in the same location
+            if dense_matrix[curr_matrix_loc[0]][curr_matrix_loc[1]] != None:
+                temp = [dense_matrix[curr_matrix_loc[0]][curr_matrix_loc[1]]]
+                temp.append(neighbor_generated_id)
+                dense_matrix[curr_matrix_loc[0]][curr_matrix_loc[1]] = temp
+            else:
+                dense_matrix[curr_matrix_loc[0]][curr_matrix_loc[1]] = neighbor_generated_id
+
+            dfs_pillar_pixel_build(pillars_loc, alive_generated_center_ids, graph, neighbor_generated_id, dense_matrix,
+                                   curr_matrix_loc, visited)
+
+
+def add_points_in_rule(covered_pillars, line, max_col, max_row, pillar_id, pillar_ids, rule1):
+    current_loc = pillar_id
+    while not is_out_of_bounds(current_loc, max_row, max_col):
+        current_loc = (current_loc[0] + rule1[0], current_loc[1] + rule1[0])
+        closest_id = closest_to_point(pillar_ids, current_loc)
+        if closest_id is not None and np.linalg.norm(
+                np.array(current_loc) - np.array(closest_id)) <= Consts.MAX_DISTANCE_PILLAR_FIXED * 1.5:
+            if closest_id not in covered_pillars:
+                line.append(closest_id)
+                covered_pillars.add(closest_id)
+
+
+def is_out_of_bounds(loc, max_row, max_col):
+    return loc[0] < 0 or loc[1] < 0 or loc[0] >= max_row or loc[1] >= max_col
+
+
+def calc_angle(lineA, lineB):
+    line1Y1 = lineA[0][1]
+    line1X1 = lineA[0][0]
+    line1Y2 = lineA[1][1]
+    line1X2 = lineA[1][0]
+
+    line2Y1 = lineB[0][1]
+    line2X1 = lineB[0][0]
+    line2Y2 = lineB[1][1]
+    line2X2 = lineB[1][0]
+
+    # calculate angle between pairs of lines
+    angle1 = math.atan2(line1Y1 - line1Y2, line1X1 - line1X2)
+    angle2 = math.atan2(line2Y1 - line2Y2, line2X1 - line2X2)
+    angleDegrees = (angle1 - angle2) * 360 / (2 * math.pi)
+    return angleDegrees
+
+
+def build_graph(random_neighbors=False, shuffle_ts=False, draw=False):
+    def normalize_values(values_dict):
+        min_value = min(values_dict.values())
+        max_value = max(values_dict.values())
+        for k, v in values_dict.items():
+            norm_value = (v - min_value) / (max_value - min_value)
+            values_dict[k] = norm_value
+
+        return values_dict
+
+    G = nx.Graph()
+    p_to_intens = get_pillar_to_intensity_norm_by_inner_pillar_noise()
+    min_max_scaler = MinMaxScaler()
+    normalized_p_to_intens = {key: min_max_scaler.fit_transform(np.array(value).reshape(-1, 1)).flatten() for
+                              key, value in p_to_intens.items()}
+    nodes_loc = get_alive_pillar_ids_overall_v3()
+    nodes_loc = list(nodes_loc)
+    nodes_loc_y_inverse = [(loc[1], loc[0]) for loc in nodes_loc]
+    node_loc2index = {}
+    for i in range(len(nodes_loc)):
+        node_loc2index[str(nodes_loc[i])] = i
+        G.add_node(i, pos=nodes_loc[i], intensity=normalized_p_to_intens[nodes_loc[i]])
+        # G.add_node(i, pos=nodes_loc[i])
+
+    if random_neighbors:
+        neighbors = get_random_neighbors()
+    else:
+        neighbors = get_alive_pillars_to_alive_neighbors()
+
+    if Consts.only_alive:
+        correlation = get_alive_pillars_symmetric_correlation()
+    else:
+        correlation = get_all_pillars_correlations()
+
+    if shuffle_ts:
+        correlation = get_correlations_df_for_mixed_ts()
+
+    pillars_pair_to_corr = {}
+    for pillar, nbrs in neighbors.items():
+        for nbr in nbrs:
+            if (pillar, nbr) not in pillars_pair_to_corr and (nbr, pillar) not in pillars_pair_to_corr:
+                if str(nbr) in correlation and str(pillar) in correlation and not np.isnan(
+                        correlation[str(pillar)][str(nbr)]):
+                    pillars_pair_to_corr[(pillar, nbr)] = (correlation[str(pillar)][str(nbr)])
+
+    pillars_pair_to_corr = normalize_values(pillars_pair_to_corr)
+
+    for pair, corr in pillars_pair_to_corr.items():
+        G.add_edge(node_loc2index[str(pair[0])], node_loc2index[str(pair[1])])
+        G[node_loc2index[str(pair[0])]][node_loc2index[str(pair[1])]]['weight'] = corr
+
+    if draw:
+        if nx.get_edge_attributes(G, 'weight') == {}:
+            return
+        edges, weights = zip(*nx.get_edge_attributes(G, 'weight').items())
+        img = get_last_image_whiten(build_image=Consts.build_image)
+        fig, ax = plt.subplots()
+        ax.imshow(img, cmap='gray')
+        nx.draw(G, nodes_loc_y_inverse, edgelist=edges, edge_color=weights,
+                width=3.0, node_size=50)
+        sm = plt.cm.ScalarMappable()
+        sm.set_array(weights)
+        plt.colorbar(sm)
+        if Consts.SHOW_GRAPH:
+            plt.show()
+
+    return G
+
+
+def louvain_cluster_nodes(G, draw=False):
+    partition = community.best_partition(G, resolution=1.05, random_state=42)
+
+    # Convert the partition dictionary into a list of clusters
+    clusters = {}
+    for node, cluster_id in partition.items():
+        clusters.setdefault(cluster_id, []).append(node)
+
+    if draw:
+        img = get_last_image_whiten(build_image=Consts.build_image)
+        fig, ax = plt.subplots()
+        ax.imshow(img, cmap='gray')
+
+        pos = nx.get_node_attributes(G, 'pos')
+        nodes_loc_y_inverse = {k: (v[1], v[0]) for k, v in pos.items()}
+        for cluster_id, nodes in clusters.items():
+            nx.draw(G.subgraph(nodes), nodes_loc_y_inverse, node_color=f"C{cluster_id % 10}",
+                    label=f"Cluster {cluster_id}")
+        nx.draw_networkx_edges(G, nodes_loc_y_inverse)
+        plt.axis('off')
+        plt.show()
+
+
+def build_fully_connected_graph(random_neighbors=False, shuffle_ts=False, draw=False):
+    G = nx.Graph()
+    p_to_intens = get_pillar_to_intensity_norm_by_inner_pillar_noise()
+    min_max_scaler = MinMaxScaler()
+    normalized_p_to_intens_series = {}
+    for key, value in p_to_intens.items():
+        normalized_values = min_max_scaler.fit_transform(np.array(value).reshape(-1, 1)).flatten()
+        time_index = pd.RangeIndex(start=0, stop=len(normalized_values), step=1)
+        series = pd.Series(normalized_values, index=time_index)
+        normalized_p_to_intens_series[key] = series
+    nodes_loc = get_alive_pillar_ids_overall_v3()
+    nodes_loc = list(nodes_loc)
+    nodes_loc_y_inverse = [(loc[1], loc[0]) for loc in nodes_loc]
+    node_loc2index = {}
+    for i in range(len(nodes_loc)):
+        node_loc2index[str(nodes_loc[i])] = i
+        G.add_node(i, pos=nodes_loc[i], intensity=normalized_p_to_intens_series[nodes_loc[i]])
+
+    if Consts.only_alive:
+        correlation = get_alive_pillars_symmetric_correlation()
+    else:
+        correlation = get_all_pillars_correlations()
+
+    if shuffle_ts:
+        correlation = get_correlations_df_for_mixed_ts()
+    alpha = 0.2
+    pillars = list(correlation.columns)
+    for p1 in pillars:
+        for p2 in pillars:
+            if p1 != p2:
+                abs_corr = abs(correlation[p1][p2])
+                dist = 1/(euclidean(eval(p1), eval(p2)))
+                # f_weight = abs_corr * (1 - dist)
+                f_weight = alpha * abs_corr + (1-alpha) * (1 - dist)
+                G.add_edge(node_loc2index[p1], node_loc2index[p2])
+                G[node_loc2index[p1]][node_loc2index[p2]]['weight'] = f_weight
+
+    if draw:
+        if nx.get_edge_attributes(G, 'weight') == {}:
+            return
+        edges, weights = zip(*nx.get_edge_attributes(G, 'weight').items())
+        img = get_last_image_whiten(build_image=Consts.build_image)
+        fig, ax = plt.subplots()
+        ax.imshow(img, cmap='gray')
+        nx.draw(G, nodes_loc_y_inverse, edgelist=edges, edge_color=weights,
+                width=3.0, node_size=50)
+        sm = plt.cm.ScalarMappable()
+        sm.set_array(weights)
+        plt.colorbar(sm)
+        if Consts.SHOW_GRAPH:
+            plt.show()
+
+    return G
+
+
+def gcn(G):
+    node_features = np.array([G.nodes[node]['intensity'] for node in G.nodes()])
+    node_features = node_features.reshape(G.number_of_nodes(), node_features.shape[1])
+    n_components = 2
+    pca = PCA(n_components=n_components)
+    reduced_features = pca.fit_transform(node_features)
+
+    edge_index = torch.tensor(list(G.edges()), dtype=torch.long).t().contiguous()
+    edge_weights = torch.tensor([G[u][v]['weight'] for u, v in G.edges()], dtype=torch.float)
+    x = torch.tensor(reduced_features, dtype=torch.float)
+    data = Data(x=x, edge_index=edge_index, edge_attr=edge_weights)
+
+    model = GCN(num_features=data.num_features, hidden_channels=12)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+    for epoch in range(200):
+        model.train()
+        optimizer.zero_grad()
+        out = model(data.x, data.edge_index)
+        # Compute the loss and gradients
+        # loss.backward()
+        optimizer.step()
+
+    # Generate embeddings
+    model.eval()
+    with torch.no_grad():
+        embeddings = model(data.x, data.edge_index)
+    embeddings_np = embeddings.detach().cpu().numpy()
+    scaler = MinMaxScaler()
+    embeddings_normalized = scaler.fit_transform(embeddings_np)
+
+    from sklearn.neighbors import NearestNeighbors
+    neigh = NearestNeighbors(n_neighbors=2)
+    nbrs = neigh.fit(embeddings_normalized)
+    distances, indices = nbrs.kneighbors(embeddings_normalized)
+    distances = np.sort(distances, axis=0)
+    distances = distances[:, 1]
+    plt.figure(figsize=(20, 10))
+    plt.plot(distances)
+    plt.title('K-distance Graph', fontsize=20)
+    plt.xlabel('Data Points sorted by distance', fontsize=14)
+    plt.ylabel('Epsilon', fontsize=14)
+    plt.show()
+
+    dbscan = DBSCAN(eps=0.2, min_samples=4).fit(embeddings_normalized)
+    community_assignments = dbscan.labels_
+
+    def get_connected_components(subgraph):
+        return [list(c) for c in nx.connected_components(subgraph)]
+
+    # Adjusting clusters
+    new_community_assignments = community_assignments.copy()
+    for cluster_id in set(community_assignments):
+        if cluster_id == -1:
+            # Skip processing for noise points
+            continue
+        # Get nodes in the current cluster
+        cluster_nodes = [i for i, label in enumerate(community_assignments) if label == cluster_id]
+        # Create subgraph from the nodes in the cluster
+        cluster_subgraph = G.subgraph(cluster_nodes)
+        # Check if the subgraph is connected
+        if not nx.is_connected(cluster_subgraph):
+            # If not connected, split the cluster into connected components
+            connected_components = get_connected_components(cluster_subgraph)
+            # Assign new cluster IDs to each connected component (except the first one)
+            for component_id, component in enumerate(connected_components[1:],
+                                                     start=len(set(new_community_assignments))):
+                for node in component:
+                    new_community_assignments[node] = component_id
+    # Update community assignments
+    community_assignments = new_community_assignments
+
+    unique_labels = set(community_assignments)
+    colors = [plt.cm.jet(float(i) / max(unique_labels)) for i in unique_labels]
+    color_map = [colors[label] if label >= 0 else (1, 1, 1, 1) for label in community_assignments]  # White for outliers
+    if nx.get_edge_attributes(G, 'weight') == {}:
+        return
+    edges, weights = zip(*nx.get_edge_attributes(G, 'weight').items())
+    img = get_last_image_whiten(build_image=Consts.build_image)
+    fig, ax = plt.subplots()
+    ax.imshow(img, cmap='gray')
+    nodes_loc = get_alive_pillar_ids_overall_v3()
+    nodes_loc = list(nodes_loc)
+    nodes_loc_y_inverse = [(loc[1], loc[0]) for loc in nodes_loc]
+    nx.draw(G, nodes_loc_y_inverse, edgelist=edges, node_size=60, node_color=color_map)  # Add node_color here
+    sm = plt.cm.ScalarMappable()
+    sm.set_array(weights)
+    plt.colorbar(sm)
+    if Consts.SHOW_GRAPH:
+        plt.show()
+
+
+class GCN(torch.nn.Module):
+    def __init__(self, num_features, hidden_channels):
+        super(GCN, self).__init__()
+        self.conv1 = GCNConv(num_features, hidden_channels)
+        self.conv2 = GCNConv(hidden_channels, hidden_channels)
+        # Add more layers if needed
+
+    def forward(self, x, edge_index):
+        x = self.conv1(x, edge_index)
+        x = torch.relu(x)
+        x = self.conv2(x, edge_index)
+        return x
+
 
 # def get_peripheral_and_center_pillars_by_frame_according_revealing_pillars():
 #     frame_to_alive_pillars = get_alive_center_ids_by_frame_v2()
