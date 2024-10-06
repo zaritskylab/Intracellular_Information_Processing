@@ -116,11 +116,14 @@ def plot_graph_in_degree_label(G, in_degree_nodes, non_stationary_pillars):
     top_weighted_degree = np.percentile(list(only_stationary_pillars_data.values()), 85)
 
     in_degree_nodes = {k: round(v, 2) for k, v in in_degree_nodes.items()}
+    top_weighted_nodes = {n: d for n, d in in_degree_nodes.items() if d > top_weighted_degree}
     nodes_color = ['tab:red' if d > top_weighted_degree else 'tab:blue' for n, d in in_degree_nodes.items()]
     nx.draw(G, nodes_loc_y_inverse, node_size=250, arrows=True, width=1.5, node_color=nodes_color)
     nx.draw_networkx_labels(G, nodes_loc_y_inverse, labels=in_degree_nodes, font_size=8)
 
     plt.show()
+
+    return top_weighted_nodes
 
 
 def out_degree_centrality(G):
@@ -153,11 +156,14 @@ def plot_graph_out_degree_label(G, out_degree_nodes, non_stationary_pillars):
     top_weighted_degree = np.percentile(list(only_stationary_pillars_data.values()), 85)
 
     out_degree_nodes = {k: round(v, 2) for k, v in out_degree_nodes.items()}
+    top_weighted_nodes = {n: d for n, d in out_degree_nodes.items() if d > top_weighted_degree}
     nodes_color = ['tab:green' if d > top_weighted_degree else 'tab:blue' for n, d in out_degree_nodes.items()]
     nx.draw(G, nodes_loc_y_inverse, node_size=250, arrows=True, width=1.5, node_color=nodes_color)
     nx.draw_networkx_labels(G, nodes_loc_y_inverse, labels=out_degree_nodes, font_size=8)
 
     plt.show()
+
+    return top_weighted_nodes
 
 
 def plot_main_in_out_centrality_pillars(G, non_stationary_pillars, in_degree_nodes, out_degree_nodes):

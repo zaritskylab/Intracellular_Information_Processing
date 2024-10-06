@@ -1,4 +1,4 @@
-from skimage import io
+from skimage import io, transform
 import numpy as np
 from tifffile import imsave
 import cv2
@@ -24,19 +24,19 @@ def crop_video_rect(
         partial_img = img[top_left[0]:bottom_right[0], top_left[1]:bottom_right[1]]
 
         template[img_idx] = partial_img
-    imsave(save_path, template)
-    # imsave(
-    #     "C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\5.3\\exp-20230809-video-00-cell-1-Airyscan Processing.tif",
-    #     template)
+    # imsave(save_path, template)
+    imsave(
+        "C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\5.3\\new exps\\exp-20240912-video-05-cell-3-Airyscan Processing.tif",
+        template)
 
 
 # crop_video_rect(
-#     'C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\5.3\\20230809-video-00-Airyscan Processing.tif',
-#     (91, 172), (132, 214),
-#     # (101, 282), (144, 327)
-#     # (214, 321), (255, 353)
-#     # (322, 57), (357, 99)
-#     # (230, 50), (298, 126)
+#     'C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\5.3\\new exps\\20240912-video-05-Airyscan Processing.tif',
+#     # (230, 0), (518, 320),
+#     # (1440, 350), (1775, 590)
+#     (1677, 1120), (1945, 1385)
+#     # (1260, 590), (1619, 910)
+#     # (1952, 159), (2299, 471)
 # )
 
 
@@ -110,7 +110,7 @@ def crop_video_triangle(
         full_img_stack[img_idx] = masked_img
 
     imsave(
-        "C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\5.3\\exp-20230809-video-03-cell-5-Airyscan Processing2.tif",
+        "C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\5.3\\new exps\\exp-20240912-video-05-cell-33-Airyscan Processing.tif",
         full_img_stack)
 
 
@@ -143,6 +143,14 @@ def isInside(x1, y1, x2, y2, x3, y3, x, y):
         return False
 
 
+# crop_video_triangle(
+#     "C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\5.3\\new exps\\exp-20240912-video-05-cell-3-Airyscan Processing.tif",
+# (115,0),
+# (268,0),
+# (268,100)
+# )
+
+
 def skip_frame(
         video_path: str,
         frames_to_discard: list):
@@ -165,18 +173,96 @@ def skip_frame(
 
     # Optional: Save the filtered image stack
     io.imsave(
-        "C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\5.3\\20230818-video-03-Airyscan Processing_skiped_noise.tif",
+        "C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\5.3\\new exps\\exp-2024091002-video-05-cell-3-Airyscan Processing_skiped_noise.tif",
         filtered_image_stack)
 
-# skip_frame(video_path="C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\5.3\\20230818-video-03-Airyscan Processing.tif",
-#            frames_to_discard=[35])
 
-# crop_video_triangle(
-#     "C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\5.3\\exp-20230809-video-03-cell-5-Airyscan Processing.tif",
-# (160,0),
-# (324,130),
-# (324,0)
-# )
+def concatenate_videos_crop(video_paths: list, output_path: str):
+    """
+    Concatenate multiple TIFF files into a single TIFF file, cropping frames to match dimensions.
+
+    :param video_paths: List of file paths to the input TIFF files.
+    :param output_path: File path to save the concatenated output TIFF file.
+    """
+    concatenated_stack = []
+    target_shape = None
+
+    # Determine the smallest common shape (height, width)
+    for video_path in video_paths:
+        img_stack = io.imread(video_path)
+        if target_shape is None:
+            target_shape = img_stack.shape[1:]  # Take the shape of the first video frames
+        else:
+            # Update the target shape to the smallest dimensions across all videos
+            target_shape = tuple(min(s1, s2) for s1, s2 in zip(target_shape, img_stack.shape[1:]))
+
+    # Loop through each video (TIFF file) and crop frames
+    for video_path in video_paths:
+        img_stack = io.imread(video_path)
+
+        # Crop each frame in the video stack to the target shape
+        cropped_stack = np.array([image[:target_shape[0], :target_shape[1]] for image in img_stack])
+
+        # Append the cropped stack to the concatenated list
+        concatenated_stack.append(cropped_stack)
+
+    # Concatenate the image stacks along the first axis (frames)
+    concatenated_stack = np.concatenate(concatenated_stack, axis=0)
+
+    # Save the concatenated image stack to the specified output path
+    io.imsave(output_path, concatenated_stack)
+
+
+def concatenate_videos_resize(video_paths: list, output_path: str):
+    """
+    Concatenate multiple TIFF files into a single TIFF file, resizing frames to match dimensions.
+
+    :param video_paths: List of file paths to the input TIFF files.
+    :param output_path: File path to save the concatenated output TIFF file.
+    """
+    concatenated_stack = []
+    target_shape = None
+
+    # Determine the common target shape based on the smallest frame dimensions
+    for video_path in video_paths:
+        img_stack = io.imread(video_path)
+        if target_shape is None:
+            target_shape = img_stack.shape[1:]  # Take the shape of the first video frames
+        else:
+            # Ensure that all images resize to match the smallest frame dimensions
+            target_shape = tuple(min(s1, s2) for s1, s2 in zip(target_shape, img_stack.shape[1:]))
+
+    # Loop through each video (TIFF file) and resize frames
+    for video_path in video_paths:
+        img_stack = io.imread(video_path)
+
+        # Resize each frame in the video stack to the target shape
+        resized_stack = np.array(
+            [transform.resize(image, target_shape, preserve_range=True, anti_aliasing=True).astype(np.uint16) for image
+             in img_stack])
+
+        # Append the resized stack to the concatenated list
+        concatenated_stack.append(resized_stack)
+
+    # Concatenate the image stacks along the first axis (frames)
+    concatenated_stack = np.concatenate(concatenated_stack, axis=0)
+
+    # Save the concatenated image stack to the specified output path
+    io.imsave(output_path, concatenated_stack)
+
+
+# concatenate_videos_crop([
+#     "C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\5.3\\new exps\\20240911-exp1-video-01-1-Airyscan Processing.tif",
+#     "C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\5.3\\new exps\\20240911-exp1-video-01-2-Airyscan Processing.tif",
+# "C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\5.3\\new exps\\20240911-exp1-video-01-3-Airyscan Processing.tif",
+# "C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\5.3\\new exps\\20240911-exp1-video-01-4-Airyscan Processing.tif",
+# ],
+#     "C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\5.3\\new exps\\20240911-video-011-Airyscan Processing.tif", )
+
+
+skip_frame(video_path="C:\\Users\\Sarit Hollander\\Desktop\\Study\\MSc\\Research\\Project\\Intracellular_Information_Processing\\Data\\Pillars\\5.3\\new exps\\exp-2024091002-video-05-cell-3-Airyscan Processing.tif",
+           frames_to_discard=[14])
+
 # (140, 242),
 # (225, 242),
 # (225, 116)

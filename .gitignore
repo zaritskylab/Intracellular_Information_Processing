@@ -18,3 +18,8 @@ Data/Pillars/New-06-Airyscan Processing-04-actin_drift_corrected_13.2.tif
 Miscellaneous/multi_config_runner_results/
 /multi_config_runner_results/
 Miscellaneous/SavedPillarsData/
+Miscellaneous/*png
+Miscellaneous/*svg
+Miscellaneous/*html
+Miscellaneous/*csv
+

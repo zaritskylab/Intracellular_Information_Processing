@@ -31,7 +31,7 @@ def show_last_image_masked(mask_path=None, pillars_mask=None, save_mask=True, fr
     if frame is not None:
         img = frame
 
-    plt.imshow(img, cmap=plt.cm.gray)
+    # plt.imshow(img, cmap=plt.cm.gray)
     # if Consts.RESULT_FOLDER_PATH is not None:
     #     plt.savefig(Consts.RESULT_FOLDER_PATH + "/last_image.png")
     #     plt.close()  # close the figure window
@@ -45,6 +45,7 @@ def show_last_image_masked(mask_path=None, pillars_mask=None, save_mask=True, fr
     pillars_mask = 255 - pillars_mask
     mx = ma.masked_array(img, pillars_mask)
     plt.imshow(mx, cmap=plt.cm.gray)
+    plt.axis('off')
     if save_mask and Consts.RESULT_FOLDER_PATH is not None:
         plt.savefig(Consts.RESULT_FOLDER_PATH + "/mask.png")
         plt.close()  # close the figure window
@@ -57,6 +58,7 @@ def show_last_image_masked(mask_path=None, pillars_mask=None, save_mask=True, fr
         #     s = '(' + str(center[0]) + ',' + str(center[1]) + ')'
         #     plt.text(center[VIDEO_06_LENGTH], center[0], s=s, fontsize=7, color='red')
         plt.show()
+    return mx
 
 
 def indirect_alive_neighbors_correlation_plot(pillar_location, only_alive=True):
@@ -115,7 +117,8 @@ def correlation_plot(only_alive=True,
                      neighbors_str='all',
                      alive_correlation_type='symmetric',
                      pillars_corr_df=None,
-                     frame_to_show=None):
+                     frame_to_show=None,
+                     save_fig=False):
     """
     Plotting graph of correlation between neighboring pillars
     Each point represent pillar itop_5_neighboring_corr_animationn its exact position in the image, and the size of each point represent how many
@@ -126,9 +129,11 @@ def correlation_plot(only_alive=True,
     :return:
     """
     my_G = nx.Graph()
-    last_img = get_last_image()
+    # last_img = get_last_image()
     alive_centers = get_seen_centers_for_mask()
-    nodes_loc = generate_centers_from_alive_centers(alive_centers, Consts.IMAGE_SIZE_ROWS, Consts.IMAGE_SIZE_COLS)
+    # nodes_loc = generate_centers_from_alive_centers(alive_centers, Consts.IMAGE_SIZE_ROWS, Consts.IMAGE_SIZE_COLS)
+    nodes_loc = get_alive_pillar_ids_overall_v3()
+    nodes_loc = list(nodes_loc)
     if neighbors_str == 'alive2back':
         neighbors = get_alive_pillars_in_edges_to_l1_neighbors()[0]
     elif neighbors_str == 'back2back':
@@ -165,7 +170,7 @@ def correlation_plot(only_alive=True,
                 x = 1
 
     edges, weights = zip(*nx.get_edge_attributes(my_G, 'weight').items())
-    cmap = plt.cm.seismic
+    cmap = plt.cm.viridis
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=-1, vmax=1))
     # pillar2mask = get_last_img_mask_for_each_pillar()
     frame2pillars = get_alive_center_ids_by_frame_v3()  # get_frame_to_alive_pillars_by_same_mask(pillar2mask)
@@ -174,13 +179,17 @@ def correlation_plot(only_alive=True,
         img_to_show = get_images(get_images_path())[frame_to_show]
     else:
         img_to_show = get_images(get_images_path())[-1]
-    plt.imshow(img_to_show, cmap=plt.cm.gray)
+    # plt.imshow(img_to_show, cmap=plt.cm.gray)
+    plt.imshow(get_last_image_whiten(Consts.build_image), cmap=plt.cm.gray)
 
     nx.draw(my_G, nodes_loc_y_inverse, with_labels=False, node_color='black', edgelist=edges, edge_color=weights,
-            width=3.0,
-            edge_cmap=cmap, node_size=15,
+            width=1,
+            edge_cmap=cmap, node_size=1,
             vmin=-1, vmax=1, edge_vmin=-1, edge_vmax=1)
+    # nx.draw_networkx_edges(my_G, nodes_loc_y_inverse, alpha=0.5)
     plt.colorbar(sm)
+    if save_fig:
+        plt.savefig('../corrs_graph_fig_1d.svg', format="svg")
     if Consts.SHOW_GRAPH:
         plt.show()
     x = 1
@@ -445,7 +454,7 @@ def non_neighbors_correlation_histogram(correlations_lst):
         plt.show()
 
 
-def nbrs_and_non_nbrs_corrs_gistogram(correlations_dict, neighbors_dict):
+def nbrs_and_non_nbrs_corrs_histogram(correlations_dict, neighbors_dict):
     nbrs_mean_corr, nbrs_corrs_list = get_neighbors_avg_correlation(correlations_dict, neighbors_dict)
     non_nbrs_mean_corr, non_nbrs_corrs_list = get_non_neighbors_mean_correlation(correlations_dict, neighbors_dict)
 
@@ -459,12 +468,14 @@ def nbrs_and_non_nbrs_corrs_gistogram(correlations_dict, neighbors_dict):
     plt.show()
 
 
-def plot_pillar_time_series(pillars_loc, temporal_res=30, img_res=0.1565932, inner_pillar=False, ring_vs_inner=False):
+def plot_pillar_time_series(pillars_loc=None, temporal_res=30, img_res=0.1565932, inner_pillar=False, ring_vs_inner=False,
+                            inner_pillar_norm=False, series_to_plot=None, custom_p_to_intens=None, color=None, save_fig=False):
     """
     Plotting a time series graph of the pillar intensity over time
     :return:
     """
-    color = 'tab:blue'
+    if color is None:
+        color = 'tab:blue'
     if Consts.normalized:
         pillar2intens = normalized_intensities_by_mean_background_intensity()
     elif inner_pillar:
@@ -473,8 +484,16 @@ def plot_pillar_time_series(pillars_loc, temporal_res=30, img_res=0.1565932, inn
     elif ring_vs_inner:
         inner = pillar_to_inner_intensity()
         ring = get_pillar_to_intensity_norm_by_inner_pillar_noise()
+    elif inner_pillar_norm:
+        p2intens_norm = pillar_to_inner_intensity_norm_by_noise()
+    elif custom_p_to_intens is not None:
+        pillar2intens = custom_p_to_intens
     else:
         pillar2intens = get_pillar_to_intensity_norm_by_inner_pillar_noise()
+        # pillar2intens = get_pillar_to_intensities(get_images_path())
+
+    plt.rcParams.update({'font.size': 10})
+    plt.rcParams['font.family'] = 'Arial'
 
     if ring_vs_inner:
         intensities_inner = inner[pillars_loc]
@@ -484,15 +503,42 @@ def plot_pillar_time_series(pillars_loc, temporal_res=30, img_res=0.1565932, inn
         intensities_ring = [i * img_res for i in intensities_ring]
         plt.plot(x, intensities_ring, label='ring intensity')
         plt.plot(x, intensities_inner, label='pillar intensity')
+    elif inner_pillar and type(pillars_loc) is list:
+        intensities_1 = pillar2intens[pillars_loc[0]]
+        intensities_2 = pillar2intens[pillars_loc[1]]
+        x = [i * temporal_res for i in range(len(intensities_1))]
+        intensities_1 = [i * img_res for i in intensities_1]
+        intensities_2 = [i * img_res for i in intensities_2]
+        plt.plot(x, intensities_1, label=str(pillars_loc[0]), color='tab:blue')
+        plt.plot(x, intensities_2, label=str(pillars_loc[1]), color='tab:orange')
+    elif inner_pillar_norm:
+        intensities_1 = p2intens_norm[pillars_loc[0]]
+        intensities_2 = p2intens_norm[pillars_loc[1]]
+        x = [i * temporal_res for i in range(len(intensities_1))]
+        intensities_1 = [i * img_res for i in intensities_1]
+        intensities_2 = [i * img_res for i in intensities_2]
+        plt.plot(x, intensities_1, label=str(pillars_loc[0]), color='tab:blue')
+        plt.plot(x, intensities_2, label=str(pillars_loc[1]), color='tab:orange')
+    elif series_to_plot is not None:
+        intensities = series_to_plot.tolist()
+        x = [i * temporal_res for i in range(len(intensities))]
+        intensities_1 = [i * img_res for i in intensities]
+        plt.plot(x, intensities_1, label="mean background ts", color='tab:red')
     else:
         intensities_1 = pillar2intens[pillars_loc]
         x = [i * temporal_res for i in range(len(intensities_1))]
-        intensities_1 = [i * img_res for i in intensities_1]
+        len1 = len(x)
+        x = [(i / 60) for i in x if i >= 400]
+        len2 = len(x)
+        intensities_1 = [(intens * img_res) for i,intens in enumerate(intensities_1) if i >= (len1 - len2)]
         plt.plot(x, intensities_1, label=str(pillars_loc), color=color)
 
     plt.xlabel('Time (sec)')
     plt.ylabel('Intensity (micron)')
-    plt.legend()
+    plt.yticks(rotation=90)
+    # plt.legend(title='Pillar Location')
+    if save_fig:
+        plt.savefig('../ts_fig_1c.svg', format="svg")
     if Consts.SHOW_GRAPH:
         plt.show()
 
@@ -771,8 +817,8 @@ def k_means(principalComponents, output_path_type, n_clusters=2, custom_df=None)
 
 
 def plot_average_correlation_neighbors_vs_non_neighbors(lst1, lst2, labels=None, title=None, xlabel=None,
-                                                        ylabel=None, special_marker=None, cells_lst=None, arg1=None, arg2=None):
-    f, ax = plt.subplots(figsize=(6, 6))
+                                                        ylabel=None, colors=None, special_marker=None, cells_lst=None, arg1=None, arg2=None, save_fig=False, fig_name=None):
+    f, ax = plt.subplots(figsize=(4, 4))
     color = iter(cm.rainbow(np.linspace(0, 1, len(labels))))
 
     cmap = None
@@ -804,11 +850,12 @@ def plot_average_correlation_neighbors_vs_non_neighbors(lst1, lst2, labels=None,
     #     # plt.plot(float(lst1[i]), float(lst2[i]), marker, label=k, c=c)
 
     ## TODO: this code is for the comparison of 5.3 vs 13.2
-    colors = list(mcolors.TABLEAU_COLORS.values())[2:4]
-    # label1 = labels[0]
-    # label2 = labels[-1]
-    label1 = '5.3'
-    label2 = '13.2'
+    if colors is None:
+        colors = list(mcolors.TABLEAU_COLORS.values())[2:4]
+    label1 = 'before inhibitor'
+    label2 = 'after inhibitor'
+    # label1 = '5.3'
+    # label2 = '13.2'
     lst_x_1 = []
     lst_y_1 = []
     lst_x_2 = []
@@ -822,20 +869,23 @@ def plot_average_correlation_neighbors_vs_non_neighbors(lst1, lst2, labels=None,
             lst_x_2.append(float(lst1[label_index]))
             lst_y_2.append(float(lst2[label_index]))
 
-    plt.plot(lst_x_1, lst_y_1, 'bo', label=label1, c=colors[0], alpha=0.3)
-    plt.plot(lst_x_2, lst_y_2, 'bo', label=label2, c=colors[1], alpha=0.3)
-    #
+    # plt.rcParams.update({'font.size': 10})
+    # plt.rcParams['font.family'] = 'Arial'
+
+    plt.plot(lst_x_1, lst_y_1, 'bo', label=label1, c=colors[0], alpha=0.2)
+    plt.plot(lst_x_2, lst_y_2, 'bo', label=label2, c=colors[1], alpha=0.2)
+
     plt.axvline(x=0, color="gainsboro", linestyle="--")
     plt.axhline(y=0, color="gainsboro", linestyle="--")
-    #
+
     plt.axis('square')
-    plt.setp(ax, xlim=(-1, 1), ylim=(-1, 1))
-    # plt.setp(ax, xlim=(0.5, 1), ylim=(0.5, 1))
+    # plt.setp(ax, xlim=(-1, 1), ylim=(-1, 1))
+    plt.setp(ax, xlim=(-0.5, 1), ylim=(-0.5, 1))
     axline([ax.get_xlim()[0], ax.get_ylim()[0]], [ax.get_xlim()[1], ax.get_ylim()[1]], ls='--')
 
     # plt.axvline(x=arg1, color="gainsboro", linestyle="--")
     # plt.axhline(y=arg2, color="gainsboro", linestyle="--")
-
+    plt.yticks(rotation=90)
     if title:
         plt.title(title)
     else:
@@ -843,18 +893,20 @@ def plot_average_correlation_neighbors_vs_non_neighbors(lst1, lst2, labels=None,
     if xlabel:
         plt.xlabel(xlabel, fontsize=12)
     else:
-        plt.xlabel('Non-Neighbor pair correlation')
+        plt.xlabel('Non-Adjacent pair correlation')
     if ylabel:
         plt.ylabel(ylabel, fontsize=12)
     else:
-        plt.ylabel('Neighbor pair correlation')
+        plt.ylabel('Adjacent pair correlation')
     if labels is not None:
-        # plt.legend(labels, bbox_to_anchor=(1, 1))
+        # plt.legend(labels, bbox_to_anchor=(1, 1), title='cell')
         # cells_int_lst = [int(c) for c in set(cells_lst)]
         # cells_int_lst.sort()
         # plt.legend(cells_int_lst)
-        plt.legend(title='Type')
-        # plt.legend()
+        # plt.legend(title='Video-cell')
+        plt.legend()
+    if save_fig:
+        plt.savefig('../' + fig_name + '.svg', format="svg")
     if Consts.SHOW_GRAPH:
         plt.show()
 
@@ -1293,14 +1345,35 @@ def plot_avg_similarity_by_nbrhood_degree(level_to_similarities_dict):
     plt.show()
 
 
-def plot_avg_correlation_by_nbrhood_degree(level_to_corrs_dict):
+def plot_avg_correlation_by_nbrhood_degree(level_to_corrs_dict, save_fig=False):
     levels = list(level_to_corrs_dict.keys())
     level_avg_similarity = [np.mean(v) for v in level_to_corrs_dict.values()]
-    plt.plot(levels, level_avg_similarity, linestyle='dashed', marker='o')
-    plt.xlabel('Neighborhood Degree')
+
+    plt.rcParams.update({'font.size': 10})
+    plt.rcParams['font.family'] = 'Arial'
+
+    plt.plot(levels, level_avg_similarity, linestyle='dashed', marker='o', color="tab:orange")
+    plt.bar(levels, level_avg_similarity)
+    # sns.kdeplot(level_avg_similarity, color="red", linestyle="--")
+    plt.xlabel('Topological Distance')
     plt.ylabel('Avg Correlation')
-    plt.title('Average Correlation Of Each Neighborhood Degree')
+    plt.yticks(rotation=90)
+    # plt.title('Average Correlation by Topological Distance')
+    if save_fig:
+        plt.savefig('../top_dist_fig_1f.svg', format="svg")
     plt.show()
+
+
+def plot_correlation_by_topological_distance_histogram(level_to_corrs_dict):
+    distances = list(level_to_corrs_dict.keys())
+    level_avg_similarity = [np.mean(v) for v in level_to_corrs_dict.values()]
+
+    # for l, corrs in level_to_corrs_dict.items():
+    #     sns.histplot(data=corrs, label=l, kde=True, alpha=0.3, stat='density')
+    # plt.xlabel("Correlations")
+    # plt.title('Correlation by Topological Distance Histogram')
+    # plt.legend(title="Topological Distance")
+    # plt.show()
 
 
 def plot_avg_cluster_time_series(segments, matrix_3d, pillars_id_matrix_2d, save_clusters_fig=None):
@@ -1446,6 +1519,41 @@ def plot_significance_bar(type_1_significant, type_1_total, type_2_significant, 
     ax.text(x[0], significant_counts[0], f'{type_1_percentage:.1f}%', ha='center', va='bottom', color='black')
     ax.text(x[1], significant_counts[1], f'{type_2_percentage:.1f}%', ha='center', va='bottom', color='black')
     # ax.legend()
+    plt.show()
+
+
+def histogram_for_53_exps_time_distribution():
+    map_exp_to_minuts = {'20230320-02': 60.6,
+                         '20230320-03': 60.3,
+                         '20230320-04': 60.6,
+                         '20230320-05': 60.3,
+                         '20230320-06': 60.6,
+                         '20230323-01': 21.3,
+                         '20230323-03': 48.4,
+                         '20230323-04': 60.9,
+                         '20230323-05': 60,
+                         '20230323-06': 60.6,
+                         '20230323-07': 120.6,
+                         '20230323-08': 60.4,
+                         '20230323-09': 60.6,
+                         '20230323-10': 60.6,
+                         }
+    exp_minuts = [60.6,60.6,60.6,60.6,60.6,
+                  60.3,60.3,60.3,60.3,60.3,
+                  60.6,60.6,60.6,60.6,60.6,
+                  60.3,60.3,60.3,60.3,
+                  60.6,60.6,60.6,60.6,
+                  21.3,21.3,21.3,21.3,21.3,21.3,21.3,21.3,
+                  48.4,48.4,48.4,48.4,48.4,48.4,48.4,48.4,
+                  60.9,60.9,60.9,60.9,60.9,60.9,60.9,60.9,
+                  60,60,60,60,60,60,60,60,
+                  60.6,60.6,60.6,60.6,60.6,60.6,
+                  120.6,120.6,120.6,120.6,120.6,
+                  60.4,60.4,60.4,60.4,60.4,60.4,
+                  60.6,60.6,60.6,60.6,60.6,
+                  60.6,60.6,60.6,60.6]
+    sns.distplot(exp_minuts, kde=True, bins=3)
+    plt.xlabel("Time (minutes)")
     plt.show()
 
 

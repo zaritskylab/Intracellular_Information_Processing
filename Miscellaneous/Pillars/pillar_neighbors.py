@@ -65,40 +65,56 @@ def get_pillar_to_neighbors():
     if Consts.USE_CACHE and os.path.isfile(Consts.pillar_to_neighbors_cache_path):
         with open(Consts.pillar_to_neighbors_cache_path, 'rb') as handle:
             pillar_to_neighbors = pickle.load(handle)
+            if Consts.NUMBER_OF_NBRS == 6:
+                pillar_to_neighbors = trim_closest_neighbours(pillar_to_neighbors)
             return pillar_to_neighbors
 
     alive_centers = get_seen_centers_for_mask()
 
-    pillar_ids, rule_jump_1, rule_jump_2, generated_location2real_pillar_loc = \
-        generate_centers_and_rules_from_alive_centers(alive_centers, Consts.IMAGE_SIZE_ROWS, Consts.IMAGE_SIZE_COLS)
-    real_pillar_loc2generated_location = dict((v, k) for k, v in generated_location2real_pillar_loc.items())
-    pillar_to_neighbors = {}
-    for pillar_id in pillar_ids:
-        # If pillar_actual_location is the original location (moved), we should treat it as the generated location for the rules
-        # Still, the generated location is the ID for the pillar.
-        if pillar_id in real_pillar_loc2generated_location:
-            pillar_center_to_activate_rule = real_pillar_loc2generated_location[pillar_id]
-        else:
-            pillar_center_to_activate_rule = pillar_id
+    if Consts.USE_JUST_TAGGED_CENTERS:
+        pillar_to_neighbors = {}
+        for pillar_id in alive_centers:
+            distances = [(point, get_distance(point, pillar_id)) for point in alive_centers if point != pillar_id]
+            # Sort the list of tuples based on the distance
+            distances.sort(key=lambda x: x[1])
+            # Extract just the points from the sorted list of tuples
+            closest_points = [point for point, distance in distances[:8]]
+            pillar_to_neighbors[pillar_id] = closest_points
+    else:
 
-        n1 = (pillar_center_to_activate_rule[0] - rule_jump_1[0], pillar_center_to_activate_rule[1] - rule_jump_1[1])
-        n2 = (pillar_center_to_activate_rule[0] + rule_jump_1[0], pillar_center_to_activate_rule[1] + rule_jump_1[1])
-        n3 = (pillar_center_to_activate_rule[0] - rule_jump_2[0], pillar_center_to_activate_rule[1] - rule_jump_2[1])
-        n4 = (pillar_center_to_activate_rule[0] + rule_jump_2[0], pillar_center_to_activate_rule[1] + rule_jump_2[1])
-        n_minus1_minus2 = (n1[0] - rule_jump_2[0], n1[1] - rule_jump_2[1])
-        n_minus1_plus2 = (n1[0] + rule_jump_2[0], n1[1] + rule_jump_2[1])
-        n_plus1_minus2 = (n2[0] - rule_jump_2[0], n2[1] - rule_jump_2[1])
-        n_plus1_plus2 = (n2[0] + rule_jump_2[0], n2[1] + rule_jump_2[1])
+        pillar_ids, rule_jump_1, rule_jump_2, generated_location2real_pillar_loc = \
+            generate_centers_and_rules_from_alive_centers(alive_centers, Consts.IMAGE_SIZE_ROWS, Consts.IMAGE_SIZE_COLS)
+        real_pillar_loc2generated_location = dict((v, k) for k, v in generated_location2real_pillar_loc.items())
+        pillar_to_neighbors = {}
+        for pillar_id in pillar_ids:
+            # If pillar_actual_location is the original location (moved), we should treat it as the generated location for the rules
+            # Still, the generated location is the ID for the pillar.
+            if pillar_id in real_pillar_loc2generated_location:
+                pillar_center_to_activate_rule = real_pillar_loc2generated_location[pillar_id]
+            else:
+                pillar_center_to_activate_rule = pillar_id
 
-        potential_neighbors = {n1, n2, n3, n4, n_minus1_plus2, n_minus1_minus2, n_plus1_minus2, n_plus1_plus2}
-        neighbors_lst = list(potential_neighbors.intersection(pillar_ids))
+            n1 = (pillar_center_to_activate_rule[0] - rule_jump_1[0], pillar_center_to_activate_rule[1] - rule_jump_1[1])
+            n2 = (pillar_center_to_activate_rule[0] + rule_jump_1[0], pillar_center_to_activate_rule[1] + rule_jump_1[1])
+            n3 = (pillar_center_to_activate_rule[0] - rule_jump_2[0], pillar_center_to_activate_rule[1] - rule_jump_2[1])
+            n4 = (pillar_center_to_activate_rule[0] + rule_jump_2[0], pillar_center_to_activate_rule[1] + rule_jump_2[1])
+            n_minus1_minus2 = (n1[0] - rule_jump_2[0], n1[1] - rule_jump_2[1])
+            n_minus1_plus2 = (n1[0] + rule_jump_2[0], n1[1] + rule_jump_2[1])
+            n_plus1_minus2 = (n2[0] - rule_jump_2[0], n2[1] - rule_jump_2[1])
+            n_plus1_plus2 = (n2[0] + rule_jump_2[0], n2[1] + rule_jump_2[1])
 
-        # In case we switched pillar location from rule based to actual live pillar base, we take the actual live pillar location
-        neighbors_lst.extend(
-            [generated_location2real_pillar_loc[potential_nbr] for potential_nbr in potential_neighbors if potential_nbr in generated_location2real_pillar_loc]
-        )
+            potential_neighbors = {n1, n2, n3, n4, n_minus1_plus2, n_minus1_minus2, n_plus1_minus2, n_plus1_plus2}
+            neighbors_lst = list(potential_neighbors.intersection(pillar_ids))
 
-        pillar_to_neighbors[pillar_id] = list(set(neighbors_lst))
+            # In case we switched pillar location from rule based to actual live pillar base, we take the actual live pillar location
+            neighbors_lst.extend(
+                [generated_location2real_pillar_loc[potential_nbr] for potential_nbr in potential_neighbors if potential_nbr in generated_location2real_pillar_loc]
+            )
+
+            pillar_to_neighbors[pillar_id] = list(set(neighbors_lst))
+
+    if Consts.NUMBER_OF_NBRS == 6:
+        pillar_to_neighbors = trim_closest_neighbours(pillar_to_neighbors)
 
     if Consts.USE_CACHE:
         with open(Consts.pillar_to_neighbors_cache_path, 'wb') as handle:
@@ -166,6 +182,55 @@ def get_pillar_directed_neighbors(pillar_location):
     return pillar_directed_neighbors
 
 
+def get_avg_nbrs_distance():
+    nbrs = get_alive_pillars_to_alive_neighbors()
+    all_distances = []
+    for key, coords in nbrs.items():
+        distances = [euclidean_distance(key, coord) for coord in coords]
+        all_distances.extend(distances)
+
+    mean_distance = np.mean(all_distances)
+    std_distance = np.std(all_distances)
+
+    return mean_distance, std_distance
+
+
+def trim_closest_neighbours(piilar2nbrs):
+    top_distances = []
+    trimmed_nbrs = piilar2nbrs
+    full_nbrs = {key: value for key, value in piilar2nbrs.items() if len(value) == 8}
+    for key, coords in full_nbrs.items():
+        distances = [euclidean_distance(key, coord) for coord in coords]
+        # Sort the distances and select the top two
+        top_two = sorted(distances, reverse=True)[:2]
+        # Collect these top two distances
+        top_distances.extend(top_two)
+
+    full_nbrs = {key: value for key, value in piilar2nbrs.items() if len(value) == 7}
+    for key, coords in full_nbrs.items():
+        distances = [euclidean_distance(key, coord) for coord in coords]
+        # Sort the distances and select the top two
+        top_one = sorted(distances, reverse=True)[:1]
+        # Collect these top two distances
+        top_distances.extend(top_one)
+
+    if len(top_distances) >= 1:
+        not_real_nbr_distance_threshold = np.min(top_distances)
+
+        trimmed_nbrs = {}
+        for key, coordinates in piilar2nbrs.items():
+            # Calculate the distance from the key to each coordinate in the list
+            distances = [(coord, euclidean_distance(key, coord)) for coord in coordinates]
+            # Sort coordinates by distance
+            distances.sort(key=lambda x: x[1])
+            # Keep only the closest Consts.NUMBER_OF_NBRS coordinates (or fewer if less than Consts.NUMBER_OF_NBRS are present)
+            trimmed_nbrs[key] = [coord for coord, dist in distances[:Consts.NUMBER_OF_NBRS] if dist <= not_real_nbr_distance_threshold]
+    return trimmed_nbrs
+
+def euclidean_distance(coord1, coord2):
+    """Calculate the Euclidean distance between two points."""
+    return math.sqrt(sum((a - b) ** 2 for a, b in zip(coord1, coord2)))
+
 def get_alive_pillars_to_alive_neighbors():
     """
     Mapping each alive pillar to its level 1 alive neighbors
@@ -174,6 +239,8 @@ def get_alive_pillars_to_alive_neighbors():
     if Consts.USE_CACHE and os.path.isfile(Consts.alive_pillars_to_alive_neighbors_cache_path):
         with open(Consts.alive_pillars_to_alive_neighbors_cache_path, 'rb') as handle:
             alive_pillars_to_alive_neighbors = pickle.load(handle)
+            if Consts.NUMBER_OF_NBRS == 6:
+                alive_pillars_to_alive_neighbors = trim_closest_neighbours(alive_pillars_to_alive_neighbors)
             return alive_pillars_to_alive_neighbors
 
     # Consts.MULTI_COMPONENT = False
@@ -201,6 +268,9 @@ def get_alive_pillars_to_alive_neighbors():
     for component in components:
         for pillar in component:
             alive_pillars_to_alive_neighbors[pillar] = []
+
+    if Consts.NUMBER_OF_NBRS == 6:
+        alive_pillars_to_alive_neighbors = trim_closest_neighbours(alive_pillars_to_alive_neighbors)
 
     if Consts.USE_CACHE:
         with open(Consts.alive_pillars_to_alive_neighbors_cache_path, 'wb') as handle:

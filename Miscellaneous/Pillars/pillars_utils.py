@@ -380,7 +380,10 @@ def get_all_center_generated_ids():
     if len(alive_centers) == 0:
         raise Exception("Failed to found alive centers")
 
-    centers = generate_centers_from_alive_centers(alive_centers, Consts.IMAGE_SIZE_ROWS, Consts.IMAGE_SIZE_COLS)
+    if Consts.USE_JUST_TAGGED_CENTERS:
+        centers = alive_centers
+    else:
+        centers = generate_centers_from_alive_centers(alive_centers, Consts.IMAGE_SIZE_ROWS, Consts.IMAGE_SIZE_COLS)
 
     if Consts.SHOW_GRAPH:
         plt.imshow(get_last_image(), cmap=plt.cm.gray)
@@ -434,12 +437,11 @@ def get_seen_centers_for_mask(img=None, all_center_ids=None):
             plt.close()  # close the figure window
             print("saved last_image_whiten.png")
     alive_centers = set()
-    if all_center_ids is None:
-        print("Finding seen centers for last frame")
-
+    if all_center_ids is None or Consts.USE_JUST_TAGGED_CENTERS:
         if Consts.tagged_centers is not None:
             alive_centers = Consts.tagged_centers
         else:
+            print("Finding seen centers for last frame")
             visited = set()
             whiten_img = get_image_by_threshold(img)
 
@@ -484,14 +486,14 @@ def get_seen_centers_for_mask(img=None, all_center_ids=None):
                 if avg_inner_pixel_intens * Consts.INTENSITIES_RATIO_OUTER_INNER < avg_outer_pixel_intens and avg_outer_pixel_intens >= img_avg and median_outer_circle >= img_median:
                     if white_pixels_in_outer_circle / total_pixels_in_outer_circle >= 0.5:
                         alive_centers.add(repositioned_alive_center)
-
+    # TODO: remove or Consts.USE_JUST_TAGGED_CENTERS
     if Consts.tagged_centers is not None and all_center_ids is None:
         alive_centers_fixed = alive_centers
     else:
         alive_centers_fixed = get_centers_fixed_by_circle_mask_reposition(alive_centers, img)
 
     # If boolean is true, need to add all tagged centers to alive_centers_fixed (only if not in list)
-    if Consts.ALL_TAGGED_ALWAYS_ALIVE:
+    if Consts.ALL_TAGGED_ALWAYS_ALIVE and not Consts.USE_JUST_TAGGED_CENTERS:
         tagged_centers_fixed = get_centers_fixed_by_circle_mask_reposition(Consts.tagged_centers, img)
         for fixed_tagged_center in tagged_centers_fixed:
             closest_center_to_tagged = closest_to_point(alive_centers_fixed, fixed_tagged_center)
@@ -529,7 +531,6 @@ def generate_centers_from_alive_centers(alive_centers, matrix_row_size, matrix_c
 
 def generate_centers_and_rules_from_alive_centers(alive_centers, matrix_row_size, matrix_col_size):
     closest_to_middle, rule1, rule2 = get_center_generation_rules(alive_centers, matrix_row_size, matrix_col_size)
-
     generated_center_ids = generate_centers_by_pillar_loc(closest_to_middle,
                                                           matrix_col_size,
                                                           matrix_row_size,
@@ -548,22 +549,22 @@ def generate_centers_and_rules_from_alive_centers(alive_centers, matrix_row_size
 
     # Replaced center IDs with better found locations
     generated_location2real_pillar_loc = {}
-    for better_location in alive_centers:
+    for actual_alive_location in alive_centers:
         closest_generated_center = min(generated_center_ids,
-                                       key=lambda point: math.hypot(better_location[1] - point[1],
-                                                                    better_location[0] - point[0]))
+                                       key=lambda point: math.hypot(actual_alive_location[1] - point[1],
+                                                                    actual_alive_location[0] - point[0]))
         if np.linalg.norm(
                 np.array(closest_generated_center) - np.array(
-                    better_location)) < Consts.MAX_DISTANCE_PILLAR_FIXED or Consts.tagged_centers is not None:
+                    actual_alive_location)) < Consts.FIND_BETTER_CENTER_IN_RANGE or Consts.tagged_centers is not None:
             generated_center_ids.remove(closest_generated_center)
-            generated_center_ids.append(better_location)
-            generated_location2real_pillar_loc[closest_generated_center] = better_location
+            generated_center_ids.append(actual_alive_location)
+            generated_location2real_pillar_loc[closest_generated_center] = actual_alive_location
         else:
             far = True
     # Generated center = pillar id.
 
     # TODO: consider use get_centers_fixed_by_circle_mask_reposition also for generated location - to have better position for them,
-    #  if we'll do that - don't forget to update mapping of generated_location2real_pillar_loc
+    #  if do that - don't forget to update mapping of generated_location2real_pillar_loc
     return generated_center_ids, rule1, rule2, generated_location2real_pillar_loc
 
 
@@ -650,7 +651,32 @@ def get_center_generation_rules(alive_centers, matrix_row_size, matrix_col_size)
         rule1, rule2 = rules
     else:
         rule1, rule2 = get_rules_by_middle_centers(alive_centers, closest_to_middle)
-    return closest_to_middle, rule1, rule2
+
+    orientation_center = get_best_orientation_center(alive_centers, rule1, rule2)
+    if orientation_center is None:
+        orientation_center = closest_to_middle
+
+    return orientation_center, rule1, rule2
+
+def get_best_orientation_center(alive_centers, rule1, rule2):
+    best_center = None
+    min_center_distances_from_nhbrs = float('inf')
+
+    for center in alive_centers:
+        n1 = (center[0] + rule1[0], center[1] + rule1[1])
+        n2 = (center[0] + rule2[0], center[1] + rule2[1])
+        n3 = (center[0] - rule1[0], center[1] - rule1[1])
+        n4 = (center[0] - rule2[0], center[1] - rule2[1])
+
+        distances_sum = get_distance(n1, closest_to_point(alive_centers, n1)) + \
+                        get_distance(n2, closest_to_point(alive_centers, n2)) + \
+                        get_distance(n3, closest_to_point(alive_centers, n3)) + \
+                        get_distance(n4, closest_to_point(alive_centers, n4))
+        if distances_sum < min_center_distances_from_nhbrs:
+            min_center_distances_from_nhbrs = distances_sum
+            best_center = center
+
+    return best_center
 
 
 def get_rules_by_middle_centers(alive_centers, closest_to_middle):
@@ -791,16 +817,16 @@ def get_rules_by_all_centers(alive_centers):
 
     sorted_rules = sorted(rule_groups, key=lambda x: len(x), reverse=True)
     max_rules = sorted_rules[0]
-    # rule1 = max(max_rules, key=max_rules.count) # TODO
 
-    rule1 = np.average(max_rules, axis=0)
-    rule1 = (int(rule1[0]), int(rule1[1]))
+    # rule1 = np.average(max_rules, axis=0)
+    rule1 = max(max_rules, key=max_rules.count)
+    rule1 = (round(rule1[0]), round(rule1[1]))
 
     for rule2 in sorted_rules[1:]:
-        # rule2 = max(rule2, key=rule2.count)  # TODO
 
-        rule2 = np.average(rule2, axis=0)
-        rule2 = (int(rule2[0]), int(rule2[1]))
+        # rule2 = np.average(rule2, axis=0)
+        rule2 = max(rule2, key=rule2.count)
+        rule2 = (round(rule2[0]), round(rule2[1]))
 
         if rule2[0] != 0 and rule2[1] != 0 and (rule1[1] / rule2[1]) != 0:
             # Check if rules are multiplication of one another (meaning - same rule)
@@ -822,7 +848,7 @@ def group_points(points):
         groups.append([ref])
         for point in points:
             d = get_distance(ref, point)
-            if d < 5:
+            if d < 3:
                 groups[-1].append(point)
             else:
                 far_points.append(point)

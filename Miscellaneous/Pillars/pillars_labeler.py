@@ -34,12 +34,13 @@ class Labeler:
     def label_video(self, config_name):
         f = open("../configs/" + config_name)
         config_data = json.load(f)
-        update_const_by_config(config_data)
+        update_const_by_config(config_data, config_name)
         # self.alive_centers = []
         self.alive_centers = get_seen_centers_for_mask()
 
         self.img = get_last_image()
         # self.img = get_images(get_images_path())[0]
+        # self.img = get_images(get_images_path())[60]
         self.print_alive_centers()
 
     def print_alive_centers(self):
@@ -108,7 +109,7 @@ class Labeler:
 # When image closed - save list
 # Enable revert
 
-json_path = '5.3/exp_20230320-04-6_type_5.3_mask_15_35_non-normalized_fixed.json'
-# json_path = '5.3/exp_20230818-03-3_type_5.3_bleb_mask_15_35_non-normalized_fixed.json'
+json_path = '5.3/exp_2024091102-02-1_type_5.3_mask_15_35_non-normalized_fixed.json'
+# json_path = '5.3/exp_2024091002-05-3_type_5.3_formin_mask_15_35_non-normalized_fixed.json'
 # json_path = '13.2/exp_2023071201-04-5_type_13.2_bleb_mask_15_35_non-normalized_fixed.json'
 Labeler().label_video(json_path)

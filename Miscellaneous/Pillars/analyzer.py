@@ -33,6 +33,8 @@ from fastdtw import fastdtw
 from sklearn.metrics import mean_squared_error
 from scipy.spatial.distance import euclidean
 from scipy.stats import wasserstein_distance
+from sklearn.manifold import TSNE
+import seaborn as sns
 
 
 def get_correlations_between_neighboring_pillars(pillar_to_pillars_dict):
@@ -244,6 +246,10 @@ def get_alive_pillars_symmetric_correlation(frame_start=None, frame_end=None, us
     maximum_frame(pillar a start to live, pillar b start to live) -> correlation(a, b) == correlation(b, a)
     :return:
     """
+
+    if Consts.SHUFFLE_TS_BETWEEN_CELLS:
+        use_cache = False
+
     origin_frame_start = frame_start
     origin_frame_end = frame_end
     if norm_by_noise and use_cache and origin_frame_start is None and origin_frame_end is None and Consts.USE_CACHE and os.path.isfile(
@@ -277,12 +283,12 @@ def get_alive_pillars_symmetric_correlation(frame_start=None, frame_end=None, us
         pillars_intens = get_pillar_to_intensity_norm_by_inner_pillar_noise(inner_mask_radius=(0, 10),
                                                                             use_cache=use_cache)
     else:
-        pillars_intens = _get_overall_alive_pillars_to_intensities(use_cache=use_cache)
+        pillars_intens = get_overall_alive_pillars_to_intensities(use_cache=use_cache)
 
     alive_pillars = list(pillars_intens.keys())
     alive_pillars_str = [str(p) for p in alive_pillars]
     pillars_corr = pd.DataFrame(0.0, index=alive_pillars_str, columns=alive_pillars_str)
-
+    # pillars_intens = zscore_intensity_normalization(pillars_intens)
     # Symmetric correlation - calc correlation of 2 pillars start from the frame they are both alive: maxFrame(A, B)
     for p1 in alive_pillars_to_start_living_frame:
         p1_living_frame = alive_pillars_to_start_living_frame[p1]
@@ -393,7 +399,10 @@ def get_non_neighbors_mean_correlation(correlations_df, neighbors_dict):
     for pillar1 in df.columns:
         for pillar2 in df.columns:
             if pillar1 != pillar2 and eval(pillar2) not in neighbors_dict[eval(pillar1)]:
-                correlation_list.append(df[str(pillar1)][str(pillar2)])
+                if math.isnan(df[str(pillar1)][str(pillar2)]):
+                    correlation_list.append(df[str(pillar2)][str(pillar1)])
+                else:
+                    correlation_list.append(df[str(pillar1)][str(pillar2)])
 
     mean_corr = np.nanmean(correlation_list)
     mean_corr = format(mean_corr, ".3f")
@@ -649,7 +658,7 @@ def get_pca(output_path_type, n_components, custom_df=None):
     return pca, principle_comp
 
 
-def extract_ts_features(time_series):
+def extract_ts_features_dict(time_series):
     # Ensure time_series is a NumPy array
     time_series = np.asarray(time_series)
 
@@ -866,7 +875,7 @@ def correlation_graph():
     for p, nbrs in pillar_to_neighbor_dict.items():
         nbrs_weight = {}
         for nbr in nbrs:
-            nbrs_weight[nbr] = corr_df[p][nbr]
+            nbrs_weight[nbr] = corr_df[str(p)][str(nbr)]
         weighted_graph[p] = nbrs_weight
 
     return weighted_graph
@@ -1305,33 +1314,45 @@ def get_correlations_df_for_mixed_ts(simple_swap=True):
     # Get intensities (in timeseries)
     pillar_intens = get_pillar_to_intensity_norm_by_inner_pillar_noise()
     # Shuffle timeseries (between pillars)
-
     # if simple_swap:
     # Get a list of the dictionary values
     values = list(pillar_intens.values())
-
     # Shuffle the list of values in place
     random.shuffle(values)
-
     # Create a new dictionary with the shuffled values
     shuffled_pillar_intens = {key: value for key, value in zip(pillar_intens.keys(), values)}
-
-    # else:
-    #
-    #     # Get the items from the original dictionary as a list of key-value pairs
-    #     items = list(pillar_intens.items())
-    #
-    #     # Shuffle the list of items in place
-    #     random.shuffle(items)
-    #
-    #     # Create a new dictionary with the shuffled order of items
-    #     shuffled_dict = dict(items)
-
     # Calculate neighours-correlation
     corrs_df = get_alive_pillars_symmetric_correlation(use_cache=False,
                                                        pillar_to_intensities_dict=shuffled_pillar_intens)
 
     return corrs_df
+
+
+def get_correlations_df_for_mixed_ts_permutations(simple_swap=True):
+    np.random.seed(42)
+    num_shuffles = 10
+    # Get intensities (in timeseries)
+    pillar_intens = get_pillar_to_intensity_norm_by_inner_pillar_noise()
+    num_pillars = len(pillar_intens)  # Number of pillars
+    accumulated_corrs = np.zeros((num_pillars, num_pillars))
+    for _ in range(num_shuffles):
+        # Shuffle timeseries (between pillars)
+        # Get a list of the dictionary values
+        values = list(pillar_intens.values())
+        # Shuffle the list of values in place
+        random.shuffle(values)
+        # Create a new dictionary with the shuffled values
+        shuffled_pillar_intens = {key: value for key, value in zip(pillar_intens.keys(), values)}
+        # Calculate neighours-correlation
+        corrs_df = get_alive_pillars_symmetric_correlation(use_cache=False,
+                                                           pillar_to_intensities_dict=shuffled_pillar_intens)
+        accumulated_corrs += corrs_df.values
+    mean_corrs_matrix = accumulated_corrs / num_shuffles
+
+    # Convert the matrix back to a DataFrame with the same row/column labels as the original pillars
+    mean_corrs_df = pd.DataFrame(mean_corrs_matrix, index=corrs_df.index, columns=corrs_df.columns)
+
+    return mean_corrs_df
 
 
 def build_pillars_graph(random_neighbors=False, shuffle_ts=False, draw=False):
@@ -1561,6 +1582,54 @@ def get_pillar_to_avg_similarity_dict(nbrs_similarity_dict, non_nbrs_similarity_
     return pillar_to_nbrs_and_non_nbrs_avg_sim
 
 
+def topological_distance_to_pair(G, nbrs_corrs_dict, non_nbrs_corrs_dict):
+    distance_to_pair = {}
+
+    distance_1 = list(nbrs_corrs_dict.keys())
+    distance_to_pair[1] = distance_1
+
+    for k, v in non_nbrs_corrs_dict.items():
+        node1_idx = next((i for i, p in G.nodes(data=True) if p.get('pos') == k[0]), None)
+        node2_idx = next((i for i, p in G.nodes(data=True) if p.get('pos') == k[1]), None)
+        try:
+            distance = nx.shortest_path_length(G, source=node1_idx, target=node2_idx)
+            if distance not in distance_to_pair:
+                distance_to_pair[distance] = []
+            distance_to_pair[distance].append(k)
+        except:
+            continue
+
+    def extract_neighbors(pair_list, node):
+        neighbors = set()
+        for pair in pair_list:
+            if node in pair:
+                other_node = pair[0] if pair[1] == node else pair[1]
+                neighbors.add(other_node)
+        return neighbors
+
+    # p1 = (125, 95)
+    # pair_list = list(distance_to_pair[3])
+    # pillars_in_dist = list(extract_neighbors(pair_list, p1))
+    # img = get_last_image_whiten(build_image=Consts.build_image)
+    # fig, ax = plt.subplots()
+    # ax.imshow(img, cmap='gray')
+    # pos = nx.get_node_attributes(G, 'pos')
+    # nodes_loc_y_inverse = {k: (v[1], v[0]) for k, v in pos.items()}
+    # pillars_in_dist_inverse = [(p[1], p[0]) for p in pillars_in_dist]
+    # node_colors = []
+    # for node in list(nodes_loc_y_inverse.values()):
+    #     if node in pillars_in_dist_inverse:
+    #         node_colors.append('red')
+    #     elif (node[1], node[0]) == p1:
+    #         node_colors.append('white')
+    #     else:
+    #         node_colors.append('black')
+    # nx.draw(G, nodes_loc_y_inverse, node_color=node_colors)
+    # plt.show()
+
+    return distance_to_pair
+
+
 def nbrs_level_to_correlation(G, nbrs_corrs_dict, non_nbrs_corrs_dict):
     level_to_corrs = {}
 
@@ -1631,6 +1700,17 @@ def correlation_between_nbrhood_level_to_avg_correlation(level_to_corrs_dict):
     simis = list(level_to_corrs_dict.values())
     avgs = [np.mean(sublist) for sublist in simis]
     corr = np.corrcoef(np.array(nbrhood_level_list), avgs)[0][1]
+    corr, p_value = pearsonr(np.array(nbrhood_level_list), avgs)
+    print('correlation:', corr)
+    print('p-value:', p_value)
+
+    # topological_distances = []
+    # correlations = []
+    # for distance, correlation_list in level_to_corrs_dict.items():
+    #     for correlation in correlation_list:
+    #         topological_distances.append(distance)
+    #         correlations.append(correlation)
+    # corr, p_value = pearsonr(topological_distances, correlations)
 
     return corr
 
@@ -1830,7 +1910,7 @@ def strong_nodes_avg_distance_from_center(G, alive_centers, strong_nodes, all_no
         # Show the plot
         plt.show()
 
-    return average_distance
+    return strong_nodes_distances, average_distance
 
 
 def strong_nodes_avg_distance_from_center_by_hops(G, alive_centers, strong_nodes, removed_nodes=None):
@@ -2650,14 +2730,7 @@ def pillars_to_pixels():
     return matrix
 
 
-def build_3d_pillars_pixel_matrix(matrix, shuffle_ts=False, custom_p_to_intensity=None, channel='ts'):
-    if custom_p_to_intensity is not None:
-        p_to_intensity = custom_p_to_intensity
-    elif shuffle_ts:
-        p_to_intensity = get_pillar_to_intensity_for_shuffle_ts()
-    else:
-        p_to_intensity = get_pillar_to_intensity_norm_by_inner_pillar_noise()
-
+def build_3d_pillars_pixel_matrix(matrix, shuffle_ts=False, p_to_intensity=None, channel='ts'):
     non_zero_rows = np.any(matrix != 0, axis=1)
     non_zero_cols = np.any(matrix != 0, axis=0)
     pillars_id_trimmed_matrix = matrix[non_zero_rows][:, non_zero_cols]
@@ -2674,7 +2747,10 @@ def build_3d_pillars_pixel_matrix(matrix, shuffle_ts=False, custom_p_to_intensit
     if channel == 'correlation':
         channel_length = get_alive_pillars_correlation().shape[0]
         matrix_3d = np.zeros((channel_length, pillars_id_trimmed_matrix.shape[0], pillars_id_trimmed_matrix.shape[1]))
-        channel_vals = get_alive_pillars_correlation()
+        if shuffle_ts:
+            channel_vals = get_correlations_df_for_mixed_ts()
+        else:
+            channel_vals = get_alive_pillars_correlation()
 
     for p in matrix_pillars:
         p_indexes = [(i, j) for i in range(pillars_id_trimmed_matrix.shape[0]) for j in
@@ -2696,7 +2772,7 @@ def show_pillars_on_line(pillars_chain):
 
 
 # TODO: delete from here
-def plot_avg_cluster_time_series(custom_p_to_intensity, segments, matrix_3d, pillars_id_matrix_2d, save_clusters_fig=None):
+def plot_avg_cluster_time_series(p_to_intensity, segments, pillars_id_matrix_2d, save_clusters_fig=None):
     unique_labels = np.unique(segments)
     unique_labels.sort()
     avg_segment_intnes = []
@@ -2705,7 +2781,7 @@ def plot_avg_cluster_time_series(custom_p_to_intensity, segments, matrix_3d, pil
             intens = []
             pillars_in_labels = pillars_id_matrix_2d[segments == l]
             for p in pillars_in_labels:
-                intens.append(custom_p_to_intensity[p])
+                intens.append(p_to_intensity[p])
             average_intensity_in_segment = [sum(values) / len(values) for values in zip(*intens)]
             avg_segment_intnes.append(average_intensity_in_segment)
     plt.figure(figsize=(10, 8))
@@ -2720,9 +2796,10 @@ def plot_avg_cluster_time_series(custom_p_to_intensity, segments, matrix_3d, pil
         plt.close()
 
 
-def superpixel_segmentation(n_segments=4, shuffle_ts=False, custom_p_to_intensity=None, channel='ts', save_clusters_fig=None):
+def superpixel_segmentation(n_segments=4, p_to_intensity=None, shuffle_ts=False, channel='ts', save_clusters_fig=None):
     matrix = pillars_to_pixels()
-    matrix_3d, pillars_id_matrix_2d = build_3d_pillars_pixel_matrix(matrix, shuffle_ts=shuffle_ts, custom_p_to_intensity=custom_p_to_intensity, channel=channel)
+    matrix_3d, pillars_id_matrix_2d = build_3d_pillars_pixel_matrix(matrix, shuffle_ts=shuffle_ts,
+                                                                    p_to_intensity=p_to_intensity, channel=channel)
     pillars_matrix_2d_to_mask = np.where(np.vectorize(lambda x: isinstance(x, tuple))(pillars_id_matrix_2d), 1, 0)
     mask_2d = pillars_matrix_2d_to_mask > 0
 
@@ -2730,9 +2807,8 @@ def superpixel_segmentation(n_segments=4, shuffle_ts=False, custom_p_to_intensit
     segments = slic(matrix_3d_float, n_segments=n_segments, mask=mask_2d, channel_axis=0, slic_zero=True)
 
     if save_clusters_fig is not None:
-        if save_clusters_fig is True:
-            save_clusters_fig = ''
-        # plot_avg_cluster_time_series(custom_p_to_intensity, segments, matrix_3d, pillars_id_matrix_2d, save_clusters_fig=save_clusters_fig)
+        plot_avg_cluster_time_series(p_to_intensity=p_to_intensity, segments=segments,
+                                     pillars_id_matrix_2d=pillars_id_matrix_2d, save_clusters_fig=save_clusters_fig)
         unique_labels = np.unique(segments)
         colors = plt.cm.jet(np.linspace(0, 1, len(unique_labels)))
         colored_image = np.zeros((*segments.shape, 3), dtype=np.float32)
@@ -2746,11 +2822,11 @@ def superpixel_segmentation(n_segments=4, shuffle_ts=False, custom_p_to_intensit
 
         plt.figure(figsize=(10, 8))
         plt.imshow(colored_image)
-        plt.title("Colored SLIC Superpixel Segmentation by ts")
+        plt.title("Colored SLIC Superpixel Segmentation by " + channel)
         plt.legend(handles=legend_patches, bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
         plt.tight_layout()
         plt.axis('off')
-        file_name = "/Superpixel_Segmentation_by_ts_" + str(save_clusters_fig) + ".png"
+        file_name = "/Superpixel_Segmentation_by_" + channel + "_" + str(save_clusters_fig) + ".png"
         plt.savefig(Consts.RESULT_FOLDER_PATH + file_name)
         plt.close()
     # plt.show()
@@ -2793,7 +2869,7 @@ def segmentation_accuracy(segments, matrix_3d):
                 if idx1 != idx2:
                     intensity1 = matrix_3d[:, idx1[0], idx1[1]]
                     intensity2 = matrix_3d[:, idx2[0], idx2[1]]
-                    vec_dist = np.linalg.norm(intensity1-intensity2)
+                    vec_dist = np.linalg.norm(intensity1 - intensity2)
 
                     vec_distances.append(vec_dist)
         if len(vec_distances) > 0:
@@ -2827,7 +2903,7 @@ def segmentation_accuracy(segments, matrix_3d):
                 for idx2 in indices2:
                     intensity1 = matrix_3d[:, idx1[0], idx1[1]]
                     intensity2 = matrix_3d[:, idx2[0], idx2[1]]
-                    dist = np.linalg.norm(intensity1-intensity2)
+                    dist = np.linalg.norm(intensity1 - intensity2)
                     vec_dists.append(dist)
             inter_class_vec_dist.append(np.mean(vec_dists))
     # Calculate the overall inter-class variability as the mean of all inter-class distances
@@ -2837,14 +2913,17 @@ def segmentation_accuracy(segments, matrix_3d):
     return intra_class_variability, overall_intra_class_dtw_distance, overall_intra_class_vec_dist, overall_inter_class_dtw_distance, overall_inter_class_vec_dist
 
 
-def superpixel_segmentation_evaluation(number_of_segmentations, shuffle_ts=False, custom_p_to_intensity=None, channel='ts', save_clusters_fig=None):
+def superpixel_segmentation_evaluation(number_of_segmentations, p_to_intensity=None, shuffle_ts=False, channel='ts',
+                                       save_clusters_fig=None):
     intra_variance = {}
     intra_dtw_distance = {}
     intra_vector_distance = {}
     inter_dtw_distance = {}
     inter_vector_distance = {}
     for n in number_of_segmentations:
-        segments, matrix_3d, _ = superpixel_segmentation(n_segments=n, shuffle_ts=shuffle_ts, custom_p_to_intensity=custom_p_to_intensity, channel=channel, save_clusters_fig=save_clusters_fig)
+        segments, matrix_3d, _ = superpixel_segmentation(n_segments=n, p_to_intensity=p_to_intensity,
+                                                         shuffle_ts=shuffle_ts, channel=channel,
+                                                         save_clusters_fig=save_clusters_fig)
         intra_class_variability, overall_intra_class_dtw_distance, overall_intra_class_vec_dist, \
         overall_inter_class_dtw_distance, overall_inter_class_vec_dist = segmentation_accuracy(segments, matrix_3d)
         intra_variance[n] = intra_class_variability
@@ -3072,9 +3151,10 @@ def build_fully_connected_graph(random_neighbors=False, shuffle_ts=False, draw=F
         for p2 in pillars:
             if p1 != p2:
                 abs_corr = abs(correlation[p1][p2])
-                dist = 1/(euclidean(eval(p1), eval(p2)))
+                dist = 1 / (euclidean(eval(p1), eval(p2)))
                 # f_weight = abs_corr * (1 - dist)
-                f_weight = alpha * abs_corr + (1-alpha) * (1 - dist)
+                # f_weight = alpha * abs_corr + (1-alpha) * (1 - dist)
+                f_weight = abs(correlation[p1][p2])
                 G.add_edge(node_loc2index[p1], node_loc2index[p2])
                 G[node_loc2index[p1]][node_loc2index[p2]]['weight'] = f_weight
 
@@ -3187,6 +3267,169 @@ def gcn(G):
         plt.show()
 
 
+def leave_one_out(p_to_intns, exp_name, exp_type):
+    data_df = pd.DataFrame()
+    id_to_intns = {exp_name + str(k): v for k, v in p_to_intns.items()}
+    df = pd.DataFrame(id_to_intns.items(), columns=['id', 'time_series'])
+    type_series = pd.Series([exp_type] * len(df))
+    df['type'] = type_series
+    time_series_expanded = df['time_series'].apply(pd.Series)
+    time_series_expanded.columns = [str(i) for i in time_series_expanded.columns]
+    result_df = pd.concat([df.drop('time_series', axis=1), time_series_expanded], axis=1)
+    df_long = result_df.drop('type', axis=1).melt(id_vars=['id'], var_name='time', value_name='value')
+    df_long['time'] = pd.to_numeric(df_long['time'])
+
+
+def df_for_tsne(p_to_intns, exp_name, exp_type, core=None, periph=None, blebb=None, ts_features=False):
+    data_df = pd.DataFrame()
+    id_to_intns = {exp_name + str(k): v for k, v in p_to_intns.items()}
+    df = pd.DataFrame(id_to_intns.items(), columns=['id', 'time_series'])
+    type_series = pd.Series([exp_type] * len(df))
+    df['type'] = type_series
+    if core is not None and periph is not None:
+        for i, p in enumerate(list(p_to_intns.keys())):
+            if p in core:
+                df.loc[i, 'loc'] = 'core'
+            if p in periph:
+                df.loc[i, 'loc'] = 'periphery'
+    if blebb is not None:
+        for i, p in enumerate(list(p_to_intns.keys())):
+            df.loc[i, 'blebb'] = blebb
+    time_series_expanded = df['time_series'].apply(pd.Series)
+    time_series_expanded.columns = [str(i) for i in time_series_expanded.columns]
+    result_df = pd.concat([df.drop('time_series', axis=1), time_series_expanded], axis=1)
+    if core is not None and periph is not None:
+        X = result_df.drop(['id', 'type', 'loc'], axis=1)
+    elif blebb is not None:
+        X = result_df.drop(['id', 'type', 'blebb'], axis=1)
+    else:
+        X = result_df.drop(['id', 'type'], axis=1)
+    if ts_features:
+        X = extract_ts_features(X)
+    # feature_list = X.apply(lambda row: extract_ts_features(row), axis=1)
+    # X_features = pd.DataFrame(feature_list.tolist())
+    df = pd.concat([df.drop(['time_series'], axis=1), X], axis=1)
+    # df['id'] = exp_name
+    # df = df.groupby(['id', 'type'], as_index=False).mean()
+    data_df = pd.concat([data_df, df], axis=0)
+    data_df.reset_index(drop=True, inplace=True)
+    return data_df
+
+
+def extract_ts_features(ts_df):
+    df = pd.DataFrame(
+        columns=['mean', 'median', 'std_dev', 'variance', 'skewness', 'kurtosis', 'quantile_25', 'quantile_50',
+                 'quantile_75'])
+    for i, ts in ts_df.iterrows():
+        df.loc[i] = [
+            ts.mean(),
+            ts.median(),
+            ts.std(),
+            ts.var(),
+            ts.skew(),
+            ts.kurtosis(),
+            ts.quantile(0.25),
+            ts.quantile(0.5),
+            ts.quantile(0.75)
+        ]
+
+    return df
+
+
+def time_series_tsne_for_type(all_data_df):
+    X = all_data_df.drop(['id', 'type'], axis=1)
+    y = all_data_df['type'].astype('category')
+    all_data_df['type'] = all_data_df['type'].astype('category')
+    color_map = {'13.2': 'tab:orange', '5.3': 'tab:blue'}
+    all_data_df['color'] = all_data_df['type'].map(color_map)
+
+    # tsne = TSNE(n_components=2, perplexity=30, learning_rate=200, n_iter=1000, random_state=42)
+    # X_tsne = tsne.fit_transform(X)
+    # all_data_df['tsne-2d-one'] = X_tsne[:, 0]
+    # all_data_df['tsne-2d-two'] = X_tsne[:, 1]
+
+    pca = PCA(n_components=2, random_state=42)
+    X_pca = pca.fit_transform(X)
+    all_data_df['pca-2d-one'] = X_pca[:, 0]
+    all_data_df['pca-2d-two'] = X_pca[:, 1]
+
+    g = sns.jointplot(
+        data=all_data_df,
+        x='pca-2d-one',
+        y='pca-2d-two',
+        hue='type',
+        palette=color_map,
+        marginal_kws=dict(shade=True),
+        alpha=0.1
+    )
+    g.set_axis_labels('First PCA component', 'Second PCA component')
+    g.fig.subplots_adjust(top=0.9)
+    # g.add_legend(title='Type')
+    plt.show()
+
+
+def time_series_tsne_for_location(all_data_df):
+    X = all_data_df.drop(['id', 'type', 'loc'], axis=1)
+    y = all_data_df['loc'].astype('category')
+    all_data_df['loc'] = all_data_df['loc'].astype('category')
+    color_map = {'periphery': 'tab:orange', 'core': 'tab:blue'}
+    all_data_df['color'] = all_data_df['loc'].map(color_map)
+    tsne = TSNE(n_components=2, perplexity=30, learning_rate=200, n_iter=1000, random_state=42)
+    X_tsne = tsne.fit_transform(X)
+    all_data_df['tsne-2d-one'] = X_tsne[:, 0]
+    all_data_df['tsne-2d-two'] = X_tsne[:, 1]
+
+    # pca = PCA(n_components=2, random_state=42)
+    # X_pca = pca.fit_transform(X)
+    # all_data_df['pca-2d-one'] = X_pca[:, 0]
+    # all_data_df['pca-2d-two'] = X_pca[:, 1]
+
+    g = sns.jointplot(
+        data=all_data_df,
+        x='tsne-2d-one',
+        y='tsne-2d-two',
+        hue='loc',
+        palette=color_map,
+        marginal_kws=dict(shade=True),
+        alpha=0.1
+    )
+    g.set_axis_labels('First t-SNE component', 'Second t-SNE component')
+    g.fig.subplots_adjust(top=0.9)
+    # g.add_legend(title='Type')
+    plt.show()
+
+
+def time_series_tsne_for_blebb(all_data_df):
+    X = all_data_df.drop(['id', 'type', 'blebb'], axis=1)
+    y = all_data_df['blebb'].astype('category')
+    all_data_df['blebb'] = all_data_df['blebb'].astype('category')
+    color_map = {'After blebb': 'tab:orange', 'Before blebb': 'tab:blue'}
+    all_data_df['color'] = all_data_df['blebb'].map(color_map)
+    tsne = TSNE(n_components=2, perplexity=30, learning_rate=200, n_iter=1000, random_state=42)
+    # X_tsne = tsne.fit_transform(X)
+    # all_data_df['tsne-2d-one'] = X_tsne[:, 0]
+    # all_data_df['tsne-2d-two'] = X_tsne[:, 1]
+
+    pca = PCA(n_components=2, random_state=42)
+    X_pca = pca.fit_transform(X)
+    all_data_df['pca-2d-one'] = X_pca[:, 0]
+    all_data_df['pca-2d-two'] = X_pca[:, 1]
+
+    g = sns.jointplot(
+        data=all_data_df,
+        x='pca-2d-one',
+        y='pca-2d-two',
+        hue='blebb',
+        palette=color_map,
+        marginal_kws=dict(shade=True),
+        alpha=0.1
+    )
+    g.set_axis_labels('First t-SNE component', 'Second t-SNE component')
+    g.fig.subplots_adjust(top=0.9)
+    # g.add_legend(title='Type')
+    plt.show()
+
+
 class GCN(torch.nn.Module):
     def __init__(self, num_features, hidden_channels):
         super(GCN, self).__init__()
@@ -3199,7 +3442,6 @@ class GCN(torch.nn.Module):
         x = torch.relu(x)
         x = self.conv2(x, edge_index)
         return x
-
 
 # def get_peripheral_and_center_pillars_by_frame_according_revealing_pillars():
 #     frame_to_alive_pillars = get_alive_center_ids_by_frame_v2()

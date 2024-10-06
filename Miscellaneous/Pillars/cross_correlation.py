@@ -3,8 +3,13 @@ import seaborn as sns
 import matplotlib.patches as mpatches
 
 
-def cross_correlations(pillar_to_intensities, pillars_neighbors, max_lag=3):
+def cross_correlations(pillar_to_intensities, pillars_neighbors, max_lag=3, top_dist=(1, None)):
     # pillars_time_series_stationary, non_stationary_pillars = adf_stationary_test(pillar_to_intensities)
+    dist = top_dist[0]
+    pairs_by_dist = top_dist[1]
+
+    #start from frame 10:
+    # pillar_to_intensities = {k: v[20:] for k, v in pillar_to_intensities.items()}
 
     def normalize_time_series(data):
         normalized_data = {}
@@ -37,11 +42,20 @@ def cross_correlations(pillar_to_intensities, pillars_neighbors, max_lag=3):
         return lags, corr_values
 
     correlations = {}
-    for pillar, neighbors in pillars_neighbors.items():
-        for neighbor in neighbors:
-            if (neighbor, pillar) not in correlations and (pillar, neighbor) not in correlations:
-                lags, corr = calculate_pearson_correlation(normalized_ts[pillar], normalized_ts[neighbor], max_lag)
-                correlations[(pillar, neighbor)] = (lags, corr)
+    # if dist == 1:
+    #     for pillar, neighbors in pillars_neighbors.items():
+    #         for neighbor in neighbors:
+    #             if (neighbor, pillar) not in correlations and (pillar, neighbor) not in correlations:
+    #                 lags, corr = calculate_pearson_correlation(normalized_ts[pillar], normalized_ts[neighbor], max_lag)
+    #                 correlations[(pillar, neighbor)] = (lags, corr)
+    # else:
+    pairs = pairs_by_dist[dist]
+    for pair in pairs:
+        p1 = pair[0]
+        p2 = pair[1]
+        if p1 in normalized_ts.keys() and p2 in normalized_ts.keys() and (p1, p2) not in correlations and (p2, p1) not in correlations:
+            lags, corr = calculate_pearson_correlation(normalized_ts[p2], normalized_ts[p1], max_lag)
+            correlations[(p2, p1)] = (lags, corr)
 
     return correlations
 
@@ -185,8 +199,8 @@ def lag_correlations_heatmap(correlations):
 def lag_distribution_plot(peak_lags):
     lags = [lag[0] for _, lag in peak_lags.items()]
 
-    sns.histplot(lags, kde=True, alpha=0.3)
-    plt.title('Distribution of Peak Correlation Lags')
+    sns.histplot(lags, kde=True, alpha=0.3, stat='density')
+    plt.title('Distribution of Peak Correlation Lags - topological distance 1')
     plt.xlabel('Lag')
     plt.show()
 

@@ -16,6 +16,7 @@ class Consts:
     fixed = True
     inner_cell = True
     INTENSITIES_RATIO_OUTER_INNER = 1.9
+    NUMBER_OF_NBRS = 8
 
     tagged_centers = None
     ignore_centers = []
@@ -34,6 +35,7 @@ class Consts:
     FIND_BETTER_CENTER_IN_RANGE = None # TODO: change to be based on radius if needed later
     NUMBER_OF_NBRS_TO_CONSIDER_CENTRAL = 6
     MULTI_COMPONENT = True
+    USE_JUST_TAGGED_CENTERS = None
 
     last_image_path = None
     fixed_images_path = None
@@ -79,6 +81,11 @@ class Consts:
     SHOW_GRAPH = True
     WRITE_OUTPUT = False
     ALL_TAGGED_ALWAYS_ALIVE = False
+    FIND_MORE_THAN_TAGGED_CENTER = False
+
+    SHUFFLE_TS_BETWEEN_CELLS = False
+    shuffled_ts = {}
+    config_name = None
 
 
     # BFS data
