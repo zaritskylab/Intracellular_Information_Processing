@@ -24,4 +24,7 @@ Project/*png
 Project/*svg
 Project/*html
 Project/*csv
-Project/*map_vid
+Project/map_vid*
+Project/models_builder.py
+Project/utils.py
+Project/global_parameters.py
