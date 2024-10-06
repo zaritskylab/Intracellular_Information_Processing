@@ -5,7 +5,7 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.svm import SVR
 
 from AnalyzerModels.BaselineCell2Cell_InfluenceAnalyzer import BaselineCell2CellInfluenceAnalyzer
-from Miscellaneous.utils import *
+from Project.utils import *
 from sklearn.linear_model import ElasticNet
 from Pillars.consts import *
 

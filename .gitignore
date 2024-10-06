@@ -17,11 +17,11 @@ AnalyzerModels
 AnalyzerModelsTests
 not_cropped_images.npy
 Data/Pillars/New-06-Airyscan Processing-04-actin_drift_corrected_13.2.tif
-Miscellaneous/multi_config_runner_results/
+Project/multi_config_runner_results/
 /multi_config_runner_results/
-Miscellaneous/SavedPillarsData/
-Miscellaneous/*png
-Miscellaneous/*svg
-Miscellaneous/*html
-Miscellaneous/*csv
-Miscellaneous/*map_vid
+Project/SavedPillarsData/
+Project/*png
+Project/*svg
+Project/*html
+Project/*csv
+Project/*map_vid
