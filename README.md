@@ -1,1 +1,1 @@
-Intracellular Information Processing using pillars
+Spatiotemporal analysis of F-actin polymerization with micropillar arrays reveals synchronization between adhesion sites
