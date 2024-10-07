@@ -187,9 +187,24 @@ def run_config(config_name):
     # # core, periph = get_core_periphery_pillars()
     # return p_to_intns_norm, core, periph
 
+    # G = build_pillars_graph(random_neighbors=False, shuffle_ts=False, draw=False)
+    # nbrs_corrs_dict = get_neighbors_to_correlation(get_alive_pillars_symmetric_correlation(), get_alive_pillars_to_alive_neighbors())
+    # non_nbrs_corrs_dict = get_non_neighbors_to_correlation_dict(get_alive_pillars_symmetric_correlation(), get_alive_pillars_to_alive_neighbors())
+    # top_dist_to_pair = topological_distance_to_pair(G, nbrs_corrs_dict, non_nbrs_corrs_dict)
     # p_to_diff_intens = differencing_time_series(get_pillar_to_intensity_norm_by_inner_pillar_noise())
+    # dist_to_gc = {}
     # stationary_p_to_intens, non_stationary_pillars = get_stationary_and_non_stationary_pillars(p_to_diff_intens)
-    # gc_dict = perform_granger_test(stationary_p_to_intens, maxlag=3)
+    # for dist, pairs in top_dist_to_pair.items():
+    #     gc_dict = perform_granger_test(pairs, stationary_p_to_intens, maxlag=3)
+    #     dist_to_gc[dist] = gc_dict
+    # return dist_to_gc
+
+    p_to_diff_intens = differencing_time_series(get_pillar_to_intensity_norm_by_inner_pillar_noise())
+    stationary_p_to_intens, non_stationary_pillars = get_stationary_and_non_stationary_pillars(p_to_diff_intens)
+    gc_dict_adjacent = perform_granger_test_for_adjacent(stationary_p_to_intens, maxlag=3)
+    gc_dict_non_adjacent = perform_granger_test_for_non_adjacent(stationary_p_to_intens, maxlag=3)
+    return gc_dict_adjacent, gc_dict_non_adjacent
+    # perform_statistical_test(gc_dict_adjacent, gc_dict_non_adjacent)
     # G = build_gc_graph(gc_dict, threshold=0.05)
     # plot_graph(G)
     # in_degree_nodes = in_degree_centrality(G)

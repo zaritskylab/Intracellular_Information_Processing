@@ -86,100 +86,100 @@ if __name__ == '__main__':
         # '5.3/exp_27.2_type_5.3_mask_15_35_non-normalized_fixed.json',
         # '5.3/exp_30_type_5.3_mask_15_35_non-normalized_fixed.json',
 
-        # '5.3/exp_20230320-02-5_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230320-02-6_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230320-02-7_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230320-02-8_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230320-02-9_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230320-02-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230320-02-6_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230320-02-7_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230320-02-8_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230320-02-9_type_5.3_mask_15_35_non-normalized_fixed.json',
+
+        '5.3/exp_20230320-03-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230320-03-6_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230320-03-7_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230320-03-8_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230320-03-9_type_5.3_mask_15_35_non-normalized_fixed.json',
         #
-        # '5.3/exp_20230320-03-5_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230320-03-6_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230320-03-7_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230320-03-8_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230320-03-9_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230320-04-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230320-04-6_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230320-04-7_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230320-04-8_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230320-04-9_type_5.3_mask_15_35_non-normalized_fixed.json',
+
+        '5.3/exp_20230320-05-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230320-05-7_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230320-05-8_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230320-05-9_type_5.3_mask_15_35_non-normalized_fixed.json',
+
+        '5.3/exp_20230320-06-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230320-06-7_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230320-06-8_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230320-06-9_type_5.3_mask_15_35_non-normalized_fixed.json',
+
+        '5.3/exp_20230323-01-1_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-01-2_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-01-3_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-01-4_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-01-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-01-6_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-01-7_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-01-8_type_5.3_mask_15_35_non-normalized_fixed.json',
         # #
-        # '5.3/exp_20230320-04-5_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230320-04-6_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230320-04-7_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230320-04-8_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230320-04-9_type_5.3_mask_15_35_non-normalized_fixed.json',
-        #
-        # '5.3/exp_20230320-05-5_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230320-05-7_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230320-05-8_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230320-05-9_type_5.3_mask_15_35_non-normalized_fixed.json',
-        #
-        # '5.3/exp_20230320-06-5_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230320-06-7_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230320-06-8_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230320-06-9_type_5.3_mask_15_35_non-normalized_fixed.json',
-        #
-        # '5.3/exp_20230323-01-1_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-01-2_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-01-3_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-01-4_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-01-5_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-01-6_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-01-7_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-01-8_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # # #
-        # '5.3/exp_20230323-03-1_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-03-2_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-03-3_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-03-4_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-03-5_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-03-6_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-03-7_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-03-8_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # # #
-        # '5.3/exp_20230323-04-1_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-04-2_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-04-3_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-04-4_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-04-5_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-04-6_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-04-7_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-04-8_type_5.3_mask_15_35_non-normalized_fixed.json',
-        #
-        # '5.3/exp_20230323-05-1_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-05-2_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-05-3_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-05-4_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-05-5_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-05-6_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-05-7_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-05-8_type_5.3_mask_15_35_non-normalized_fixed.json',
-        #
-        # '5.3/exp_20230323-06-1_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-06-2_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-06-3_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-06-4_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-06-5_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-06-8_type_5.3_mask_15_35_non-normalized_fixed.json',
-        #
-        # '5.3/exp_20230323-07-1_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-07-2_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-07-4_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-07-5_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-07-8_type_5.3_mask_15_35_non-normalized_fixed.json',
-        #
-        # '5.3/exp_20230323-08-1_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-08-2_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-08-3_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-08-4_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-08-5_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-08-8_type_5.3_mask_15_35_non-normalized_fixed.json',
-        #
-        # '5.3/exp_20230323-09-1_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-09-2_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-09-4_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-09-5_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-09-8_type_5.3_mask_15_35_non-normalized_fixed.json',
-        #
-        # '5.3/exp_20230323-10-1_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-10-4_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-10-5_type_5.3_mask_15_35_non-normalized_fixed.json',
-        # '5.3/exp_20230323-10-8_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-03-1_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-03-2_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-03-3_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-03-4_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-03-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-03-6_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-03-7_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-03-8_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # #
+        '5.3/exp_20230323-04-1_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-04-2_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-04-3_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-04-4_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-04-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-04-6_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-04-7_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-04-8_type_5.3_mask_15_35_non-normalized_fixed.json',
+
+        '5.3/exp_20230323-05-1_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-05-2_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-05-3_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-05-4_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-05-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-05-6_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-05-7_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-05-8_type_5.3_mask_15_35_non-normalized_fixed.json',
+
+        '5.3/exp_20230323-06-1_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-06-2_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-06-3_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-06-4_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-06-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-06-8_type_5.3_mask_15_35_non-normalized_fixed.json',
+
+        '5.3/exp_20230323-07-1_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-07-2_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-07-4_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-07-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-07-8_type_5.3_mask_15_35_non-normalized_fixed.json',
+
+        '5.3/exp_20230323-08-1_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-08-2_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-08-3_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-08-4_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-08-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-08-8_type_5.3_mask_15_35_non-normalized_fixed.json',
+
+        '5.3/exp_20230323-09-1_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-09-2_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-09-4_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-09-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-09-8_type_5.3_mask_15_35_non-normalized_fixed.json',
+
+        '5.3/exp_20230323-10-1_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-10-4_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-10-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        '5.3/exp_20230323-10-8_type_5.3_mask_15_35_non-normalized_fixed.json',
 
         ######### blebbistatin experiments #############
         # '5.3/exp_20230809-00-1_type_5.3_mask_15_35_non-normalized_fixed.json',
@@ -322,45 +322,45 @@ if __name__ == '__main__':
         # '5.3/exp_20240912-05-3_type_5.3_formin_mask_15_35_non-normalized_fixed.json',
 
         #################### arp 2/3 exps ########################
-        '5.3/exp_2024091101-01-1_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_2024091101-01-2_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_2024091101-01-3_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_2024091101-01-4_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_2024091101-01-5_type_5.3_mask_15_35_non-normalized_fixed.json',
-
-        '5.3/exp_2024091101-02-1_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_2024091101-02-2_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_2024091101-02-3_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_2024091101-02-4_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_2024091101-02-5_type_5.3_mask_15_35_non-normalized_fixed.json',
-
-        '5.3/exp_2024091101-04-1_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_2024091101-04-2_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_2024091101-04-3_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_2024091101-04-4_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_2024091101-04-5_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
-
-        '5.3/exp_2024091101-05-1_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_2024091101-05-2_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_2024091101-05-3_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_2024091101-05-4_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_2024091101-05-5_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
-
-        '5.3/exp_2024091102-01-1_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_2024091102-01-2_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_2024091102-01-3_type_5.3_mask_15_35_non-normalized_fixed.json',
-
-        '5.3/exp_2024091102-02-1_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_2024091102-02-2_type_5.3_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_2024091102-02-3_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_2024091101-01-1_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_2024091101-01-2_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_2024091101-01-3_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_2024091101-01-4_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_2024091101-01-5_type_5.3_mask_15_35_non-normalized_fixed.json',
         #
-        '5.3/exp_2024091102-04-1_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_2024091102-04-2_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_2024091102-04-3_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
-
-        '5.3/exp_2024091102-05-1_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_2024091102-05-2_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
-        '5.3/exp_2024091102-05-3_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_2024091101-02-1_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_2024091101-02-2_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_2024091101-02-3_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_2024091101-02-4_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_2024091101-02-5_type_5.3_mask_15_35_non-normalized_fixed.json',
+        #
+        # '5.3/exp_2024091101-04-1_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_2024091101-04-2_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_2024091101-04-3_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_2024091101-04-4_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_2024091101-04-5_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
+        #
+        # '5.3/exp_2024091101-05-1_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_2024091101-05-2_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_2024091101-05-3_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_2024091101-05-4_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_2024091101-05-5_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
+        #
+        # '5.3/exp_2024091102-01-1_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_2024091102-01-2_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_2024091102-01-3_type_5.3_mask_15_35_non-normalized_fixed.json',
+        #
+        # '5.3/exp_2024091102-02-1_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_2024091102-02-2_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_2024091102-02-3_type_5.3_mask_15_35_non-normalized_fixed.json',
+        # #
+        # '5.3/exp_2024091102-04-1_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_2024091102-04-2_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_2024091102-04-3_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
+        #
+        # '5.3/exp_2024091102-05-1_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_2024091102-05-2_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
+        # '5.3/exp_2024091102-05-3_type_5.3_arp_mask_15_35_non-normalized_fixed.json',
 
         ###############################################################################################################
 
@@ -603,6 +603,9 @@ if __name__ == '__main__':
     nbrs_corrs_shuffle_between_cells_ts = []
     total_mean = []
     total_std = []
+    all_dist_to_gc = {}
+    all_gc_dict_adjacent = {}
+    all_gc_dict_non_adjacent = {}
 
     # radiuses_by_0_10 = ['(15, 35)', '(0, 10)', '(10, 30)', '(20, 40)', '(15, 40)', '(10, 40)']
     # my_dict_0_10 = {k: [] for k in radiuses_by_0_10}
@@ -840,9 +843,9 @@ if __name__ == '__main__':
 
         ##### fig 2B #####
         #### correlations delta before and after blebb #####
-        delta_corr = float(nbrs_avg_correlation) - float(non_nbrs_avg_correlation)
-        exp_name_lst = exp_name.split('-')
-        exp_name_to_exp_type[exp_name_lst[0]] = exp_type
+        # delta_corr = float(nbrs_avg_correlation) - float(non_nbrs_avg_correlation)
+        # exp_name_lst = exp_name.split('-')
+        # exp_name_to_exp_type[exp_name_lst[0]] = exp_type
         # if exp_name_lst[0] == '20230809':
         #     if '20230809' not in map_exp_to_delta_corrs:
         #         map_exp_to_delta_corrs['20230809'] = {}
@@ -928,61 +931,61 @@ if __name__ == '__main__':
         #         map_exp_to_delta_corrs['2023071202'][exp_name_lst[-1]]['before'].append(delta_corr)
         #
         # # for revision #
-        if exp_name_lst[0] == '2024091002':
-            if '2024091002' not in map_exp_to_delta_corrs:
-                map_exp_to_delta_corrs['2024091002'] = {}
-            if exp_name_lst[-1] not in map_exp_to_delta_corrs['2024091002']:
-                map_exp_to_delta_corrs['2024091002'][exp_name_lst[-1]] = {}
-            if 'formin' in path_name_split:
-                if 'after' not in map_exp_to_delta_corrs['2024091002'][exp_name_lst[-1]]:
-                    map_exp_to_delta_corrs['2024091002'][exp_name_lst[-1]]['after'] = []
-                map_exp_to_delta_corrs['2024091002'][exp_name_lst[-1]]['after'].append(delta_corr)
-            if 'formin' not in path_name_split:
-                if 'before' not in map_exp_to_delta_corrs['2024091002'][exp_name_lst[-1]]:
-                    map_exp_to_delta_corrs['2024091002'][exp_name_lst[-1]]['before'] = []
-                map_exp_to_delta_corrs['2024091002'][exp_name_lst[-1]]['before'].append(delta_corr)
-
-        if exp_name_lst[0] == '20240912':
-            if '20240912' not in map_exp_to_delta_corrs:
-                map_exp_to_delta_corrs['20240912'] = {}
-            if exp_name_lst[-1] not in map_exp_to_delta_corrs['20240912']:
-                map_exp_to_delta_corrs['20240912'][exp_name_lst[-1]] = {}
-            if 'formin' in path_name_split:
-                if 'after' not in map_exp_to_delta_corrs['20240912'][exp_name_lst[-1]]:
-                    map_exp_to_delta_corrs['20240912'][exp_name_lst[-1]]['after'] = []
-                map_exp_to_delta_corrs['20240912'][exp_name_lst[-1]]['after'].append(delta_corr)
-            if 'formin' not in path_name_split:
-                if 'before' not in map_exp_to_delta_corrs['20240912'][exp_name_lst[-1]]:
-                    map_exp_to_delta_corrs['20240912'][exp_name_lst[-1]]['before'] = []
-                map_exp_to_delta_corrs['20240912'][exp_name_lst[-1]]['before'].append(delta_corr)
-
-        if exp_name_lst[0] == '2024091101':
-            if '2024091101' not in map_exp_to_delta_corrs:
-                map_exp_to_delta_corrs['2024091101'] = {}
-            if exp_name_lst[-1] not in map_exp_to_delta_corrs['2024091101']:
-                map_exp_to_delta_corrs['2024091101'][exp_name_lst[-1]] = {}
-            if 'arp' in path_name_split:
-                if 'after' not in map_exp_to_delta_corrs['2024091101'][exp_name_lst[-1]]:
-                    map_exp_to_delta_corrs['2024091101'][exp_name_lst[-1]]['after'] = []
-                map_exp_to_delta_corrs['2024091101'][exp_name_lst[-1]]['after'].append(delta_corr)
-            if 'arp' not in path_name_split:
-                if 'before' not in map_exp_to_delta_corrs['2024091101'][exp_name_lst[-1]]:
-                    map_exp_to_delta_corrs['2024091101'][exp_name_lst[-1]]['before'] = []
-                map_exp_to_delta_corrs['2024091101'][exp_name_lst[-1]]['before'].append(delta_corr)
-
-        if exp_name_lst[0] == '2024091102':
-            if '2024091102' not in map_exp_to_delta_corrs:
-                map_exp_to_delta_corrs['2024091102'] = {}
-            if exp_name_lst[-1] not in map_exp_to_delta_corrs['2024091102']:
-                map_exp_to_delta_corrs['2024091102'][exp_name_lst[-1]] = {}
-            if 'arp' in path_name_split:
-                if 'after' not in map_exp_to_delta_corrs['2024091102'][exp_name_lst[-1]]:
-                    map_exp_to_delta_corrs['2024091102'][exp_name_lst[-1]]['after'] = []
-                map_exp_to_delta_corrs['2024091102'][exp_name_lst[-1]]['after'].append(delta_corr)
-            if 'arp' not in path_name_split:
-                if 'before' not in map_exp_to_delta_corrs['2024091102'][exp_name_lst[-1]]:
-                    map_exp_to_delta_corrs['2024091102'][exp_name_lst[-1]]['before'] = []
-                map_exp_to_delta_corrs['2024091102'][exp_name_lst[-1]]['before'].append(delta_corr)
+        # if exp_name_lst[0] == '2024091002':
+        #     if '2024091002' not in map_exp_to_delta_corrs:
+        #         map_exp_to_delta_corrs['2024091002'] = {}
+        #     if exp_name_lst[-1] not in map_exp_to_delta_corrs['2024091002']:
+        #         map_exp_to_delta_corrs['2024091002'][exp_name_lst[-1]] = {}
+        #     if 'formin' in path_name_split:
+        #         if 'after' not in map_exp_to_delta_corrs['2024091002'][exp_name_lst[-1]]:
+        #             map_exp_to_delta_corrs['2024091002'][exp_name_lst[-1]]['after'] = []
+        #         map_exp_to_delta_corrs['2024091002'][exp_name_lst[-1]]['after'].append(delta_corr)
+        #     if 'formin' not in path_name_split:
+        #         if 'before' not in map_exp_to_delta_corrs['2024091002'][exp_name_lst[-1]]:
+        #             map_exp_to_delta_corrs['2024091002'][exp_name_lst[-1]]['before'] = []
+        #         map_exp_to_delta_corrs['2024091002'][exp_name_lst[-1]]['before'].append(delta_corr)
+        #
+        # if exp_name_lst[0] == '20240912':
+        #     if '20240912' not in map_exp_to_delta_corrs:
+        #         map_exp_to_delta_corrs['20240912'] = {}
+        #     if exp_name_lst[-1] not in map_exp_to_delta_corrs['20240912']:
+        #         map_exp_to_delta_corrs['20240912'][exp_name_lst[-1]] = {}
+        #     if 'formin' in path_name_split:
+        #         if 'after' not in map_exp_to_delta_corrs['20240912'][exp_name_lst[-1]]:
+        #             map_exp_to_delta_corrs['20240912'][exp_name_lst[-1]]['after'] = []
+        #         map_exp_to_delta_corrs['20240912'][exp_name_lst[-1]]['after'].append(delta_corr)
+        #     if 'formin' not in path_name_split:
+        #         if 'before' not in map_exp_to_delta_corrs['20240912'][exp_name_lst[-1]]:
+        #             map_exp_to_delta_corrs['20240912'][exp_name_lst[-1]]['before'] = []
+        #         map_exp_to_delta_corrs['20240912'][exp_name_lst[-1]]['before'].append(delta_corr)
+        #
+        # if exp_name_lst[0] == '2024091101':
+        #     if '2024091101' not in map_exp_to_delta_corrs:
+        #         map_exp_to_delta_corrs['2024091101'] = {}
+        #     if exp_name_lst[-1] not in map_exp_to_delta_corrs['2024091101']:
+        #         map_exp_to_delta_corrs['2024091101'][exp_name_lst[-1]] = {}
+        #     if 'arp' in path_name_split:
+        #         if 'after' not in map_exp_to_delta_corrs['2024091101'][exp_name_lst[-1]]:
+        #             map_exp_to_delta_corrs['2024091101'][exp_name_lst[-1]]['after'] = []
+        #         map_exp_to_delta_corrs['2024091101'][exp_name_lst[-1]]['after'].append(delta_corr)
+        #     if 'arp' not in path_name_split:
+        #         if 'before' not in map_exp_to_delta_corrs['2024091101'][exp_name_lst[-1]]:
+        #             map_exp_to_delta_corrs['2024091101'][exp_name_lst[-1]]['before'] = []
+        #         map_exp_to_delta_corrs['2024091101'][exp_name_lst[-1]]['before'].append(delta_corr)
+        #
+        # if exp_name_lst[0] == '2024091102':
+        #     if '2024091102' not in map_exp_to_delta_corrs:
+        #         map_exp_to_delta_corrs['2024091102'] = {}
+        #     if exp_name_lst[-1] not in map_exp_to_delta_corrs['2024091102']:
+        #         map_exp_to_delta_corrs['2024091102'][exp_name_lst[-1]] = {}
+        #     if 'arp' in path_name_split:
+        #         if 'after' not in map_exp_to_delta_corrs['2024091102'][exp_name_lst[-1]]:
+        #             map_exp_to_delta_corrs['2024091102'][exp_name_lst[-1]]['after'] = []
+        #         map_exp_to_delta_corrs['2024091102'][exp_name_lst[-1]]['after'].append(delta_corr)
+        #     if 'arp' not in path_name_split:
+        #         if 'before' not in map_exp_to_delta_corrs['2024091102'][exp_name_lst[-1]]:
+        #             map_exp_to_delta_corrs['2024091102'][exp_name_lst[-1]]['before'] = []
+        #         map_exp_to_delta_corrs['2024091102'][exp_name_lst[-1]]['before'].append(delta_corr)
 
         # sim = run_config(config_path)
         # sns.histplot(sim, label="similarity", kde=True, alpha=0.3)
@@ -1149,8 +1152,18 @@ if __name__ == '__main__':
         # total_mean.append(mean_distance)
         # total_std.append(std_distance)
 
+        # vid_dist_to_gc = run_config(config_path)
+        # for k, v in vid_dist_to_gc.items():
+        #     if k in all_dist_to_gc:
+        #         all_dist_to_gc[k].update(v)
+        #     else:
+        #         all_dist_to_gc[k] = v
+        # gc_dict_adjacent, gc_dict_non_adjacent = run_config(config_path)
+        # all_gc_dict_adjacent.update(gc_dict_adjacent)
+        # all_gc_dict_non_adjacent.update(gc_dict_non_adjacent)
+
         ##################################### RUN  ############################################
-        # run_config(config_path)
+        run_config(config_path)
 
         # try:
         #     run_config(config_path)
@@ -1161,6 +1174,50 @@ if __name__ == '__main__':
         #     print("there was an error in config path " + str(config_path) + str(error))
         # print(config_path, "completed")
         ##################################### RUN  ############################################
+    # data = []
+    # for dist, pairs in all_dist_to_gc.items():
+    #     if dist < 6:
+    #         for pair, p_value in pairs.items():
+    #             data.append((dist, p_value))
+    # df = pd.DataFrame(data, columns=['Distance', 'P-Value'])
+    # plt.figure(figsize=(10, 6))
+    # bplot = sns.boxplot(x='Distance', y='P-Value', data=df, color="gray")
+    # medians = df.groupby(['Distance'])['P-Value'].median()
+    # vertical_offset = df['P-Value'].median() * 0.05
+    # for xtick in bplot.get_xticks():
+    #     bplot.text(xtick, medians[xtick + 1] + vertical_offset, f'{medians[xtick + 1]:.2f}',
+    #                horizontalalignment='center', size='small', color='black', weight='semibold')
+    # plt.title('Granger Causality P-Values by Topological Distance')
+    # plt.xlabel('Topological Distance')
+    # plt.ylabel('P-Value')
+    # plt.show()
+    # distances = sorted(df['Distance'].unique())
+    # for i in range(len(distances) - 1):
+    #     dist1 = distances[i]
+    #     dist2 = distances[i + 1]
+    #     p_values_dist1 = df[df['Distance'] == dist1]['P-Value']
+    #     p_values_dist2 = df[df['Distance'] == dist2]['P-Value']
+    #     stat, p_value = stats.mannwhitneyu(p_values_dist1, p_values_dist2, alternative='two-sided')
+    #     print(f"Mann-Whitney U Test between distances {dist1} and {dist2}: U-statistic = {stat}, p-value = {p_value}")
+
+    # data_adjacent = pd.DataFrame(list(all_gc_dict_adjacent.items()), columns=['Pair', 'P-Value'])
+    # data_non_adjacent = pd.DataFrame(list(all_gc_dict_non_adjacent.items()), columns=['Pair', 'P-Value'])
+    # data_adjacent['Type'] = 'Adjacent'
+    # data_non_adjacent['Type'] = 'Non-Adjacent'
+    # combined_data = pd.concat([data_adjacent, data_non_adjacent])
+    # stat, p_value = stats.mannwhitneyu(data_adjacent['P-Value'], data_non_adjacent['P-Value'], alternative='two-sided')
+    # print(f"Mann-Whitney U Test results: U-statistic = {stat}, p-value = {p_value}")
+    # plt.figure(figsize=(8, 6))
+    # bplot = sns.boxplot(x='Type', y='P-Value', data=combined_data, color="gray")
+    # medians = combined_data.groupby(['Type'])['P-Value'].median()
+    # vertical_offset = combined_data['P-Value'].median() * 0.05
+    # for xtick in bplot.get_xticks():
+    #     bplot.text(xtick, medians[xtick] + vertical_offset, f'{medians[xtick]:.2f}',
+    #                horizontalalignment='center', color='black', fontsize=10, weight='semibold')
+    # plt.title('Comparison of Granger Causality P-Values')
+    # plt.xlabel('Type of Pair')
+    # plt.ylabel('Granger Causality P-Value')
+    # plt.show()
 
     # print("mean:", np.mean(total_mean))
     # print("std:", np.std(total_std))
@@ -1630,47 +1687,47 @@ if __name__ == '__main__':
     #                     for distance, correlations in distances.items()}
     # print(cell_to_distance_to_mean_corr)
     #### wilcoxon test on the diffs of original pillars vs shuffle in cell pillars
-    original_dict = {'20230320-5': {1: 0.22503654730639147, 2: 0.10723211573577573, 3: 0.10032120151109378, 4: 0.09114147021533622, 5: 0.09597892531265195, 6: 0.08236430222875896, 7: 0.07895370523793194, 8: 0.05705169534234702, 9: 0.043436538214417494}, '20230320-6': {1: 0.25984114060068536, 2: 0.15202299392848773, 3: 0.12472479057865636, 4: 0.10341219608559205, 5: 0.0918991334483285, 6: 0.0845953322084087, 7: 0.06057759722135544, 8: 0.04435127849778822, 9: 0.010816911905839907, 10: 0.07310865255955226}, '20230320-7': {1: 0.4043782239559096, 2: 0.33811778455484254, 3: 0.28852333540338065, 4: 0.24608609119249877, 5: 0.21280099202929081, 6: 0.17928304704116063, 7: 0.0649970069699358, 8: 0.05264456895621299}, '20230320-8': {1: 0.2712914575594924, 2: 0.19066477450562563, 3: 0.16965120221949936, 4: 0.15027295192653492, 5: 0.14547091923117664, 6: 0.1413290820685724}, '20230320-9': {1: 0.1910102175771357, 2: 0.1309737792936859, 3: 0.1209920882913678, 4: 0.08259173502233398, 5: 0.07473589890587791}, '20230323-1': {1: 0.29553940462694395, 2: 0.21495715477731842, 3: 0.1830149041042908, 4: 0.19412273592169269, 5: 0.16954354842471772, 6: 0.07355366375657338}, '20230323-2': {1: 0.2982276514406073, 2: 0.18772584586399121, 3: 0.15055964711361003, 4: 0.13240236070221456, 5: 0.1222002940502894, 6: 0.11412464704737829, 7: 0.09534873726455159, 8: 0.004641932021561539}, '20230323-3': {1: 0.16994007108549247, 2: 0.0654795548846897, 3: 0.0592675745805424, 4: 0.06438698357012893, 5: 0.05560658984803742, 6: 0.012922562724342945, 7: -0.08589752674283102}, '20230323-4': {1: 0.2751978651441353, 2: 0.18767596444007972, 3: 0.17123980901618413, 4: 0.18083086081484712, 5: 0.17400849796989062, 6: 0.17827070751180915}, '20230323-5': {1: 0.29565531596886935, 2: 0.22417423419916427, 3: 0.2169929603899525, 4: 0.2113102148907313, 5: 0.21714722318126334, 6: 0.2252539208112331, 7: 0.13378761028256014, 8: 0.14744372027656785, 9: 0.11317361766134451}, '20230323-6': {1: 0.3029028527492706, 2: 0.21249952409552522, 3: 0.19243769948875888, 4: 0.17402642970311683, 5: 0.15392774068469386, 6: 0.13236218673198868, 7: 0.07637732746444077, 8: -0.013367321881219151}, '20230323-7': {1: 0.3992898924721755, 2: 0.32337096844913404, 3: 0.31207013950839496, 4: 0.3133261145126943, 5: 0.26363851063498656, 6: 0.19339365590724567}, '20230323-8': {1: 0.3763000434657713, 2: 0.25548551424804405, 3: 0.20483914725333557, 4: 0.19165410308410846, 5: 0.17360014434703502, 6: 0.17377592031328126, 7: 0.18397622686601797, 8: 0.16843757602948908, 9: -0.036769783945195395, 10: -0.047804019737084695}}
-    shuffle_dict = {'20230320-5': {1: 0.08665009164370154, 2: 0.0904065795742828, 3: 0.085234155215305, 4: 0.086034858037695, 5: 0.08624637948266407, 6: 0.08754636376195261, 7: 0.09259279689296765, 8: 0.0910806399985463, 9: 0.08537682707289432}, '20230320-6': {1: 0.07526411191274923, 2: 0.07840577667129427, 3: 0.07525942353597015, 4: 0.07801383801437199, 5: 0.07803747186541393, 6: 0.07727127919495036, 7: 0.07466439142054289, 8: 0.07359457645050707, 9: 0.04264352077706614, 10: 0.023979772860058715}, '20230320-7': {1: 0.21550818552425097, 2: 0.22484723269581658, 3: 0.21924320080558446, 4: 0.21857516050482392, 5: 0.21687636214594072, 6: 0.21931547519433364, 7: 0.13512004276341408, 8: 0.062478601718201}, '20230320-8': {1: 0.14980200824119647, 2: 0.14848070386418505, 3: 0.14467148207931635, 4: 0.14462162837020381, 5: 0.14643420948965907, 6: 0.14215474018240254}, '20230320-9': {1: 0.09987689660850296, 2: 0.09996079053228013, 3: 0.10281915930618094, 4: 0.10238708002648596, 5: 0.10233634254083797}, '20230323-1': {1: 0.19276348848289512, 2: 0.19154087198259254, 3: 0.19082568199073102, 4: 0.18746306721059222, 5: 0.1832209801265099, 6: 0.15060726945123754}, '20230323-2': {1: 0.13839470799379433, 2: 0.1408165135465747, 3: 0.14367955046880274, 4: 0.13650641132446975, 5: 0.13874101375111253, 6: 0.13582184704464662, 7: 0.1349302219208141, 8: 0.1257973990411691}, '20230323-3': {1: 0.04309910820076598, 2: 0.04410572210887193, 3: 0.04140859853670647, 4: 0.04707167547845309, 5: 0.04541587313780152, 6: 0.008551081553666993, 7: -0.001480388113205671}, '20230323-4': {1: 0.18317791450549292, 2: 0.18671950957847339, 3: 0.1855662782012636, 4: 0.18655443446959724, 5: 0.18621480682505764, 6: 0.18514452572890852}, '20230323-5': {1: 0.16738694880625304, 2: 0.16802315568423504, 3: 0.17293126172890427, 4: 0.16777374843281873, 5: 0.1723432578473528, 6: 0.1738961425329822, 7: 0.10835702258616378, 8: 0.12184422649012572, 9: 0.17827943700825283}, '20230323-6': {1: 0.11500915628580703, 2: 0.11869778082316132, 3: 0.11800059313063897, 4: 0.11759977875078786, 5: 0.11515927474209355, 6: 0.11360623611208427, 7: 0.04842851671399429, 8: 0.03197877438596029}, '20230323-7': {1: 0.24904987974762885, 2: 0.2356928807903797, 3: 0.2420946223921914, 4: 0.24985071821624494, 5: 0.24236801306703915, 6: 0.19328302183100873}, '20230323-8': {1: 0.1647212811454815, 2: 0.16293896930619012, 3: 0.16223071287001656, 4: 0.15890546006194115, 5: 0.15971920187127908, 6: 0.15831862188483567, 7: 0.1598169214328397, 8: 0.11308912647616134, 9: 0.022682118959445507, 10: 0.030516414074833954}}
-    diffs_dist = []
-    dist = 5
-    for cell in original_dict:
-        if dist in original_dict[cell] and cell in shuffle_dict and dist in shuffle_dict[cell]:
-            original_value = original_dict[cell][dist]
-            shuffle_value = shuffle_dict[cell][dist]
-            difference = original_value - shuffle_value
-            diffs_dist.append(difference)
-    if len(diffs_dist) > 1:
-        stat, p_value = stats.wilcoxon(diffs_dist)
-        print("p-value:", p_value)
-    def prepare_data_for_plot(data_dict, label):
-        rows = []
-        for cell, distances in data_dict.items():
-            if dist in distances:  # Only take data from distance 2
-                rows.append({'Cell': cell, 'Correlation': distances[dist], 'Type': label})
-        return rows
-    original_data = prepare_data_for_plot(original_dict, 'Observed')
-    shuffle_data = prepare_data_for_plot(shuffle_dict, 'Shuffle')
-    df = pd.DataFrame(original_data + shuffle_data)
-    cells = df['Cell'].unique()
-    num_cells = len(cells)
-    mean_original = df[df['Type'] == 'Observed']['Correlation'].mean()
-    median_original = df[df['Type'] == 'Observed']['Correlation'].median()
-    mean_shuffle = df[df['Type'] == 'Shuffle']['Correlation'].mean()
-    median_shuffle = df[df['Type'] == 'Shuffle']['Correlation'].median()
-    print(f"Observed - Mean: {mean_original}, Median: {median_original}")
-    print(f"Shuffle - Mean: {mean_shuffle}, Median: {median_shuffle}")
-    plt.figure(figsize=(10, 6))
-    sns.boxplot(x='Type', y='Correlation', data=df, palette=['white', 'white'], showmeans=False, color='lightgrey', boxprops={'facecolor': 'None'})
-    sns.stripplot(x='Type', y='Correlation', data=df, hue='Cell', jitter=True, dodge=True, palette=sns.color_palette("Spectral", num_cells), marker="o", size=8)
-    # plt.title('Correlations at Distance', dist, 'Original vs. Shuffle', fontsize=14)
-    plt.ylabel('Correlation', fontsize=12)
-    plt.legend(title='Cell', bbox_to_anchor=(1.05, 1), loc='upper left')
-    ymin, ymax = plt.ylim()
-    plt.ylim(ymin, ymax + 0.05)
-    plt.tight_layout()
-    plt.savefig('../observed_vs_shuffle_dist5_fig_S8.jpg', format="jpg")
-    plt.show()
+    # original_dict = {'20230320-5': {1: 0.22503654730639147, 2: 0.10723211573577573, 3: 0.10032120151109378, 4: 0.09114147021533622, 5: 0.09597892531265195, 6: 0.08236430222875896, 7: 0.07895370523793194, 8: 0.05705169534234702, 9: 0.043436538214417494}, '20230320-6': {1: 0.25984114060068536, 2: 0.15202299392848773, 3: 0.12472479057865636, 4: 0.10341219608559205, 5: 0.0918991334483285, 6: 0.0845953322084087, 7: 0.06057759722135544, 8: 0.04435127849778822, 9: 0.010816911905839907, 10: 0.07310865255955226}, '20230320-7': {1: 0.4043782239559096, 2: 0.33811778455484254, 3: 0.28852333540338065, 4: 0.24608609119249877, 5: 0.21280099202929081, 6: 0.17928304704116063, 7: 0.0649970069699358, 8: 0.05264456895621299}, '20230320-8': {1: 0.2712914575594924, 2: 0.19066477450562563, 3: 0.16965120221949936, 4: 0.15027295192653492, 5: 0.14547091923117664, 6: 0.1413290820685724}, '20230320-9': {1: 0.1910102175771357, 2: 0.1309737792936859, 3: 0.1209920882913678, 4: 0.08259173502233398, 5: 0.07473589890587791}, '20230323-1': {1: 0.29553940462694395, 2: 0.21495715477731842, 3: 0.1830149041042908, 4: 0.19412273592169269, 5: 0.16954354842471772, 6: 0.07355366375657338}, '20230323-2': {1: 0.2982276514406073, 2: 0.18772584586399121, 3: 0.15055964711361003, 4: 0.13240236070221456, 5: 0.1222002940502894, 6: 0.11412464704737829, 7: 0.09534873726455159, 8: 0.004641932021561539}, '20230323-3': {1: 0.16994007108549247, 2: 0.0654795548846897, 3: 0.0592675745805424, 4: 0.06438698357012893, 5: 0.05560658984803742, 6: 0.012922562724342945, 7: -0.08589752674283102}, '20230323-4': {1: 0.2751978651441353, 2: 0.18767596444007972, 3: 0.17123980901618413, 4: 0.18083086081484712, 5: 0.17400849796989062, 6: 0.17827070751180915}, '20230323-5': {1: 0.29565531596886935, 2: 0.22417423419916427, 3: 0.2169929603899525, 4: 0.2113102148907313, 5: 0.21714722318126334, 6: 0.2252539208112331, 7: 0.13378761028256014, 8: 0.14744372027656785, 9: 0.11317361766134451}, '20230323-6': {1: 0.3029028527492706, 2: 0.21249952409552522, 3: 0.19243769948875888, 4: 0.17402642970311683, 5: 0.15392774068469386, 6: 0.13236218673198868, 7: 0.07637732746444077, 8: -0.013367321881219151}, '20230323-7': {1: 0.3992898924721755, 2: 0.32337096844913404, 3: 0.31207013950839496, 4: 0.3133261145126943, 5: 0.26363851063498656, 6: 0.19339365590724567}, '20230323-8': {1: 0.3763000434657713, 2: 0.25548551424804405, 3: 0.20483914725333557, 4: 0.19165410308410846, 5: 0.17360014434703502, 6: 0.17377592031328126, 7: 0.18397622686601797, 8: 0.16843757602948908, 9: -0.036769783945195395, 10: -0.047804019737084695}}
+    # shuffle_dict = {'20230320-5': {1: 0.08665009164370154, 2: 0.0904065795742828, 3: 0.085234155215305, 4: 0.086034858037695, 5: 0.08624637948266407, 6: 0.08754636376195261, 7: 0.09259279689296765, 8: 0.0910806399985463, 9: 0.08537682707289432}, '20230320-6': {1: 0.07526411191274923, 2: 0.07840577667129427, 3: 0.07525942353597015, 4: 0.07801383801437199, 5: 0.07803747186541393, 6: 0.07727127919495036, 7: 0.07466439142054289, 8: 0.07359457645050707, 9: 0.04264352077706614, 10: 0.023979772860058715}, '20230320-7': {1: 0.21550818552425097, 2: 0.22484723269581658, 3: 0.21924320080558446, 4: 0.21857516050482392, 5: 0.21687636214594072, 6: 0.21931547519433364, 7: 0.13512004276341408, 8: 0.062478601718201}, '20230320-8': {1: 0.14980200824119647, 2: 0.14848070386418505, 3: 0.14467148207931635, 4: 0.14462162837020381, 5: 0.14643420948965907, 6: 0.14215474018240254}, '20230320-9': {1: 0.09987689660850296, 2: 0.09996079053228013, 3: 0.10281915930618094, 4: 0.10238708002648596, 5: 0.10233634254083797}, '20230323-1': {1: 0.19276348848289512, 2: 0.19154087198259254, 3: 0.19082568199073102, 4: 0.18746306721059222, 5: 0.1832209801265099, 6: 0.15060726945123754}, '20230323-2': {1: 0.13839470799379433, 2: 0.1408165135465747, 3: 0.14367955046880274, 4: 0.13650641132446975, 5: 0.13874101375111253, 6: 0.13582184704464662, 7: 0.1349302219208141, 8: 0.1257973990411691}, '20230323-3': {1: 0.04309910820076598, 2: 0.04410572210887193, 3: 0.04140859853670647, 4: 0.04707167547845309, 5: 0.04541587313780152, 6: 0.008551081553666993, 7: -0.001480388113205671}, '20230323-4': {1: 0.18317791450549292, 2: 0.18671950957847339, 3: 0.1855662782012636, 4: 0.18655443446959724, 5: 0.18621480682505764, 6: 0.18514452572890852}, '20230323-5': {1: 0.16738694880625304, 2: 0.16802315568423504, 3: 0.17293126172890427, 4: 0.16777374843281873, 5: 0.1723432578473528, 6: 0.1738961425329822, 7: 0.10835702258616378, 8: 0.12184422649012572, 9: 0.17827943700825283}, '20230323-6': {1: 0.11500915628580703, 2: 0.11869778082316132, 3: 0.11800059313063897, 4: 0.11759977875078786, 5: 0.11515927474209355, 6: 0.11360623611208427, 7: 0.04842851671399429, 8: 0.03197877438596029}, '20230323-7': {1: 0.24904987974762885, 2: 0.2356928807903797, 3: 0.2420946223921914, 4: 0.24985071821624494, 5: 0.24236801306703915, 6: 0.19328302183100873}, '20230323-8': {1: 0.1647212811454815, 2: 0.16293896930619012, 3: 0.16223071287001656, 4: 0.15890546006194115, 5: 0.15971920187127908, 6: 0.15831862188483567, 7: 0.1598169214328397, 8: 0.11308912647616134, 9: 0.022682118959445507, 10: 0.030516414074833954}}
+    # diffs_dist = []
+    # dist = 5
+    # for cell in original_dict:
+    #     if dist in original_dict[cell] and cell in shuffle_dict and dist in shuffle_dict[cell]:
+    #         original_value = original_dict[cell][dist]
+    #         shuffle_value = shuffle_dict[cell][dist]
+    #         difference = original_value - shuffle_value
+    #         diffs_dist.append(difference)
+    # if len(diffs_dist) > 1:
+    #     stat, p_value = stats.wilcoxon(diffs_dist)
+    #     print("p-value:", p_value)
+    # def prepare_data_for_plot(data_dict, label):
+    #     rows = []
+    #     for cell, distances in data_dict.items():
+    #         if dist in distances:  # Only take data from distance 2
+    #             rows.append({'Cell': cell, 'Correlation': distances[dist], 'Type': label})
+    #     return rows
+    # original_data = prepare_data_for_plot(original_dict, 'Observed')
+    # shuffle_data = prepare_data_for_plot(shuffle_dict, 'Shuffle')
+    # df = pd.DataFrame(original_data + shuffle_data)
+    # cells = df['Cell'].unique()
+    # num_cells = len(cells)
+    # mean_original = df[df['Type'] == 'Observed']['Correlation'].mean()
+    # median_original = df[df['Type'] == 'Observed']['Correlation'].median()
+    # mean_shuffle = df[df['Type'] == 'Shuffle']['Correlation'].mean()
+    # median_shuffle = df[df['Type'] == 'Shuffle']['Correlation'].median()
+    # print(f"Observed - Mean: {mean_original}, Median: {median_original}")
+    # print(f"Shuffle - Mean: {mean_shuffle}, Median: {median_shuffle}")
+    # plt.figure(figsize=(10, 6))
+    # sns.boxplot(x='Type', y='Correlation', data=df, palette=['white', 'white'], showmeans=False, color='lightgrey', boxprops={'facecolor': 'None'})
+    # sns.stripplot(x='Type', y='Correlation', data=df, hue='Cell', jitter=True, dodge=True, palette=sns.color_palette("Spectral", num_cells), marker="o", size=8)
+    # # plt.title('Correlations at Distance', dist, 'Original vs. Shuffle', fontsize=14)
+    # plt.ylabel('Correlation', fontsize=12)
+    # plt.legend(title='Cell', bbox_to_anchor=(1.05, 1), loc='upper left')
+    # ymin, ymax = plt.ylim()
+    # plt.ylim(ymin, ymax + 0.05)
+    # plt.tight_layout()
+    # plt.savefig('../observed_vs_shuffle_dist5_fig_S8.jpg', format="jpg")
+    # plt.show()
 
     # nbrs_sim = [tup[0] for tup in list(p_2_sim_dict.values())]
     # non_nbrs_sim = [tup[1] for tup in list(p_2_sim_dict.values())]

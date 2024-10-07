@@ -40,7 +40,20 @@ def find_optimal_lag(stationary_pillar_to_intensity, max_lag=3):
     results.summary()
 
 
-def perform_granger_test(stationary_pillar_to_intensity, maxlag=3):
+def perform_granger_test(pillar_pairs, stationary_pillar_to_intensity, maxlag=3):
+    granger_results = {}
+    for pair in pillar_pairs:
+        p1 = pair[0]
+        p2 = pair[1]
+        if p1 in stationary_pillar_to_intensity.keys() and p2 in stationary_pillar_to_intensity.keys():
+            test_result = grangercausalitytests(
+                list(zip(stationary_pillar_to_intensity[p1], stationary_pillar_to_intensity[p2])), maxlag=maxlag, verbose=False )
+            p_values = [test_result[i + 1][0]['ssr_chi2test'][1] for i in range(maxlag)]
+            granger_results[(p1, p2)] = min(p_values)
+    return granger_results
+
+
+def perform_granger_test_for_adjacent(stationary_pillar_to_intensity, maxlag=3):
     neighbors = get_alive_pillars_to_alive_neighbors()
     nbrs_granger_results = {}
     for pillar1 in stationary_pillar_to_intensity:
@@ -53,6 +66,38 @@ def perform_granger_test(stationary_pillar_to_intensity, maxlag=3):
                 p_values = [test_result[i + 1][0]['ssr_chi2test'][1] for i in range(maxlag)]
                 nbrs_granger_results[(pillar1, pillar2)] = min(p_values)
     return nbrs_granger_results
+
+
+def perform_granger_test_for_non_adjacent(stationary_pillar_to_intensity, maxlag=3):
+    neighbors = get_alive_pillars_to_alive_neighbors()
+    non_nbrs_granger_results = {}
+    for pillar1 in stationary_pillar_to_intensity:
+        for pillar2 in stationary_pillar_to_intensity:
+            if pillar1 != pillar2 and pillar1 not in neighbors[pillar2]:
+                test_result = grangercausalitytests(
+                    list(zip(stationary_pillar_to_intensity[pillar1], stationary_pillar_to_intensity[pillar2])),
+                    maxlag=maxlag, verbose=False
+                )
+                p_values = [test_result[i + 1][0]['ssr_chi2test'][1] for i in range(maxlag)]
+                non_nbrs_granger_results[(pillar1, pillar2)] = min(p_values)
+    return non_nbrs_granger_results
+
+
+def perform_statistical_test(adjacent_results, non_adjacent_results):
+    # Extract p-values from results dictionaries
+    adjacent_p_values = list(adjacent_results.values())
+    non_adjacent_p_values = list(non_adjacent_results.values())
+
+    # Perform Mann-Whitney U Test
+    stat, p_value = stats.mannwhitneyu(adjacent_p_values, non_adjacent_p_values, alternative='two-sided')
+
+    print(f"Mann-Whitney U test stat: {stat}, p-value: {p_value}")
+
+    # Determine significance
+    if p_value < 0.05:
+        print("Significant difference between adjacent and non-adjacent neighbors' Granger causality.")
+    else:
+        print("No significant difference between adjacent and non-adjacent neighbors' Granger causality.")
 
 
 def build_gc_graph(gc_dict, threshold=0.05):
